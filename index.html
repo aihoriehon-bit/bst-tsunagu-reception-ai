@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>つなぐちゃん 受付AI</title>
-    <link rel="stylesheet" href="./styles.css?v=20260701-2" />
+    <link rel="stylesheet" href="./styles.css?v=20260701-3" />
   </head>
   <body>
     <main class="app-shell">
@@ -98,6 +98,16 @@
               <span>背景 ぼかし</span>
               <input type="range" min="0" max="8" step="0.5" data-expression="backgroundBlur" />
               <output data-expression-output="backgroundBlur">2px</output>
+            </label>
+            <label class="control-row">
+              <span>時計 サイズ</span>
+              <input type="range" min="70" max="180" step="1" data-expression="clockScale" />
+              <output data-expression-output="clockScale">100%</output>
+            </label>
+            <label class="control-row">
+              <span>メッセージ</span>
+              <input type="range" min="70" max="180" step="1" data-expression="messageScale" />
+              <output data-expression-output="messageScale">100%</output>
             </label>
             <label class="control-row">
               <span>モデル 明るさ</span>
@@ -220,7 +230,10 @@
               <output data-expression-output="badgeScale">100</output>
             </label>
           </div>
-          <button id="expressionReset" class="secondary-button" type="button">表情位置を初期値に戻す</button>
+          <div class="control-actions">
+            <button id="shareSettings" class="secondary-button" type="button">現在の設定URLをコピー</button>
+            <button id="expressionReset" class="secondary-button" type="button">表情位置を初期値に戻す</button>
+          </div>
         </section>
 
         <section class="operator-section">
@@ -267,6 +280,6 @@
         }
       }
     </script>
-    <script type="module" src="./src/app.js?v=20260701-2"></script>
+    <script type="module" src="./src/app.js?v=20260701-3"></script>
   </body>
 </html>

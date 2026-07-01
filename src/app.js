@@ -17,7 +17,8 @@ const FACE_PART_URLS = {
   mouthWide: "./assets/face-parts/mouth-wide-open.png",
   nosePart: "./assets/face-parts/nose-chon.png",
 };
-const EXPRESSION_STORAGE_KEY = "tsunagu-expression-settings-v2";
+const EXPRESSION_STORAGE_KEY = "tsunagu-expression-settings-v3";
+const SETTINGS_URL_PARAM = "settings";
 const DEFAULT_EXPRESSION = {
   layerX: 2,
   layerY: -22,
@@ -25,6 +26,8 @@ const DEFAULT_EXPRESSION = {
   modelBrightness: 109,
   modelSaturation: 158,
   backgroundBlur: 5.5,
+  clockScale: 100,
+  messageScale: 100,
   patchVisible: 0,
   patchWidth: 100,
   patchHeight: 100,
@@ -56,6 +59,7 @@ const voiceStatus = document.querySelector("#voiceStatus");
 const morphStatus = document.querySelector("#morphStatus");
 const boneStatus = document.querySelector("#boneStatus");
 const animationStatus = document.querySelector("#animationStatus");
+const speechBubble = document.querySelector(".speech-bubble");
 const speechText = document.querySelector("#speechText");
 const assistantMood = document.querySelector("#assistantMood");
 const conversation = document.querySelector("#conversation");
@@ -69,6 +73,7 @@ const listenState = document.querySelector("#listenState");
 const clockText = document.querySelector("#clockText");
 const expressionControls = document.querySelector("#expressionControls");
 const expressionReset = document.querySelector("#expressionReset");
+const shareSettings = document.querySelector("#shareSettings");
 const editorUnlockForm = document.querySelector("#editorUnlockForm");
 const editorPassword = document.querySelector("#editorPassword");
 const editorLockState = document.querySelector("#editorLockState");
@@ -108,6 +113,7 @@ const state = {
   speechToken: 0,
   speechKeepAliveTimer: null,
   editorUnlocked: false,
+  editorStatusTimer: null,
   soundEnabled: true,
   lastInteractionAt: Date.now(),
   recognition: null,
@@ -252,17 +258,33 @@ function loadImage(url) {
 
 function loadExpressionSettings() {
   try {
+    const sharedSettings = loadExpressionSettingsFromUrl();
+    if (sharedSettings) return sharedSettings;
+
     const stored = window.localStorage.getItem(EXPRESSION_STORAGE_KEY);
     if (!stored) return { ...DEFAULT_EXPRESSION };
-    const settings = { ...DEFAULT_EXPRESSION, ...JSON.parse(stored) };
-    settings.modelBrightness = clampNumber(settings.modelBrightness, 80, 130, DEFAULT_EXPRESSION.modelBrightness);
-    settings.modelSaturation = clampNumber(settings.modelSaturation, 80, 200, DEFAULT_EXPRESSION.modelSaturation);
-    settings.backgroundBlur = clampNumber(settings.backgroundBlur, 0, 8, DEFAULT_EXPRESSION.backgroundBlur);
-    return settings;
+    return normalizeExpressionSettings(JSON.parse(stored));
   } catch (error) {
     console.warn("Expression settings could not be loaded", error);
     return { ...DEFAULT_EXPRESSION };
   }
+}
+
+function loadExpressionSettingsFromUrl() {
+  const encoded = new URLSearchParams(window.location.search).get(SETTINGS_URL_PARAM);
+  if (!encoded) return null;
+  return normalizeExpressionSettings(decodeExpressionSettings(encoded));
+}
+
+function normalizeExpressionSettings(values = {}) {
+  const settings = { ...DEFAULT_EXPRESSION, ...values };
+  settings.modelBrightness = clampNumber(settings.modelBrightness, 80, 130, DEFAULT_EXPRESSION.modelBrightness);
+  settings.modelSaturation = clampNumber(settings.modelSaturation, 80, 200, DEFAULT_EXPRESSION.modelSaturation);
+  settings.backgroundBlur = clampNumber(settings.backgroundBlur, 0, 8, DEFAULT_EXPRESSION.backgroundBlur);
+  settings.clockScale = clampNumber(settings.clockScale, 70, 180, DEFAULT_EXPRESSION.clockScale);
+  settings.messageScale = clampNumber(settings.messageScale, 70, 180, DEFAULT_EXPRESSION.messageScale);
+  settings.viewZoom = clampNumber(settings.viewZoom, 80, 220, DEFAULT_EXPRESSION.viewZoom);
+  return settings;
 }
 
 function clampNumber(value, min, max, fallback) {
@@ -277,6 +299,27 @@ function saveExpressionSettings() {
   } catch (error) {
     console.warn("Expression settings could not be saved", error);
   }
+}
+
+function encodeExpressionSettings(settings) {
+  const compactSettings = {};
+  Object.keys(DEFAULT_EXPRESSION).forEach((key) => {
+    compactSettings[key] = settings[key];
+  });
+  return btoa(JSON.stringify(compactSettings)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function decodeExpressionSettings(encoded) {
+  const base64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+  return JSON.parse(atob(padded));
+}
+
+function updateSharedSettingsUrl() {
+  const url = new URL(window.location.href);
+  url.searchParams.set(SETTINGS_URL_PARAM, encodeExpressionSettings(state.expression));
+  window.history.replaceState(null, "", url);
+  return url.toString();
 }
 
 function initExpressionControls() {
@@ -294,6 +337,7 @@ function initExpressionControls() {
       applyExpressionSettings();
       drawFaceTexture(isSpeaking(), getBlinkFrame(), 0);
       saveExpressionSettings();
+      updateSharedSettingsUrl();
     });
   });
 
@@ -308,8 +352,11 @@ function initExpressionControls() {
     applyExpressionSettings();
     drawFaceTexture(isSpeaking(), getBlinkFrame(), 0);
     saveExpressionSettings();
+    updateSharedSettingsUrl();
   });
 
+  shareSettings?.addEventListener("click", copySharedSettingsUrl);
+  applyExpressionSettings();
   initEditorLock(inputs);
 }
 
@@ -343,9 +390,31 @@ function setEditorUnlocked(unlocked, inputs) {
     inputControl.disabled = !unlocked;
   });
   if (expressionReset) expressionReset.disabled = !unlocked;
+  if (shareSettings) shareSettings.disabled = !unlocked;
   expressionControls.classList.toggle("is-locked", !unlocked);
   editorUnlockForm?.classList.toggle("is-unlocked", unlocked);
   if (editorLockState) editorLockState.textContent = unlocked ? "編集中" : "ロック中";
+}
+
+async function copySharedSettingsUrl() {
+  const url = updateSharedSettingsUrl();
+  try {
+    if (!navigator.clipboard?.writeText) throw new Error("Clipboard API unavailable");
+    await navigator.clipboard.writeText(url);
+    flashEditorStatus("URLコピー済み");
+  } catch (error) {
+    window.prompt("共有URL", url);
+    flashEditorStatus("URL表示中");
+  }
+}
+
+function flashEditorStatus(text) {
+  if (!editorLockState) return;
+  editorLockState.textContent = text;
+  if (state.editorStatusTimer) window.clearTimeout(state.editorStatusTimer);
+  state.editorStatusTimer = window.setTimeout(() => {
+    editorLockState.textContent = state.editorUnlocked ? "編集中" : "ロック中";
+  }, 1400);
 }
 
 async function isEditorPasswordValid(value) {
@@ -385,6 +454,12 @@ function updateExpressionOutput(key) {
     output.textContent = text;
     return;
   }
+  if (key === "clockScale" || key === "messageScale") {
+    const text = `${state.expression[key]}%`;
+    output.value = text;
+    output.textContent = text;
+    return;
+  }
   output.value = state.expression[key];
   output.textContent = String(state.expression[key]);
 }
@@ -400,6 +475,7 @@ function applyExpressionSettings() {
   applyBadgeSettings();
   applyViewSettings();
   applyBackgroundSettings();
+  applyHudSettings();
 }
 
 function applyViewSettings() {
@@ -426,13 +502,45 @@ function applyBackgroundSettings() {
 function applyBadgeSettings() {
   if (!nameTagOverlay) return;
   const expression = state.expression;
-  const scale = expression.badgeScale / 100;
+  const placementScale = getStageScale() * (expression.viewZoom / 100);
+  const scale = (expression.badgeScale / 100) * placementScale;
   nameTagOverlay.classList.toggle("is-hidden", !expression.badgeVisible);
-  nameTagOverlay.style.left = `calc(50% + ${expression.badgeX}px)`;
-  nameTagOverlay.style.top = `calc(46% + ${expression.badgeY}px)`;
+  nameTagOverlay.style.left = `calc(50% + ${expression.badgeX * placementScale}px)`;
+  nameTagOverlay.style.top = `calc(46% + ${expression.badgeY * placementScale}px)`;
   nameTagOverlay.style.width = `${46 * scale}px`;
   nameTagOverlay.style.height = `${24 * scale}px`;
   nameTagOverlay.style.fontSize = `${9 * scale}px`;
+}
+
+function applyHudSettings() {
+  const stageScale = getStageScale();
+  const clockScale = stageScale * (state.expression.clockScale / 100);
+  if (clockText) {
+    clockText.style.minWidth = `${68 * clockScale}px`;
+    clockText.style.minHeight = `${34 * clockScale}px`;
+    clockText.style.padding = `${7 * clockScale}px ${12 * clockScale}px`;
+    clockText.style.fontSize = `${16 * clockScale}px`;
+  }
+
+  const messageScale = stageScale * (state.expression.messageScale / 100);
+  if (speechBubble) {
+    speechBubble.style.minHeight = `${86 * messageScale}px`;
+    speechBubble.style.padding = `${12 * messageScale}px ${14 * messageScale}px`;
+    speechBubble.style.gap = `${12 * messageScale}px`;
+  }
+  if (speechText) {
+    speechText.style.fontSize = `${15 * messageScale}px`;
+  }
+  if (assistantMood) {
+    assistantMood.style.width = `${13 * messageScale}px`;
+    assistantMood.style.height = `${13 * messageScale}px`;
+    assistantMood.style.marginTop = `${8 * messageScale}px`;
+  }
+}
+
+function getStageScale() {
+  const height = sceneHost?.clientHeight || 600;
+  return clampNumber(height / 600, 0.72, 2.4, 1);
 }
 
 function initScene() {
@@ -523,6 +631,7 @@ function initScene() {
     camera.aspect = rect.width / Math.max(rect.height, 1);
     camera.updateProjectionMatrix();
     renderer.setSize(rect.width, rect.height, false);
+    applyExpressionSettings();
   };
 
   window.addEventListener("resize", resize);

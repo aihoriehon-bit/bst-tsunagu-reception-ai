@@ -471,6 +471,11 @@ input:focus-visible {
   border-top: 0;
 }
 
+.control-actions {
+  display: grid;
+  gap: 8px;
+}
+
 .editor-lock-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 72px;
