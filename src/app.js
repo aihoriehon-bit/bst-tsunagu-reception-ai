@@ -14,6 +14,7 @@ const FACE_PART_URLS = {
   eyeRightClosed: "./assets/face-parts/eye-right-closed.png",
   mouthNeutral: "./assets/face-parts/mouth-neutral.png",
   mouthSmall: "./assets/face-parts/mouth-small-open.png",
+  mouthHalf: "./assets/face-parts/mouth-half-open.png",
   mouthWide: "./assets/face-parts/mouth-wide-open.png",
   nosePart: "./assets/face-parts/nose-chon.png",
 };
@@ -859,7 +860,7 @@ function updateBadgeMotion(breathe) {
 
 function drawFaceTexture(speaking, blinkFrame, elapsed) {
   if (!state.faceContext || !state.faceTexture) return;
-  const mouthFrame = speaking ? Math.floor(elapsed * 14) % 3 : 0;
+  const mouthFrame = speaking ? Math.floor(elapsed * 13) % 4 : 0;
   const frameKey = `${state.faceAssetsReady}-${speaking}-${blinkFrame}-${mouthFrame}-${state.expressionRevision}`;
   if (frameKey === state.faceFrame) return;
   state.faceFrame = frameKey;
@@ -939,10 +940,12 @@ function drawFaceTexture(speaking, blinkFrame, elapsed) {
       speaking && mouthFrame === 0
         ? state.faceAssets.mouthSmall
         : speaking && mouthFrame === 1
-          ? state.faceAssets.mouthWide
+          ? state.faceAssets.mouthHalf
           : speaking && mouthFrame === 2
-            ? state.faceAssets.mouthSmall
-            : state.faceAssets.mouthNeutral;
+            ? state.faceAssets.mouthWide
+            : speaking && mouthFrame === 3
+              ? state.faceAssets.mouthHalf
+              : state.faceAssets.mouthNeutral;
     const mouthBaseY = speaking ? 298 : 313;
     const mouthBaseHeight = speaking ? 62 : 30;
     const mouthScale = expression.mouthScale / 100;
@@ -1084,8 +1087,8 @@ function drawMouth(ctx, speaking, frame) {
     return;
   }
 
-  const heights = [13, 25, 18];
-  const widths = [19, 22, 18];
+  const heights = [13, 19, 25, 19];
+  const widths = [19, 21, 22, 21];
   ctx.beginPath();
   ctx.ellipse(0, 4, widths[frame], heights[frame], 0, 0, Math.PI * 2);
   ctx.fill();
