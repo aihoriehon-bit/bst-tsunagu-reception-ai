@@ -13,22 +13,21 @@ const FACE_PART_URLS = {
   eyeLeftClosed: "./assets/face-parts/eye-left-closed.png",
   eyeRightClosed: "./assets/face-parts/eye-right-closed.png",
   mouthNeutral: "./assets/face-parts/mouth-neutral.png",
-  mouthSmall: "./assets/face-parts/mouth-small-open.png",
-  mouthHalf: "./assets/face-parts/mouth-half-open.png",
+  mouthHalf: "./assets/face-parts/mouth-half-open.png?v=20260701-5",
   mouthWide: "./assets/face-parts/mouth-wide-open.png",
   nosePart: "./assets/face-parts/nose-chon.png",
 };
-const EXPRESSION_STORAGE_KEY = "tsunagu-expression-settings-v3";
+const EXPRESSION_STORAGE_KEY = "tsunagu-expression-settings-v4";
 const SETTINGS_URL_PARAM = "settings";
 const DEFAULT_EXPRESSION = {
   layerX: 2,
-  layerY: -22,
-  viewZoom: 100,
-  modelBrightness: 109,
-  modelSaturation: 158,
-  backgroundBlur: 5.5,
-  clockScale: 100,
-  messageScale: 100,
+  layerY: -24,
+  viewZoom: 112,
+  modelBrightness: 128,
+  modelSaturation: 148,
+  backgroundBlur: 3.5,
+  clockScale: 110,
+  messageScale: 90,
   patchVisible: 0,
   patchWidth: 100,
   patchHeight: 100,
@@ -44,9 +43,9 @@ const DEFAULT_EXPRESSION = {
   mouthY: 90,
   mouthScale: 180,
   badgeVisible: 1,
-  badgeX: 4,
-  badgeY: -59,
-  badgeScale: 215,
+  badgeX: 2,
+  badgeY: -22,
+  badgeScale: 75,
 };
 const FACE_LAYER_BASE = {
   x: 0.003,
@@ -860,7 +859,7 @@ function updateBadgeMotion(breathe) {
 
 function drawFaceTexture(speaking, blinkFrame, elapsed) {
   if (!state.faceContext || !state.faceTexture) return;
-  const mouthFrame = speaking ? Math.floor(elapsed * 13) % 4 : 0;
+  const mouthFrame = speaking ? Math.floor(elapsed * 12) % 3 : 0;
   const frameKey = `${state.faceAssetsReady}-${speaking}-${blinkFrame}-${mouthFrame}-${state.expressionRevision}`;
   if (frameKey === state.faceFrame) return;
   state.faceFrame = frameKey;
@@ -938,14 +937,12 @@ function drawFaceTexture(speaking, blinkFrame, elapsed) {
 
     const mouth =
       speaking && mouthFrame === 0
-        ? state.faceAssets.mouthSmall
+        ? state.faceAssets.mouthHalf
         : speaking && mouthFrame === 1
-          ? state.faceAssets.mouthHalf
+          ? state.faceAssets.mouthWide
           : speaking && mouthFrame === 2
-            ? state.faceAssets.mouthWide
-            : speaking && mouthFrame === 3
-              ? state.faceAssets.mouthHalf
-              : state.faceAssets.mouthNeutral;
+            ? state.faceAssets.mouthHalf
+            : state.faceAssets.mouthNeutral;
     const mouthBaseY = speaking ? 298 : 313;
     const mouthBaseHeight = speaking ? 62 : 30;
     const mouthScale = expression.mouthScale / 100;
@@ -1087,8 +1084,8 @@ function drawMouth(ctx, speaking, frame) {
     return;
   }
 
-  const heights = [13, 19, 25, 19];
-  const widths = [19, 21, 22, 21];
+  const heights = [19, 25, 19];
+  const widths = [21, 22, 21];
   ctx.beginPath();
   ctx.ellipse(0, 4, widths[frame], heights[frame], 0, 0, Math.PI * 2);
   ctx.fill();
