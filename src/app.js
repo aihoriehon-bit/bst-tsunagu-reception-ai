@@ -53,6 +53,7 @@ const FACE_LAYER_BASE = {
   z: -0.04,
 };
 
+const stagePanel = document.querySelector(".stage-panel");
 const sceneHost = document.querySelector("#scene");
 const modelStatus = document.querySelector("#modelStatus");
 const voiceStatus = document.querySelector("#voiceStatus");
@@ -112,6 +113,7 @@ const state = {
   speechActive: false,
   speechToken: 0,
   speechKeepAliveTimer: null,
+  lastStageTapAt: 0,
   editorUnlocked: false,
   editorStatusTimer: null,
   soundEnabled: true,
@@ -206,6 +208,17 @@ const idleTalk = [
   "防犯カメラ、業務用無線機、LED工事、映像音響のご相談を受け付けています。",
   "お帰りの際もお気軽にお声がけください。お疲れさまでした、とお迎えします。",
   "BSTの受付AIとして、安心でスムーズなご案内をお手伝いします。",
+];
+
+const tapTalk = [
+  "はい、つなぐです。ご用件があれば、いつでもお声がけください。",
+  "お疲れさまです。今日も受付でしっかりサポートします。",
+  "ご来社ありがとうございます。来客受付、防犯カメラ、業務用無線などのご相談を承ります。",
+  "お帰りなさい。今日もお疲れさまでした。",
+  "こんにちは。有限会社ビジネスシステム通信へようこそ。",
+  "少しでも迷ったら、画面のご用件ボタンから選んでくださいね。",
+  "防犯カメラ、LED工事、映像音響のご相談も受け付けています。",
+  "担当者へのおつなぎが必要でしたら、お名前とご用件を教えてください。",
 ];
 
 initScene();
@@ -1131,6 +1144,8 @@ function initEvents() {
   voiceStatus.textContent = "ブラウザ読み上げ";
   initExpressionControls();
 
+  stagePanel?.addEventListener("pointerup", handleStageTap);
+
   quickActions.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-intent]");
     if (!button) return;
@@ -1170,6 +1185,19 @@ function initEvents() {
 
   initSpeechRecognition();
   setupBlinking();
+}
+
+function handleStageTap(event) {
+  if (event.pointerType === "mouse" && event.button !== 0) return;
+  const now = Date.now();
+  if (now - state.lastStageTapAt < 700 || isSpeaking(now)) return;
+
+  state.lastStageTapAt = now;
+  speak(pickRandomLine(tapTalk));
+}
+
+function pickRandomLine(lines) {
+  return lines[Math.floor(Math.random() * lines.length)];
 }
 
 function initSpeechRecognition() {
