@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>つなぐちゃん 受付AI</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="kiosk-zone" aria-label="縦型受付ディスプレイ">
+        <div class="display-frame">
+          <section class="stage-panel" aria-label="つなぐちゃん 3D受付">
+            <video id="backgroundVideo" class="kiosk-background-video" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+              <source src="./haikei.mp4" type="video/mp4" />
+            </video>
+            <div id="scene" class="scene"></div>
+            <div id="nameTagOverlay" class="name-tag-overlay" aria-hidden="true">
+              <span class="name-tag-company">BST</span>
+              <span class="name-tag-name">つなぐ</span>
+            </div>
+            <div id="faceOverlay" class="face-overlay" aria-hidden="true">
+              <span class="blink-line blink-left"></span>
+              <span class="blink-line blink-right"></span>
+              <span id="mouthOverlay" class="mouth"></span>
+            </div>
+            <div class="speech-bubble" role="status" aria-live="polite">
+              <span id="assistantMood" class="mood-dot"></span>
+              <p id="speechText">おはようございます。受付AIのつなぐです。ご用件を選ぶか、下の入力欄にお話しください。</p>
+            </div>
+            <div class="stage-status">
+              <span id="modelStatus" hidden>3Dモデル読み込み中</span>
+              <span id="clockText" aria-label="現在時刻">--:--</span>
+            </div>
+          </section>
+        </div>
+        <div class="display-stand" aria-hidden="true"></div>
+      </section>
+
+      <aside class="reception-panel" aria-label="受付メニュー">
+        <header class="brand-row">
+          <div>
+            <p class="eyebrow">有限会社 ビジネスシステム通信</p>
+            <h1>つなぐ受付AI</h1>
+          </div>
+          <button id="soundToggle" class="icon-button is-active" type="button" aria-label="音声のオンオフ" title="音声">
+            <span>♪</span>
+          </button>
+        </header>
+
+        <section class="operator-section">
+          <div class="section-heading">
+            <h2>ご用件</h2>
+            <span id="listenState">待機中</span>
+          </div>
+          <div class="quick-actions" id="quickActions">
+            <button type="button" data-intent="visitor">来客受付</button>
+            <button type="button" data-intent="camera">防犯カメラ</button>
+            <button type="button" data-intent="radio">業務用無線</button>
+            <button type="button" data-intent="electrical">LED・電気工事</button>
+            <button type="button" data-intent="av">映像音響</button>
+            <button type="button" data-intent="emergency">緊急連絡</button>
+          </div>
+        </section>
+
+        <section class="operator-section">
+          <div class="section-heading">
+            <h2>声かけ</h2>
+            <span>自動応答デモ</span>
+          </div>
+          <div class="quick-actions greetings" id="greetingActions">
+            <button type="button" data-greeting="welcomeBack">お帰りなさい</button>
+            <button type="button" data-greeting="goodMorning">朝の挨拶</button>
+            <button type="button" data-greeting="goOut">いってらっしゃい</button>
+            <button type="button" data-greeting="closing">退勤時</button>
+            <button type="button" data-greeting="weather">雨の日</button>
+            <button type="button" data-greeting="thanks">感謝</button>
+          </div>
+        </section>
+
+        <section class="operator-section">
+          <div class="section-heading">
+            <h2>表示・表情調整</h2>
+            <span id="editorLockState">ロック中</span>
+          </div>
+          <form id="editorUnlockForm" class="editor-lock-form" autocomplete="off">
+            <input id="editorPassword" type="password" placeholder="パスワード" aria-label="編集パスワード" />
+            <button type="submit">解除</button>
+          </form>
+          <div class="expression-controls" id="expressionControls">
+            <label class="control-row">
+              <span>全体 横</span>
+              <input type="range" min="-40" max="40" step="1" data-expression="layerX" />
+              <output data-expression-output="layerX">0</output>
+            </label>
+            <label class="control-row">
+              <span>全体 縦</span>
+              <input type="range" min="-40" max="40" step="1" data-expression="layerY" />
+              <output data-expression-output="layerY">0</output>
+            </label>
+            <label class="control-row">
+              <span>表示 拡大</span>
+              <input type="range" min="80" max="220" step="1" data-expression="viewZoom" />
+              <output data-expression-output="viewZoom">100</output>
+            </label>
+            <label class="control-row">
+              <span>モデル 明るさ</span>
+              <input type="range" min="80" max="130" step="1" data-expression="modelBrightness" />
+              <output data-expression-output="modelBrightness">100</output>
+            </label>
+            <label class="control-row">
+              <span>モデル 彩度</span>
+              <input type="range" min="80" max="200" step="1" data-expression="modelSaturation" />
+              <output data-expression-output="modelSaturation">135</output>
+            </label>
+            <label class="control-row">
+              <span>背景 ぼかし</span>
+              <input type="range" min="0" max="8" step="0.5" data-expression="backgroundBlur" />
+              <output data-expression-output="backgroundBlur">2px</output>
+            </label>
+            <label class="control-row toggle-row">
+              <span>楕円 表示</span>
+              <input type="checkbox" data-expression="patchVisible" />
+              <output data-expression-output="patchVisible">表示</output>
+            </label>
+            <label class="control-row">
+              <span>顔楕円 幅</span>
+              <input type="range" min="60" max="220" step="1" data-expression="patchWidth" />
+              <output data-expression-output="patchWidth">100</output>
+            </label>
+            <label class="control-row">
+              <span>顔楕円 高さ</span>
+              <input type="range" min="60" max="220" step="1" data-expression="patchHeight" />
+              <output data-expression-output="patchHeight">100</output>
+            </label>
+            <label class="control-row">
+              <span>目 横</span>
+              <input type="range" min="-90" max="90" step="1" data-expression="eyeX" />
+              <output data-expression-output="eyeX">0</output>
+            </label>
+            <label class="control-row">
+              <span>目 縦</span>
+              <input type="range" min="-90" max="90" step="1" data-expression="eyeY" />
+              <output data-expression-output="eyeY">0</output>
+            </label>
+            <label class="control-row">
+              <span>目 間隔</span>
+              <input type="range" min="-120" max="220" step="1" data-expression="eyeGap" />
+              <output data-expression-output="eyeGap">0</output>
+            </label>
+            <label class="control-row">
+              <span>目 サイズ</span>
+              <input type="range" min="60" max="260" step="1" data-expression="eyeScale" />
+              <output data-expression-output="eyeScale">100</output>
+            </label>
+            <label class="control-row toggle-row">
+              <span>鼻 表示</span>
+              <input type="checkbox" data-expression="noseVisible" />
+              <output data-expression-output="noseVisible">表示</output>
+            </label>
+            <label class="control-row">
+              <span>鼻 横</span>
+              <input type="range" min="-120" max="120" step="1" data-expression="noseX" />
+              <output data-expression-output="noseX">0</output>
+            </label>
+            <label class="control-row">
+              <span>鼻 縦</span>
+              <input type="range" min="-120" max="120" step="1" data-expression="noseY" />
+              <output data-expression-output="noseY">0</output>
+            </label>
+            <label class="control-row">
+              <span>鼻 サイズ</span>
+              <input type="range" min="40" max="260" step="1" data-expression="noseScale" />
+              <output data-expression-output="noseScale">100</output>
+            </label>
+            <label class="control-row">
+              <span>口 横</span>
+              <input type="range" min="-90" max="90" step="1" data-expression="mouthX" />
+              <output data-expression-output="mouthX">0</output>
+            </label>
+            <label class="control-row">
+              <span>口 縦</span>
+              <input type="range" min="-90" max="90" step="1" data-expression="mouthY" />
+              <output data-expression-output="mouthY">0</output>
+            </label>
+            <label class="control-row">
+              <span>口 サイズ</span>
+              <input type="range" min="60" max="300" step="1" data-expression="mouthScale" />
+              <output data-expression-output="mouthScale">100</output>
+            </label>
+            <label class="control-row toggle-row">
+              <span>名札 表示</span>
+              <input type="checkbox" data-expression="badgeVisible" />
+              <output data-expression-output="badgeVisible">表示</output>
+            </label>
+            <label class="control-row">
+              <span>名札 横</span>
+              <input type="range" min="-140" max="140" step="1" data-expression="badgeX" />
+              <output data-expression-output="badgeX">0</output>
+            </label>
+            <label class="control-row">
+              <span>名札 縦</span>
+              <input type="range" min="-180" max="180" step="1" data-expression="badgeY" />
+              <output data-expression-output="badgeY">0</output>
+            </label>
+            <label class="control-row">
+              <span>名札 サイズ</span>
+              <input type="range" min="50" max="220" step="1" data-expression="badgeScale" />
+              <output data-expression-output="badgeScale">100</output>
+            </label>
+          </div>
+          <button id="expressionReset" class="secondary-button" type="button">表情位置を初期値に戻す</button>
+        </section>
+
+        <section class="operator-section">
+          <div class="section-heading">
+            <h2>受付メモ</h2>
+            <span>AI応答</span>
+          </div>
+          <div class="conversation" id="conversation" aria-live="polite"></div>
+          <form id="messageForm" class="message-form">
+            <input
+              id="messageInput"
+              type="text"
+              autocomplete="off"
+              placeholder="例: 福田さんとの打ち合わせです"
+              aria-label="受付メッセージ"
+            />
+            <button id="micButton" class="icon-button" type="button" aria-label="音声入力" title="音声入力">
+              <span>●</span>
+            </button>
+            <button type="submit">送信</button>
+          </form>
+        </section>
+
+        <section class="operator-section compact">
+          <div class="section-heading">
+            <h2>モデル状態</h2>
+            <span>GLB</span>
+          </div>
+          <dl class="diagnostics">
+            <div><dt>音声</dt><dd id="voiceStatus">確認中</dd></div>
+            <div><dt>表情モーフ</dt><dd id="morphStatus">確認中</dd></div>
+            <div><dt>ボーン</dt><dd id="boneStatus">確認中</dd></div>
+            <div><dt>アニメーション</dt><dd id="animationStatus">確認中</dd></div>
+          </dl>
+        </section>
+      </aside>
+    </main>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.165.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.165.0/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
