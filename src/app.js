@@ -1291,7 +1291,7 @@ function initEvents() {
     const intent = intents[button.dataset.intent];
     if (!intent) return;
     addMessage("user", intent.label);
-    speak(intent.say);
+    speak(intent.say, { bow: button.dataset.intent === "visitor" });
   });
 
   greetingActions.addEventListener("click", (event) => {
@@ -1400,7 +1400,7 @@ function speak(text, options = {}) {
   state.lastInteractionAt = Date.now();
   speechText.textContent = text;
   addMessage("assistant", text);
-  if (options.bow ?? shouldBowForSpeech(text)) playBow();
+  if (options.bow) playBow();
   startSpeechOutput(text, {
     minDuration: 2200,
     msPerCharacter: 135,
@@ -1408,10 +1408,6 @@ function speak(text, options = {}) {
     pitch: 1.12,
     volume: 0.92,
   });
-}
-
-function shouldBowForSpeech(text) {
-  return /ようこそ|いらっしゃい|おはよう|こんにちは|こんばんは|お帰り|ありがとう|お疲れ/.test(text);
 }
 
 function sayIdleLine() {
