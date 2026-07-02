@@ -22,7 +22,7 @@ const FACE_PART_URLS = {
   mouthWide: "./assets/face-parts/mouth-wide-open.png",
   nosePart: "./assets/face-parts/nose-chon.png",
 };
-const EXPRESSION_STORAGE_KEY = "tsunagu-expression-settings-v4";
+const EXPRESSION_STORAGE_KEY = "tsunagu-expression-settings-v5";
 const SETTINGS_URL_PARAM = "settings";
 const DEFAULT_EXPRESSION = {
   layerX: 2,
@@ -48,9 +48,9 @@ const DEFAULT_EXPRESSION = {
   mouthY: 90,
   mouthScale: 180,
   badgeVisible: 1,
-  badgeX: 2,
-  badgeY: -22,
-  badgeScale: 75,
+  badgeX: -8,
+  badgeY: -220,
+  badgeScale: 92,
 };
 const FACE_LAYER_BASE = {
   x: 0.003,
@@ -532,9 +532,9 @@ function applyBadgeSettings() {
   nameTagOverlay.classList.toggle("is-hidden", !expression.badgeVisible);
   nameTagOverlay.style.left = `calc(50% + ${expression.badgeX * placementScale}px)`;
   nameTagOverlay.style.top = `calc(46% + ${expression.badgeY * placementScale}px)`;
-  nameTagOverlay.style.width = `${46 * scale}px`;
-  nameTagOverlay.style.height = `${24 * scale}px`;
-  nameTagOverlay.style.fontSize = `${9 * scale}px`;
+  nameTagOverlay.style.width = `${116 * scale}px`;
+  nameTagOverlay.style.height = `${42 * scale}px`;
+  nameTagOverlay.style.fontSize = `${12 * scale}px`;
 }
 
 function applyHudSettings() {

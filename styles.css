@@ -122,45 +122,62 @@ button {
 .name-tag-overlay {
   --badge-motion-y: 0px;
   position: absolute;
-  z-index: 4;
+  z-index: 7;
   left: 50%;
-  top: 46%;
+  top: 20%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
-  width: 46px;
-  height: 24px;
-  padding: 0 3px;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  color: var(--blue);
-  font-size: 9px;
+  gap: 2px;
+  width: 116px;
+  height: 42px;
+  padding: 7px 14px 8px;
+  border: 1px solid rgba(103, 206, 210, 0.78);
+  border-radius: 22px;
+  background: rgba(61, 91, 101, 0.94);
+  box-shadow:
+    0 10px 26px rgba(17, 40, 62, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0;
   line-height: 1;
   pointer-events: none;
-  text-shadow:
-    0 1px 1px rgba(255, 255, 255, 0.9),
-    0 -1px 1px rgba(255, 255, 255, 0.7);
+  text-shadow: 0 1px 2px rgba(13, 31, 42, 0.24);
   transform: translate(-50%, calc(-50% + var(--badge-motion-y)));
   transform-origin: center;
+}
+
+.name-tag-overlay::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 14px;
+  height: 14px;
+  background: rgba(61, 91, 101, 0.94);
+  border-right: 1px solid rgba(103, 206, 210, 0.68);
+  border-bottom: 1px solid rgba(103, 206, 210, 0.68);
+  transform: translateX(-50%) rotate(45deg);
 }
 
 .name-tag-overlay span {
   display: block;
   white-space: nowrap;
+  position: relative;
+  z-index: 1;
 }
 
 .name-tag-company {
-  font-size: 0.82em;
+  color: #b7fbff;
+  font-size: 0.72em;
   letter-spacing: 0.02em;
 }
 
 .name-tag-name {
-  font-size: 1.08em;
+  font-size: 1.24em;
   font-weight: 900;
 }
 
