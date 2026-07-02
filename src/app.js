@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-const MODEL_URL = "./bst-latest-0701.glb";
+const MODEL_URL = "./bst-latest-0701.glb?v=20260702-1";
 const MODEL_FRONT_Y = -Math.PI / 2 + 0.03;
 const ANIM_ROLES = {
   standA: 6,
