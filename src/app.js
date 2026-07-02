@@ -4,6 +4,11 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 const MODEL_URL = "./bst-latest-0701.glb";
 const MODEL_FRONT_Y = -Math.PI / 2 + 0.03;
+const ANIM_ROLES = {
+  standA: 6,
+  bow: 7,
+};
+const BOW_COOLDOWN_MS = 3200;
 const EDIT_PASSWORD_HASH = "eabd3fbe61db140b89746481767bf5fd0e6c2e32a6529bfb55a8519f024324cf";
 const FACE_PART_URLS = {
   eyeLeftOpen: "./assets/face-parts/eye-left-open.png",
@@ -120,6 +125,13 @@ const state = {
   lastInteractionAt: Date.now(),
   recognition: null,
   modelLoaded: false,
+  mixer: null,
+  clips: [],
+  hasAnimations: false,
+  currentAction: null,
+  currentRole: "",
+  bowTimer: null,
+  lastBowAt: 0,
 };
 
 const intents = {
@@ -610,6 +622,7 @@ function initScene() {
 
       normalizeModel(model);
       discoverRig(model, gltf);
+      initAnimations(model, gltf.animations);
       improveMaterials(model);
       createFaceLayer();
       applyBadgeSettings();
@@ -653,7 +666,9 @@ function initScene() {
   const clock = new THREE.Clock();
   function animate() {
     requestAnimationFrame(animate);
-    const elapsed = clock.getElapsedTime();
+    const delta = clock.getDelta();
+    const elapsed = clock.elapsedTime;
+    if (state.mixer) state.mixer.update(delta);
     animateRig(elapsed);
     controls.update();
     renderer.render(scene, camera);
@@ -831,9 +846,21 @@ function animateRig(elapsed) {
   const nod = speaking ? 0 : Math.sin(elapsed * 1.4) * 0.018;
   const sway = 0;
 
+  if (state.hasAnimations) {
+    state.model.position.y = 0;
+    state.model.rotation.y = MODEL_FRONT_Y;
+    updateBadgeMotion(0);
+    updateFaceLayerVisibility();
+    updateAnimationState();
+    drawFaceTexture(speaking, blinkFrame, elapsed);
+    assistantMood.classList.toggle("is-speaking", speaking);
+    return;
+  }
+
   state.model.position.y = breathe;
   state.model.rotation.y = MODEL_FRONT_Y;
   updateBadgeMotion(breathe);
+  updateFaceLayerVisibility();
 
   setBoneRotation(state.head, {
     x: nod,
@@ -861,6 +888,118 @@ function animateRig(elapsed) {
 
   drawFaceTexture(speaking, blinkFrame, elapsed);
   assistantMood.classList.toggle("is-speaking", speaking);
+}
+
+function initAnimations(model, animations) {
+  state.clips = prepareAnimationClips(animations || []);
+  state.hasAnimations = state.clips.length > 0;
+  if (!state.hasAnimations) return;
+
+  state.mixer = new THREE.AnimationMixer(model);
+  state.mixer.addEventListener("finished", () => {
+    clearBowTimer();
+    updateAnimationState(true);
+  });
+  updateAnimationState(true);
+}
+
+function prepareAnimationClips(animations) {
+  return animations.map((clip, index) => {
+    if (index !== ANIM_ROLES.bow) return clip;
+    const tracks = clip.tracks.filter((track) => !isRootMotionTrack(track.name));
+    if (tracks.length === clip.tracks.length) return clip;
+    return new THREE.AnimationClip(`${clip.name}-in-place`, clip.duration, tracks);
+  });
+}
+
+function isRootMotionTrack(trackName) {
+  if (!trackName.endsWith(".position")) return false;
+  const nodeName = trackName.slice(0, -".position".length).toLowerCase();
+  return /root|armature|hips?|pelvis|waist/.test(nodeName);
+}
+
+function clipForRole(role) {
+  const index = ANIM_ROLES[role];
+  if (index === undefined) return null;
+  return state.clips[index] || null;
+}
+
+function playClipByRole(role, { loop = true, fade = 0.45 } = {}) {
+  if (!state.mixer) return null;
+  const clip = clipForRole(role);
+  if (!clip) return null;
+
+  const action = state.mixer.clipAction(clip);
+  if (state.currentAction === action && state.currentRole === role && loop) return action;
+
+  action.reset();
+  action.enabled = true;
+  action.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1);
+  action.clampWhenFinished = !loop;
+
+  if (state.currentAction && state.currentAction !== action) {
+    const previous = state.currentAction;
+    previous.fadeOut(fade);
+    window.setTimeout(() => {
+      if (state.currentAction !== previous) previous.stop();
+    }, fade * 1000 + 120);
+  }
+
+  action.fadeIn(fade);
+  action.play();
+  state.currentAction = action;
+  state.currentRole = role;
+  return action;
+}
+
+function updateAnimationState(force = false) {
+  if (!state.hasAnimations || !state.mixer) return;
+  if (!force && state.currentRole === "bow") return;
+  if (force || state.currentRole !== "standA") {
+    playClipByRole("standA", { fade: state.currentRole === "bow" ? 0.35 : 0.5 });
+  }
+}
+
+function playBow(force = false) {
+  if (!state.hasAnimations || !state.mixer) return;
+  const now = Date.now();
+  if (!force && now - state.lastBowAt < BOW_COOLDOWN_MS) return;
+
+  const action = playClipByRole("bow", { loop: false, fade: 0.25 });
+  if (!action) return;
+
+  state.lastBowAt = now;
+  clearBowTimer();
+  state.bowTimer = window.setTimeout(() => {
+    updateAnimationState(true);
+  }, oneShotDurationMs(action));
+}
+
+function oneShotDurationMs(action) {
+  const seconds = action.getClip().duration / Math.max(action.timeScale || 1, 0.1);
+  return Math.min(seconds, 4.5) * 1000 + 450;
+}
+
+function clearBowTimer() {
+  if (!state.bowTimer) return;
+  window.clearTimeout(state.bowTimer);
+  state.bowTimer = null;
+}
+
+function updateFaceLayerVisibility() {
+  if (!state.faceLayer) return;
+  let opacity = 1;
+  if (state.currentRole === "bow") {
+    const faceNormal = state.faceLayer.getWorldDirection(new THREE.Vector3());
+    opacity *= smoothstep(-0.35, -0.08, faceNormal.y);
+  }
+  state.faceLayer.material.opacity = opacity;
+  state.faceLayer.visible = opacity > 0.02;
+}
+
+function smoothstep(edge0, edge1, value) {
+  const t = Math.min(1, Math.max(0, (value - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
 }
 
 function updateBadgeMotion(breathe) {
@@ -1257,10 +1396,11 @@ function createReply(text) {
   return "承知しました。受付メモに記録しました。担当者名、会社名、お名前のいずれかが分かる場合は続けて入力してください。";
 }
 
-function speak(text) {
+function speak(text, options = {}) {
   state.lastInteractionAt = Date.now();
   speechText.textContent = text;
   addMessage("assistant", text);
+  if (options.bow ?? shouldBowForSpeech(text)) playBow();
   startSpeechOutput(text, {
     minDuration: 2200,
     msPerCharacter: 135,
@@ -1268,6 +1408,10 @@ function speak(text) {
     pitch: 1.12,
     volume: 0.92,
   });
+}
+
+function shouldBowForSpeech(text) {
+  return /ようこそ|いらっしゃい|おはよう|こんにちは|こんばんは|お帰り|ありがとう|お疲れ/.test(text);
 }
 
 function sayIdleLine() {
