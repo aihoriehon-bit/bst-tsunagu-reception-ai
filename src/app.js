@@ -22,6 +22,17 @@ const FACE_PART_URLS = {
   mouthWide: "./assets/face-parts/mouth-wide-open.png",
   nosePart: "./assets/face-parts/nose-chon.png",
 };
+const SPEECH_PRONUNCIATION_RULES = [
+  [/Wi-?Fi/g, "ワイファイ"],
+  [/LED/g, "エルイーディー"],
+  [/BST/g, "ビーエスティー"],
+  [/GLB/g, "ジーエルビー"],
+  [/URL/g, "ユーアールエル"],
+  [/QR/g, "キューアール"],
+  [/ID/g, "アイディー"],
+  [/3D/g, "スリーディー"],
+  [/AI/g, "エーアイ"],
+];
 const EXPRESSION_STORAGE_KEY = "tsunagu-expression-settings-v6";
 const SETTINGS_URL_PARAM = "settings";
 const DEFAULT_EXPRESSION = {
@@ -1432,7 +1443,8 @@ function startSpeechOutput(text, options = {}) {
     pitch = 1.1,
     volume = 0.9,
   } = options;
-  const estimatedDuration = estimateSpeechDuration(text, minDuration, msPerCharacter);
+  const spokenText = applySpeechPronunciations(text);
+  const estimatedDuration = estimateSpeechDuration(spokenText, minDuration, msPerCharacter);
   state.speechToken += 1;
   const token = state.speechToken;
   state.speechActive = false;
@@ -1444,7 +1456,7 @@ function startSpeechOutput(text, options = {}) {
   window.speechSynthesis.cancel();
   state.speechActive = true;
   state.speakingUntil = Date.now() + Math.max(estimatedDuration, 15000);
-  const utterance = new SpeechSynthesisUtterance(text);
+  const utterance = new SpeechSynthesisUtterance(spokenText);
   utterance.lang = "ja-JP";
   utterance.rate = rate;
   utterance.pitch = pitch;
@@ -1471,6 +1483,10 @@ function startSpeechOutput(text, options = {}) {
     }
   }, 900);
   window.speechSynthesis.speak(utterance);
+}
+
+function applySpeechPronunciations(text) {
+  return SPEECH_PRONUNCIATION_RULES.reduce((current, [pattern, reading]) => current.replace(pattern, reading), text);
 }
 
 function estimateSpeechDuration(text, minDuration, msPerCharacter) {
