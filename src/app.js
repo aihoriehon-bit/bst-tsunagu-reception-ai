@@ -22,12 +22,12 @@ const FACE_PART_URLS = {
   mouthWide: "./assets/face-parts/mouth-wide-open.png",
   nosePart: "./assets/face-parts/nose-chon.png",
 };
-const EXPRESSION_STORAGE_KEY = "tsunagu-expression-settings-v5";
+const EXPRESSION_STORAGE_KEY = "tsunagu-expression-settings-v6";
 const SETTINGS_URL_PARAM = "settings";
 const DEFAULT_EXPRESSION = {
   layerX: 2,
   layerY: -24,
-  viewZoom: 112,
+  viewZoom: 104,
   modelBrightness: 128,
   modelSaturation: 148,
   backgroundBlur: 3.5,
@@ -49,7 +49,7 @@ const DEFAULT_EXPRESSION = {
   mouthScale: 180,
   badgeVisible: 1,
   badgeX: -8,
-  badgeY: -220,
+  badgeY: -235,
   badgeScale: 92,
 };
 const FACE_LAYER_BASE = {
