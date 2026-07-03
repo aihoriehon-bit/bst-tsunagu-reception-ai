@@ -3,6 +3,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 // ---- モデル・素材（縦型版と共有） ----
 const MODEL_URL = "../bst-latest-0701.glb?v=20260702-1";
+const AUDIO_FALLBACK_VERSION = "20260703-13";
 
 // GLBに入っているアニメーションの割り当て（wide/animtest.html で目視確認）
 // 5: 歩行 / 6: 自然な立ち待機 / 7: お辞儀。
@@ -115,6 +116,45 @@ const SPEECH_PRONUNCIATION_RULES = [
   [/3D/g, "スリーディー"],
   [/AI/g, "エーアイ"],
 ];
+const AUDIO_FALLBACKS = new Map(
+  [
+    ["受付AIのつなぐ、横型モードで起動しました。普段はデスクで作業をしながら、ご来客をお待ちしています。", "startup"],
+    ["あ、いらっしゃいませ。ただいま参りますね。", "approach"],
+    ["ありがとうございました。それでは、作業に戻りますね。", "return-to-work"],
+    [
+      "おはようございます。有限会社ビジネスシステム通信へようこそ。受付AIのつなぐです。担当者をお呼びしますので、お名前とご用件をお聞かせください。",
+      "arrival-ohayo",
+    ],
+    [
+      "こんにちは。有限会社ビジネスシステム通信へようこそ。受付AIのつなぐです。担当者をお呼びしますので、お名前とご用件をお聞かせください。",
+      "arrival-konnichiwa",
+    ],
+    [
+      "こんばんは。有限会社ビジネスシステム通信へようこそ。受付AIのつなぐです。担当者をお呼びしますので、お名前とご用件をお聞かせください。",
+      "arrival-konbanwa",
+    ],
+    ["佐藤さん、お帰りなさい。今日もお疲れ様でした。ご用件があれば、いつでもお声がけください。", "employee-sato"],
+    ["田中さん、お帰りなさい。今日もお疲れ様でした。ご用件があれば、いつでもお声がけください。", "employee-tanaka"],
+    ["福田さん、おはようございます。いつもありがとうございます。ご用件があればお気軽にお声がけください。", "fukuda-ohayo"],
+    ["福田さん、こんにちは。いつもありがとうございます。ご用件があればお気軽にお声がけください。", "fukuda-konnichiwa"],
+    ["福田さん、こんばんは。いつもありがとうございます。ご用件があればお気軽にお声がけください。", "fukuda-konbanwa"],
+    [
+      "いつもお疲れさまです。ヤマトの方ですね。お荷物の受け渡しでしたら、こちらで承ります。担当者をお呼びしますので、少々お待ちください。",
+      "yamato-clothing",
+    ],
+    [
+      "いつもお疲れさまです。お荷物の受け渡しでしたら、こちらで承ります。担当者をお呼びしますので、少々お待ちください。",
+      "clothing-visitor",
+    ],
+    ["いつもありがとうございます。ご用件があればお気軽にお声がけください。", "known-visitor"],
+    ["ご用件がお決まりでしたら、担当スタッフをお呼びしますね。", "idle-request"],
+    ["防犯カメラ、業務用無線、LED工事、映像音響のご相談を承っています。", "idle-services"],
+    ["お約束のある方は、お名前と担当者名を教えてください。", "idle-appointment"],
+    ["ふんふん…受付メモを整理しています。", "work-memo"],
+    ["次のご来客に備えて、準備をしています。", "work-prepare"],
+    ["本日の予定を確認しています。", "work-schedule"],
+  ].map(([text, file]) => [normalizeSpeechAudioKey(text), file]),
+);
 
 // 縦型版で調整済みの表情配置をそのまま使う（横型は編集UIなしの固定値）
 const EXPRESSION = {
@@ -251,6 +291,7 @@ const state = {
   soundEnabled: true,
   lastSpeechRequest: null,
   currentUtterance: null,
+  currentFallbackAudio: null,
   speechUnlocked: false,
 
   // GLB内蔵アニメーション
@@ -343,19 +384,20 @@ function init() {
 }
 
 function initSpeechAutoStart() {
-  if (!("speechSynthesis" in window)) return;
-  try {
-    window.speechSynthesis.resume();
-  } catch (error) {
-    console.warn("Speech auto start failed", error);
-  }
+  if ("speechSynthesis" in window) {
+    try {
+      window.speechSynthesis.resume();
+    } catch (error) {
+      console.warn("Speech auto start failed", error);
+    }
 
-  const retry = () => retryLastSpeech("speech-ready");
-  window.speechSynthesis.addEventListener?.("voiceschanged", retry);
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) retryLastSpeech("visible");
-  });
-  window.addEventListener("pageshow", () => retryLastSpeech("pageshow"));
+    const retry = () => retryLastSpeech("speech-ready");
+    window.speechSynthesis.addEventListener?.("voiceschanged", retry);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) retryLastSpeech("visible");
+    });
+    window.addEventListener("pageshow", () => retryLastSpeech("pageshow"));
+  }
   const unlock = (event) => {
     if (event?.target?.closest?.("#soundToggle, #soundPrimer")) return;
     unlockSpeechFromGesture("page-interaction");
@@ -2468,13 +2510,13 @@ function initHudEvents() {
   });
 
   soundToggle.addEventListener("click", () => {
-    if (state.soundEnabled && "speechSynthesis" in window) {
+    if (state.soundEnabled) {
       unlockSpeechFromGesture("sound-toggle", { forceReplay: true });
       return;
     }
     state.soundEnabled = !state.soundEnabled;
     soundToggle.classList.toggle("is-active", state.soundEnabled);
-    soundToggle.setAttribute("aria-label", state.soundEnabled ? "音声オン" : "音声オフ");
+    soundToggle.setAttribute("aria-label", state.soundEnabled ? "音声を開始・もう一度再生" : "音声オフ");
     if (!state.soundEnabled && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
       stopSpeechTracking();
@@ -2544,7 +2586,28 @@ function hideBubbleTimer() {
 }
 
 function unlockSpeechFromGesture(reason = "interaction", { forceReplay = false } = {}) {
-  if (state.speechUnlocked || !("speechSynthesis" in window)) {
+  if (state.lastSpeechRequest && findFallbackAudioFile(state.lastSpeechRequest.displayText || state.lastSpeechRequest.text)) {
+    state.speechUnlocked = true;
+    hideSoundPrimer();
+    if (forceReplay || !state.lastSpeechRequest.started || !state.lastSpeechRequest.completed) {
+      playFallbackAudioRequest(state.lastSpeechRequest, reason);
+    }
+    return;
+  }
+  if (!("speechSynthesis" in window)) {
+    state.speechUnlocked = true;
+    hideSoundPrimer();
+    if (state.lastSpeechRequest) {
+      if (forceReplay || !state.lastSpeechRequest.started || !state.lastSpeechRequest.completed) {
+        playFallbackAudioRequest(state.lastSpeechRequest, reason);
+      }
+      return;
+    }
+    const currentText = speechText.textContent.trim();
+    if (currentText) speak(currentText);
+    return;
+  }
+  if (state.speechUnlocked) {
     if (forceReplay) replayLastSpeech(reason);
     return;
   }
@@ -2570,7 +2633,7 @@ function unlockSpeechFromGesture(reason = "interaction", { forceReplay = false }
 }
 
 function showSoundPrimer() {
-  if (!soundPrimer || state.speechUnlocked || !state.soundEnabled) return;
+  if (!soundPrimer || !state.soundEnabled) return;
   soundPrimer.hidden = false;
 }
 
@@ -2594,12 +2657,13 @@ function startSpeechOutput(text, options = {}) {
   state.speechActive = false;
   clearSpeechKeepAlive();
   clearSpeechRetryTimer();
+  stopCurrentFallbackAudio();
   state.speakingUntil = Date.now() + estimatedDuration;
   state.faceFrame = "";
 
-  if (!state.soundEnabled || !("speechSynthesis" in window)) return;
   const request = {
     text: spokenText,
+    displayText: text,
     token,
     rate,
     pitch,
@@ -2610,13 +2674,20 @@ function startSpeechOutput(text, options = {}) {
     completed: false,
   };
   state.lastSpeechRequest = request;
-  if (!state.soundEnabled || !("speechSynthesis" in window)) return;
-  playSpeechRequest(request);
+  if (!state.soundEnabled) return;
+  if (findFallbackAudioFile(text)) {
+    playFallbackAudioRequest(request, "preferred-audio");
+  } else if ("speechSynthesis" in window) {
+    playSpeechRequest(request);
+  } else {
+    playFallbackAudioRequest(request, "no-speech-api");
+  }
 }
 
 function playSpeechRequest(request) {
   if (!request || request.token !== state.speechToken || !state.soundEnabled || !("speechSynthesis" in window)) return;
   clearSpeechRetryTimer();
+  stopCurrentFallbackAudio();
   try {
     window.speechSynthesis.cancel();
     window.speechSynthesis.resume();
@@ -2660,6 +2731,7 @@ function playSpeechRequest(request) {
     request.completed = false;
     if (state.currentUtterance === utterance) state.currentUtterance = null;
     finishSpeechTracking(request.token);
+    if (playFallbackAudioRequest(request, "speech-error")) return;
     scheduleSpeechRetry(request);
   });
   state.speechKeepAliveTimer = window.setInterval(() => {
@@ -2674,6 +2746,95 @@ function playSpeechRequest(request) {
   }, 900);
   window.speechSynthesis.speak(utterance);
   scheduleSpeechStartCheck(request);
+}
+
+function playFallbackAudioRequest(request, reason = "fallback") {
+  if (!request || request.token !== state.speechToken || !state.soundEnabled) return false;
+  const file = findFallbackAudioFile(request.displayText || request.text);
+  if (!file) {
+    if (reason !== "speech-start-timeout") showSoundPrimer();
+    return false;
+  }
+  clearSpeechRetryTimer();
+  stopCurrentFallbackAudio();
+  try {
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  } catch (error) {
+    console.warn("Speech synthesis could not be cancelled before audio fallback", error);
+  }
+
+  const runId = (request.runId || 0) + 1;
+  request.runId = runId;
+  request.started = false;
+  request.completed = false;
+  request.audioFallback = file;
+  const audio = new Audio(`./audio/${file}.wav?v=${AUDIO_FALLBACK_VERSION}`);
+  audio.preload = "auto";
+  audio.volume = request.volume;
+  state.currentFallbackAudio = audio;
+  state.speechActive = true;
+  state.speakingUntil = Date.now() + Math.max(request.estimatedDuration, 6000);
+  if (reason === "sound-primer" || reason === "sound-toggle" || reason === "page-interaction") {
+    state.speechUnlocked = true;
+    hideSoundPrimer();
+  }
+
+  audio.addEventListener("playing", () => {
+    if (request.token !== state.speechToken || request.runId !== runId) return;
+    state.speechUnlocked = true;
+    hideSoundPrimer();
+    request.started = true;
+    state.speechActive = true;
+    state.speakingUntil = Date.now() + Math.max(request.estimatedDuration, 3000);
+  });
+  audio.addEventListener("timeupdate", () => {
+    if (request.token !== state.speechToken || request.runId !== runId || audio.paused) return;
+    state.speakingUntil = Date.now() + 1200;
+  });
+  audio.addEventListener("ended", () => {
+    if (request.runId !== runId) return;
+    request.completed = true;
+    if (state.currentFallbackAudio === audio) state.currentFallbackAudio = null;
+    finishSpeechTracking(request.token);
+  });
+  audio.addEventListener("error", () => {
+    if (request.runId !== runId) return;
+    request.completed = false;
+    if (state.currentFallbackAudio === audio) state.currentFallbackAudio = null;
+    finishSpeechTracking(request.token);
+    showSoundPrimer();
+  });
+
+  const playPromise = audio.play();
+  if (playPromise?.catch) {
+    playPromise.catch((error) => {
+      if (request.token !== state.speechToken || request.runId !== runId) return;
+      request.completed = false;
+      if (state.currentFallbackAudio === audio) state.currentFallbackAudio = null;
+      finishSpeechTracking(request.token);
+      showSoundPrimer();
+      if (error?.name !== "NotAllowedError") console.warn("Audio fallback playback failed", error);
+    });
+  }
+  return true;
+}
+
+function findFallbackAudioFile(text) {
+  const normalized = normalizeSpeechAudioKey(text);
+  const exact = AUDIO_FALLBACKS.get(normalized);
+  if (exact) return exact;
+  const raw = String(text || "");
+  if (/^福田さん、おはようございます。/.test(raw)) return "fukuda-ohayo";
+  if (/^福田さん、こんにちは。/.test(raw)) return "fukuda-konnichiwa";
+  if (/^福田さん、こんばんは。/.test(raw)) return "fukuda-konbanwa";
+  if (/^.+さん、(?:おはようございます|こんにちは|こんばんは)。いつもありがとうございます。/.test(raw)) return "known-visitor";
+  if (/^いつもお疲れさまです。ヤマトの方ですね。/.test(raw)) return "yamato-clothing";
+  if (/^いつもお疲れさまです。.+の方ですね。/.test(raw)) return "clothing-visitor";
+  return null;
+}
+
+function normalizeSpeechAudioKey(text) {
+  return String(text || "").replace(/\s+/g, "");
 }
 
 function chooseJapaneseVoice() {
@@ -2691,6 +2852,7 @@ function scheduleSpeechStartCheck(request) {
   state.speechRetryTimer = window.setTimeout(() => {
     if (request.token !== state.speechToken || request.started || request.completed) return;
     if (window.speechSynthesis.speaking) return;
+    if (playFallbackAudioRequest(request, "speech-start-timeout")) return;
     showSoundPrimer();
     scheduleSpeechRetry(request);
   }, 1400);
@@ -2710,7 +2872,15 @@ function scheduleSpeechRetry(request) {
 
 function retryLastSpeech(reason = "retry") {
   const request = state.lastSpeechRequest;
-  if (!request || !state.soundEnabled || !("speechSynthesis" in window)) return;
+  if (!request || !state.soundEnabled) return;
+  if (findFallbackAudioFile(request.displayText || request.text)) {
+    playFallbackAudioRequest(request, reason);
+    return;
+  }
+  if (!("speechSynthesis" in window)) {
+    playFallbackAudioRequest(request, reason);
+    return;
+  }
   if (window.speechSynthesis.speaking) return;
   if (request.completed && reason !== "sound-on") return;
   if (request.token !== state.speechToken) {
@@ -2724,12 +2894,16 @@ function retryLastSpeech(reason = "retry") {
 
 function replayLastSpeech(reason = "replay") {
   const request = state.lastSpeechRequest;
-  if (!request || !state.soundEnabled || !("speechSynthesis" in window)) return;
+  if (!request || !state.soundEnabled) return;
   if (request.token !== state.speechToken) request.token = state.speechToken;
   request.completed = false;
   request.started = false;
   request.attempts = 0;
-  playSpeechRequest(request);
+  if (findFallbackAudioFile(request.displayText || request.text) || !("speechSynthesis" in window)) {
+    playFallbackAudioRequest(request, reason);
+  } else {
+    playSpeechRequest(request);
+  }
 }
 
 function applySpeechPronunciations(text) {
@@ -2737,6 +2911,9 @@ function applySpeechPronunciations(text) {
 }
 
 function isSpeaking(now = Date.now()) {
+  if (state.currentFallbackAudio && !state.currentFallbackAudio.paused && !state.currentFallbackAudio.ended) {
+    return true;
+  }
   if (
     state.speechActive &&
     "speechSynthesis" in window &&
@@ -2758,9 +2935,23 @@ function stopSpeechTracking() {
   state.speechToken += 1;
   state.speechActive = false;
   state.currentUtterance = null;
+  stopCurrentFallbackAudio();
   clearSpeechKeepAlive();
   clearSpeechRetryTimer();
   closeMouthNow();
+}
+
+function stopCurrentFallbackAudio() {
+  const audio = state.currentFallbackAudio;
+  if (!audio) return;
+  state.currentFallbackAudio = null;
+  try {
+    audio.pause();
+    audio.removeAttribute("src");
+    audio.load();
+  } catch (error) {
+    console.warn("Audio fallback could not be stopped", error);
+  }
 }
 
 function clearSpeechKeepAlive() {
