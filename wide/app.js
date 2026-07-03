@@ -293,6 +293,7 @@ const state = {
   currentUtterance: null,
   currentFallbackAudio: null,
   speechUnlocked: false,
+  ttsPrimed: false,
 
   // GLB内蔵アニメーション
   mixer: null,
@@ -2585,7 +2586,26 @@ function hideBubbleTimer() {
   state.bubbleHideTimer = null;
 }
 
+// 読み上げ（TTS）をユーザー操作のタイミングでアンロックする。
+// これをやらないと、録音WAVがある発話（起動・来客）は鳴るのに、
+// 名前入り挨拶などTTSで読む発話だけが無音になる。
+function primeSpeechSynthesis() {
+  if (state.ttsPrimed || !("speechSynthesis" in window)) return;
+  try {
+    window.speechSynthesis.resume();
+    const silent = new SpeechSynthesisUtterance("　");
+    silent.volume = 0;
+    silent.lang = "ja-JP";
+    window.speechSynthesis.speak(silent);
+    state.ttsPrimed = true;
+  } catch (error) {
+    console.warn("TTS prime failed", error);
+  }
+}
+
 function unlockSpeechFromGesture(reason = "interaction", { forceReplay = false } = {}) {
+  // 録音を鳴らす場合でも、TTSは必ずここでアンロックしておく（名前入り挨拶用）
+  primeSpeechSynthesis();
   const unlockGeneric = !("speechSynthesis" in window);
   if (
     state.lastSpeechRequest &&
