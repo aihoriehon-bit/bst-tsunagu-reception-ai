@@ -4,6 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>つなぐちゃん 受付AI</title>
+    <script>
+      (() => {
+        const params = new URLSearchParams(window.location.search);
+        const requestedView = params.get("view");
+        const forceWide = requestedView === "wide" || requestedView === "pc";
+        const forceVertical = requestedView === "vertical" || requestedView === "mobile";
+        const wideViewport = window.matchMedia("(min-width: 900px)").matches;
+        const touchOnly = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+
+        if (forceWide || (!forceVertical && wideViewport && !touchOnly)) {
+          params.delete("view");
+          const wideUrl = new URL("./wide/", window.location.href);
+          const query = params.toString();
+          wideUrl.search = query ? `?${query}` : "";
+          wideUrl.hash = window.location.hash;
+          window.location.replace(wideUrl.href);
+        }
+      })();
+    </script>
     <link rel="stylesheet" href="./styles.css?v=20260702-2" />
   </head>
   <body>

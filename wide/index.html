@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>つなぐちゃん 受付AI（横型）</title>
+    <link rel="stylesheet" href="./styles.css?v=20260703-4" />
+  </head>
+  <body>
+    <main class="wide-stage" aria-label="横型受付ディスプレイ">
+      <div class="backdrop" aria-hidden="true">
+        <div class="backdrop-wall"></div>
+        <div class="backdrop-floor"></div>
+      </div>
+
+      <div id="scene" class="scene"></div>
+
+      <div id="namePlate" class="name-plate" aria-hidden="true">
+        <span class="name-plate-role">受付AI</span>
+        <span class="name-plate-name">つなぐ</span>
+      </div>
+
+      <header class="hud-top">
+        <div class="hud-left">
+          <section class="camera-panel" id="cameraPanel" aria-label="来客センサーカメラ">
+            <div class="camera-view">
+              <video id="cameraPreview" autoplay muted playsinline></video>
+              <span id="cameraFaceMark" class="camera-face-mark" hidden>●</span>
+            </div>
+            <div class="camera-info">
+              <strong>来客センサー</strong>
+              <span id="cameraStatus">カメラ起動中…</span>
+              <span id="visitorStatus">来客なし</span>
+              <span class="camera-note">映像は来客検知と顔・服装の照合のみに使用。保存・送信しません。<br />顔識別のデータ（特徴量）はこの端末内にのみ保存されます。</span>
+            </div>
+            <div class="camera-buttons">
+              <button id="cameraToggle" type="button">カメラ停止</button>
+              <button id="visitorTest" type="button">来客テスト</button>
+              <button id="employeeDemoToggle" type="button">社員デモ</button>
+            </div>
+          </section>
+
+          <section class="employee-demo" id="employeeDemo" hidden aria-label="社員認識デモ">
+            <p id="demoStatus" class="demo-status">上のカードは顔照合を使わないデモ。下の「顔を登録」はカメラで本人を判別する本物の顔識別です。</p>
+            <div class="employee-cards">
+              <button id="demoEmployeeWoman" class="employee-card" type="button">
+                <span class="demo-avatar demo-avatar-woman">佐</span>
+                <span class="employee-card-text">
+                  <strong>佐藤さん</strong>
+                  <small>社員 / お帰り</small>
+                </span>
+              </button>
+              <button id="demoEmployeeMan" class="employee-card" type="button">
+                <span class="demo-avatar demo-avatar-man">田</span>
+                <span class="employee-card-text">
+                  <strong>田中さん</strong>
+                  <small>社員 / お疲れ様</small>
+                </span>
+              </button>
+            </div>
+            <div class="employee-demo-row">
+              <input id="registerName" type="text" placeholder="名前（例: 福田 / ヤマト）" autocomplete="off" />
+              <button id="registerFaceButton" type="button">顔を登録</button>
+              <button id="registerClothingButton" type="button">服装を登録</button>
+            </div>
+            <p id="registerStatus" class="register-status">顔=個人の名前呼び（1クリックで3枚自動撮影）、服装=制服（宅配業者など）の判別。特徴量だけを端末内に保存し、写真は保存・送信しません。</p>
+            <p id="matchTest" class="match-test">登録するとここに照合結果が表示されます</p>
+            <ul id="registeredList" class="registered-list"></ul>
+          </section>
+        </div>
+
+        <div class="hud-right">
+          <button id="sensorPanelToggle" class="panel-toggle is-active" type="button" aria-controls="cameraPanel" aria-pressed="true" title="来客センサー表示切替">センサー</button>
+          <span id="stateChip" class="state-chip" data-state="working">作業中</span>
+          <span id="clockText" aria-label="現在時刻">--:--</span>
+          <button id="soundToggle" class="icon-button is-active" type="button" aria-label="音声のオンオフ" title="音声">
+            <span>♪</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="speech-bubble" id="speechBubble" role="status" aria-live="polite">
+        <span id="assistantMood" class="mood-dot"></span>
+        <p id="speechText">おはようございます。受付AIのつなぐです。</p>
+      </div>
+
+      <footer class="hud-bottom">
+        <p class="brand-line">有限会社 ビジネスシステム通信　受付AI つなぐ（横型プロトタイプ）</p>
+        <span id="modelStatus">3Dモデル読み込み中</span>
+      </footer>
+    </main>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.165.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.165.0/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module" src="./app.js?v=20260703-4"></script>
+  </body>
+</html>
