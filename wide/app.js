@@ -179,7 +179,6 @@ const assistantMood = document.querySelector("#assistantMood");
 const clockText = document.querySelector("#clockText");
 const stateChip = document.querySelector("#stateChip");
 const soundToggle = document.querySelector("#soundToggle");
-const soundPrimer = document.querySelector("#soundPrimer");
 const sensorPanelToggle = document.querySelector("#sensorPanelToggle");
 const namePlate = document.querySelector("#namePlate");
 const cameraPanel = document.querySelector("#cameraPanel");
@@ -246,9 +245,10 @@ const state = {
   speechActive: false,
   speechToken: 0,
   speechKeepAliveTimer: null,
+  speechRetryTimer: null,
   bubbleHideTimer: null,
   soundEnabled: true,
-  speechPrimed: false,
+  lastSpeechRequest: null,
 
   // GLB内蔵アニメーション
   mixer: null,
@@ -333,51 +333,24 @@ function init() {
   setInterval(updateClock, 1000);
   setInterval(updateBehavior, 300);
   initHudEvents();
-  primeSpeechInteraction();
+  initSpeechAutoStart();
   startCamera();
 }
 
-// ブラウザの自動再生ポリシー対策。
-// 最初のタップ/クリック/キー操作で音声合成をアンロックし、以降の自動発話が鳴るようにする。
-// アンロックまでは画面に案内（#soundPrimer）を出す。
-function primeSpeechInteraction() {
-  if (!("speechSynthesis" in window)) {
-    hideSoundPrimer();
-    return;
-  }
-  const prime = () => {
-    const wasFirst = !state.speechPrimed;
-    unlockSpeech();
-    hideSoundPrimer();
-    window.removeEventListener("pointerdown", prime);
-    window.removeEventListener("keydown", prime);
-    if (wasFirst) {
-      // ユーザー操作直後なので、自動再生ブロックされていた直近の表示文を読み直す。
-      const currentText = speechText.textContent.trim();
-      speak(currentText || "受付AIのつなぐです。ご来客の際に、こちらからお声がけします。");
-    }
-  };
-  window.addEventListener("pointerdown", prime);
-  window.addEventListener("keydown", prime);
-  soundPrimer?.addEventListener("click", prime);
-}
-
-function unlockSpeech() {
-  if (state.speechPrimed || !("speechSynthesis" in window)) return;
-  state.speechPrimed = true;
+function initSpeechAutoStart() {
+  if (!("speechSynthesis" in window)) return;
   try {
     window.speechSynthesis.resume();
-    const silent = new SpeechSynthesisUtterance("　");
-    silent.volume = 0;
-    silent.lang = "ja-JP";
-    window.speechSynthesis.speak(silent);
   } catch (error) {
-    console.warn("Speech unlock failed", error);
+    console.warn("Speech auto start failed", error);
   }
-}
 
-function hideSoundPrimer() {
-  soundPrimer?.classList.add("is-hidden");
+  const retry = () => retryLastSpeech("speech-ready");
+  window.speechSynthesis.addEventListener?.("voiceschanged", retry);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) retryLastSpeech("visible");
+  });
+  window.addEventListener("pageshow", () => retryLastSpeech("pageshow"));
 }
 
 // ============================================================
@@ -2428,6 +2401,8 @@ function initHudEvents() {
     if (!state.soundEnabled && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
       stopSpeechTracking();
+    } else if (state.soundEnabled) {
+      retryLastSpeech("sound-on");
     }
   });
 
@@ -2505,31 +2480,68 @@ function startSpeechOutput(text, options = {}) {
   const token = state.speechToken;
   state.speechActive = false;
   clearSpeechKeepAlive();
+  clearSpeechRetryTimer();
   state.speakingUntil = Date.now() + estimatedDuration;
   state.faceFrame = "";
 
   if (!state.soundEnabled || !("speechSynthesis" in window)) return;
-  window.speechSynthesis.cancel();
+  const request = {
+    text: spokenText,
+    token,
+    rate,
+    pitch,
+    volume,
+    estimatedDuration,
+    attempts: 0,
+    started: false,
+    completed: false,
+  };
+  state.lastSpeechRequest = request;
+  if (!state.soundEnabled || !("speechSynthesis" in window)) return;
+  playSpeechRequest(request);
+}
+
+function playSpeechRequest(request) {
+  if (!request || request.token !== state.speechToken || !state.soundEnabled || !("speechSynthesis" in window)) return;
+  clearSpeechRetryTimer();
+  try {
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.resume();
+  } catch (error) {
+    console.warn("Speech synthesis could not be reset", error);
+  }
   state.speechActive = true;
-  state.speakingUntil = Date.now() + Math.max(estimatedDuration, 15000);
-  const utterance = new SpeechSynthesisUtterance(spokenText);
+  state.speakingUntil = Date.now() + Math.max(request.estimatedDuration, 15000);
+  request.started = false;
+  request.completed = false;
+  const utterance = new SpeechSynthesisUtterance(request.text);
   utterance.lang = "ja-JP";
-  utterance.rate = rate;
-  utterance.pitch = pitch;
-  utterance.volume = volume;
+  utterance.rate = request.rate;
+  utterance.pitch = request.pitch;
+  utterance.volume = request.volume;
+  const voice = chooseJapaneseVoice();
+  if (voice) utterance.voice = voice;
   utterance.addEventListener("start", () => {
-    if (token !== state.speechToken) return;
+    if (request.token !== state.speechToken) return;
+    request.started = true;
     state.speechActive = true;
-    state.speakingUntil = Date.now() + Math.max(estimatedDuration, 3000);
+    state.speakingUntil = Date.now() + Math.max(request.estimatedDuration, 3000);
   });
   utterance.addEventListener("boundary", () => {
-    if (token !== state.speechToken || !state.speechActive) return;
+    if (request.token !== state.speechToken || !state.speechActive) return;
     state.speakingUntil = Date.now() + 1800;
   });
-  utterance.addEventListener("end", () => finishSpeechTracking(token));
-  utterance.addEventListener("error", () => finishSpeechTracking(token));
+  utterance.addEventListener("end", () => {
+    request.completed = true;
+    finishSpeechTracking(request.token);
+  });
+  utterance.addEventListener("error", () => {
+    request.completed = false;
+    finishSpeechTracking(request.token);
+    scheduleSpeechRetry(request);
+  });
   state.speechKeepAliveTimer = window.setInterval(() => {
-    if (token !== state.speechToken || !state.speechActive) {
+    if (request.token !== state.speechToken || !state.speechActive) {
       clearSpeechKeepAlive();
       return;
     }
@@ -2539,6 +2551,48 @@ function startSpeechOutput(text, options = {}) {
     }
   }, 900);
   window.speechSynthesis.speak(utterance);
+  scheduleSpeechStartCheck(request);
+}
+
+function chooseJapaneseVoice() {
+  if (!("speechSynthesis" in window)) return null;
+  const voices = window.speechSynthesis.getVoices();
+  return (
+    voices.find((voice) => voice.lang === "ja-JP" && /Kyoko|Otoya|Google|Microsoft|Japanese|日本/i.test(voice.name)) ||
+    voices.find((voice) => voice.lang === "ja-JP") ||
+    voices.find((voice) => voice.lang?.toLowerCase().startsWith("ja")) ||
+    null
+  );
+}
+
+function scheduleSpeechStartCheck(request) {
+  state.speechRetryTimer = window.setTimeout(() => {
+    if (request.token !== state.speechToken || request.started || request.completed) return;
+    if (window.speechSynthesis.speaking) return;
+    scheduleSpeechRetry(request);
+  }, 1400);
+}
+
+function scheduleSpeechRetry(request) {
+  if (!request || request.token !== state.speechToken || request.completed || request.attempts >= 4 || !state.soundEnabled) return;
+  request.attempts += 1;
+  clearSpeechRetryTimer();
+  const delay = [350, 900, 1800, 3200][request.attempts - 1] || 3200;
+  state.speechRetryTimer = window.setTimeout(() => playSpeechRequest(request), delay);
+}
+
+function retryLastSpeech(reason = "retry") {
+  const request = state.lastSpeechRequest;
+  if (!request || !state.soundEnabled || !("speechSynthesis" in window)) return;
+  if (window.speechSynthesis.speaking) return;
+  if (request.completed && reason !== "sound-on") return;
+  if (request.token !== state.speechToken) {
+    if (reason !== "sound-on") return;
+    request.token = state.speechToken;
+  }
+  request.completed = false;
+  request.attempts = Math.min(request.attempts, 2);
+  playSpeechRequest(request);
 }
 
 function applySpeechPronunciations(text) {
@@ -2567,6 +2621,7 @@ function stopSpeechTracking() {
   state.speechToken += 1;
   state.speechActive = false;
   clearSpeechKeepAlive();
+  clearSpeechRetryTimer();
   closeMouthNow();
 }
 
@@ -2574,6 +2629,12 @@ function clearSpeechKeepAlive() {
   if (!state.speechKeepAliveTimer) return;
   window.clearInterval(state.speechKeepAliveTimer);
   state.speechKeepAliveTimer = null;
+}
+
+function clearSpeechRetryTimer() {
+  if (!state.speechRetryTimer) return;
+  window.clearTimeout(state.speechRetryTimer);
+  state.speechRetryTimer = null;
 }
 
 function closeMouthNow() {
