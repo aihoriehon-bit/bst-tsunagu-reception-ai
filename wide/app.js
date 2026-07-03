@@ -2586,7 +2586,13 @@ function hideBubbleTimer() {
 }
 
 function unlockSpeechFromGesture(reason = "interaction", { forceReplay = false } = {}) {
-  if (state.lastSpeechRequest && findFallbackAudioFile(state.lastSpeechRequest.displayText || state.lastSpeechRequest.text)) {
+  const unlockGeneric = !("speechSynthesis" in window);
+  if (
+    state.lastSpeechRequest &&
+    findFallbackAudioFile(state.lastSpeechRequest.displayText || state.lastSpeechRequest.text, {
+      includeGeneric: unlockGeneric,
+    })
+  ) {
     state.speechUnlocked = true;
     hideSoundPrimer();
     if (forceReplay || !state.lastSpeechRequest.started || !state.lastSpeechRequest.completed) {
@@ -2675,9 +2681,11 @@ function startSpeechOutput(text, options = {}) {
   };
   state.lastSpeechRequest = request;
   if (!state.soundEnabled) return;
-  if (findFallbackAudioFile(text)) {
+  const hasTts = "speechSynthesis" in window;
+  // 名前入りのセリフはTTSで名前を呼ぶ。TTSが無い環境だけ汎用録音も候補に含める
+  if (findFallbackAudioFile(text, { includeGeneric: !hasTts })) {
     playFallbackAudioRequest(request, "preferred-audio");
-  } else if ("speechSynthesis" in window) {
+  } else if (hasTts) {
     playSpeechRequest(request);
   } else {
     playFallbackAudioRequest(request, "no-speech-api");
@@ -2819,16 +2827,22 @@ function playFallbackAudioRequest(request, reason = "fallback") {
   return true;
 }
 
-function findFallbackAudioFile(text) {
+// includeGeneric: false の場合、名前が読まれない汎用録音（known-visitor / clothing-visitor）は
+// 候補から外す。名前入りのセリフは読み上げ（TTS）でちゃんと名前を呼ぶため。
+function findFallbackAudioFile(text, { includeGeneric = true } = {}) {
   const normalized = normalizeSpeechAudioKey(text);
   const exact = AUDIO_FALLBACKS.get(normalized);
-  if (exact) return exact;
+  if (exact) {
+    if (!includeGeneric && (exact === "known-visitor" || exact === "clothing-visitor")) return null;
+    return exact;
+  }
   const raw = String(text || "");
   if (/^福田さん、おはようございます。/.test(raw)) return "fukuda-ohayo";
   if (/^福田さん、こんにちは。/.test(raw)) return "fukuda-konnichiwa";
   if (/^福田さん、こんばんは。/.test(raw)) return "fukuda-konbanwa";
-  if (/^.+さん、(?:おはようございます|こんにちは|こんばんは)。いつもありがとうございます。/.test(raw)) return "known-visitor";
   if (/^いつもお疲れさまです。ヤマトの方ですね。/.test(raw)) return "yamato-clothing";
+  if (!includeGeneric) return null;
+  if (/^.+さん、(?:おはようございます|こんにちは|こんばんは)。いつもありがとうございます。/.test(raw)) return "known-visitor";
   if (/^いつもお疲れさまです。.+の方ですね。/.test(raw)) return "clothing-visitor";
   return null;
 }
@@ -2873,7 +2887,11 @@ function scheduleSpeechRetry(request) {
 function retryLastSpeech(reason = "retry") {
   const request = state.lastSpeechRequest;
   if (!request || !state.soundEnabled) return;
-  if (findFallbackAudioFile(request.displayText || request.text)) {
+  if (
+    findFallbackAudioFile(request.displayText || request.text, {
+      includeGeneric: !("speechSynthesis" in window),
+    })
+  ) {
     playFallbackAudioRequest(request, reason);
     return;
   }
@@ -2899,7 +2917,12 @@ function replayLastSpeech(reason = "replay") {
   request.completed = false;
   request.started = false;
   request.attempts = 0;
-  if (findFallbackAudioFile(request.displayText || request.text) || !("speechSynthesis" in window)) {
+  if (
+    findFallbackAudioFile(request.displayText || request.text, {
+      includeGeneric: !("speechSynthesis" in window),
+    }) ||
+    !("speechSynthesis" in window)
+  ) {
     playFallbackAudioRequest(request, reason);
   } else {
     playSpeechRequest(request);
