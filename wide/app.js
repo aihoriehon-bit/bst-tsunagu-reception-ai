@@ -179,6 +179,7 @@ const assistantMood = document.querySelector("#assistantMood");
 const clockText = document.querySelector("#clockText");
 const stateChip = document.querySelector("#stateChip");
 const soundToggle = document.querySelector("#soundToggle");
+const soundPrimer = document.querySelector("#soundPrimer");
 const sensorPanelToggle = document.querySelector("#sensorPanelToggle");
 const namePlate = document.querySelector("#namePlate");
 const cameraPanel = document.querySelector("#cameraPanel");
@@ -249,6 +250,7 @@ const state = {
   bubbleHideTimer: null,
   soundEnabled: true,
   lastSpeechRequest: null,
+  speechUnlocked: false,
 
   // GLB内蔵アニメーション
   mixer: null,
@@ -353,6 +355,16 @@ function initSpeechAutoStart() {
     if (!document.hidden) retryLastSpeech("visible");
   });
   window.addEventListener("pageshow", () => retryLastSpeech("pageshow"));
+  const unlock = (event) => {
+    if (event?.target?.closest?.("#soundToggle, #soundPrimer")) return;
+    unlockSpeechFromGesture("page-interaction");
+  };
+  window.addEventListener("pointerdown", unlock, { passive: true });
+  window.addEventListener("keydown", unlock);
+  soundPrimer?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    unlockSpeechFromGesture("sound-primer", { forceReplay: true });
+  });
 }
 
 // ============================================================
@@ -2455,6 +2467,10 @@ function initHudEvents() {
   });
 
   soundToggle.addEventListener("click", () => {
+    if (state.soundEnabled && !state.speechUnlocked && "speechSynthesis" in window) {
+      unlockSpeechFromGesture("sound-toggle", { forceReplay: true });
+      return;
+    }
     state.soundEnabled = !state.soundEnabled;
     soundToggle.classList.toggle("is-active", state.soundEnabled);
     soundToggle.setAttribute("aria-label", state.soundEnabled ? "音声オン" : "音声オフ");
@@ -2526,6 +2542,42 @@ function hideBubbleTimer() {
   state.bubbleHideTimer = null;
 }
 
+function unlockSpeechFromGesture(reason = "interaction", { forceReplay = false } = {}) {
+  if (state.speechUnlocked || !("speechSynthesis" in window)) {
+    if (forceReplay) retryLastSpeech(reason);
+    return;
+  }
+  state.speechUnlocked = true;
+  hideSoundPrimer();
+  try {
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.resume();
+  } catch (error) {
+    console.warn("Speech unlock failed", error);
+  }
+  if (state.lastSpeechRequest) {
+    state.lastSpeechRequest.completed = false;
+    state.lastSpeechRequest.attempts = 0;
+    if (state.lastSpeechRequest.token !== state.speechToken) {
+      state.lastSpeechRequest.token = state.speechToken;
+    }
+    playSpeechRequest(state.lastSpeechRequest);
+    return;
+  }
+  const currentText = speechText.textContent.trim();
+  if (currentText) speak(currentText);
+}
+
+function showSoundPrimer() {
+  if (!soundPrimer || state.speechUnlocked || !state.soundEnabled) return;
+  soundPrimer.hidden = false;
+}
+
+function hideSoundPrimer() {
+  if (!soundPrimer) return;
+  soundPrimer.hidden = true;
+}
+
 function startSpeechOutput(text, options = {}) {
   const {
     minDuration = 1800,
@@ -2583,6 +2635,8 @@ function playSpeechRequest(request) {
   if (voice) utterance.voice = voice;
   utterance.addEventListener("start", () => {
     if (request.token !== state.speechToken) return;
+    state.speechUnlocked = true;
+    hideSoundPrimer();
     request.started = true;
     state.speechActive = true;
     state.speakingUntil = Date.now() + Math.max(request.estimatedDuration, 3000);
@@ -2629,12 +2683,17 @@ function scheduleSpeechStartCheck(request) {
   state.speechRetryTimer = window.setTimeout(() => {
     if (request.token !== state.speechToken || request.started || request.completed) return;
     if (window.speechSynthesis.speaking) return;
+    showSoundPrimer();
     scheduleSpeechRetry(request);
   }, 1400);
 }
 
 function scheduleSpeechRetry(request) {
-  if (!request || request.token !== state.speechToken || request.completed || request.attempts >= 4 || !state.soundEnabled) return;
+  if (!request || request.token !== state.speechToken || request.completed || !state.soundEnabled) return;
+  if (request.attempts >= 4) {
+    showSoundPrimer();
+    return;
+  }
   request.attempts += 1;
   clearSpeechRetryTimer();
   const delay = [350, 900, 1800, 3200][request.attempts - 1] || 3200;
