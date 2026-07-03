@@ -179,6 +179,7 @@ const assistantMood = document.querySelector("#assistantMood");
 const clockText = document.querySelector("#clockText");
 const stateChip = document.querySelector("#stateChip");
 const soundToggle = document.querySelector("#soundToggle");
+const soundPrimer = document.querySelector("#soundPrimer");
 const sensorPanelToggle = document.querySelector("#sensorPanelToggle");
 const namePlate = document.querySelector("#namePlate");
 const cameraPanel = document.querySelector("#cameraPanel");
@@ -247,6 +248,7 @@ const state = {
   speechKeepAliveTimer: null,
   bubbleHideTimer: null,
   soundEnabled: true,
+  speechPrimed: false,
 
   // GLB内蔵アニメーション
   mixer: null,
@@ -331,7 +333,51 @@ function init() {
   setInterval(updateClock, 1000);
   setInterval(updateBehavior, 300);
   initHudEvents();
+  primeSpeechInteraction();
   startCamera();
+}
+
+// ブラウザの自動再生ポリシー対策。
+// 最初のタップ/クリック/キー操作で音声合成をアンロックし、以降の自動発話が鳴るようにする。
+// アンロックまでは画面に案内（#soundPrimer）を出す。
+function primeSpeechInteraction() {
+  if (!("speechSynthesis" in window)) {
+    hideSoundPrimer();
+    return;
+  }
+  const prime = () => {
+    const wasFirst = !state.speechPrimed;
+    unlockSpeech();
+    hideSoundPrimer();
+    window.removeEventListener("pointerdown", prime);
+    window.removeEventListener("keydown", prime);
+    if (wasFirst) {
+      // ユーザー操作直後なので、自動再生ブロックされていた直近の表示文を読み直す。
+      const currentText = speechText.textContent.trim();
+      speak(currentText || "受付AIのつなぐです。ご来客の際に、こちらからお声がけします。");
+    }
+  };
+  window.addEventListener("pointerdown", prime);
+  window.addEventListener("keydown", prime);
+  soundPrimer?.addEventListener("click", prime);
+}
+
+function unlockSpeech() {
+  if (state.speechPrimed || !("speechSynthesis" in window)) return;
+  state.speechPrimed = true;
+  try {
+    window.speechSynthesis.resume();
+    const silent = new SpeechSynthesisUtterance("　");
+    silent.volume = 0;
+    silent.lang = "ja-JP";
+    window.speechSynthesis.speak(silent);
+  } catch (error) {
+    console.warn("Speech unlock failed", error);
+  }
+}
+
+function hideSoundPrimer() {
+  soundPrimer?.classList.add("is-hidden");
 }
 
 // ============================================================
