@@ -250,6 +250,7 @@ const state = {
   bubbleHideTimer: null,
   soundEnabled: true,
   lastSpeechRequest: null,
+  currentUtterance: null,
   speechUnlocked: false,
 
   // GLB内蔵アニメーション
@@ -2467,7 +2468,7 @@ function initHudEvents() {
   });
 
   soundToggle.addEventListener("click", () => {
-    if (state.soundEnabled && !state.speechUnlocked && "speechSynthesis" in window) {
+    if (state.soundEnabled && "speechSynthesis" in window) {
       unlockSpeechFromGesture("sound-toggle", { forceReplay: true });
       return;
     }
@@ -2544,7 +2545,7 @@ function hideBubbleTimer() {
 
 function unlockSpeechFromGesture(reason = "interaction", { forceReplay = false } = {}) {
   if (state.speechUnlocked || !("speechSynthesis" in window)) {
-    if (forceReplay) retryLastSpeech(reason);
+    if (forceReplay) replayLastSpeech(reason);
     return;
   }
   state.speechUnlocked = true;
@@ -2626,7 +2627,10 @@ function playSpeechRequest(request) {
   state.speakingUntil = Date.now() + Math.max(request.estimatedDuration, 15000);
   request.started = false;
   request.completed = false;
+  const runId = (request.runId || 0) + 1;
+  request.runId = runId;
   const utterance = new SpeechSynthesisUtterance(request.text);
+  state.currentUtterance = utterance;
   utterance.lang = "ja-JP";
   utterance.rate = request.rate;
   utterance.pitch = request.pitch;
@@ -2634,7 +2638,7 @@ function playSpeechRequest(request) {
   const voice = chooseJapaneseVoice();
   if (voice) utterance.voice = voice;
   utterance.addEventListener("start", () => {
-    if (request.token !== state.speechToken) return;
+    if (request.token !== state.speechToken || request.runId !== runId) return;
     state.speechUnlocked = true;
     hideSoundPrimer();
     request.started = true;
@@ -2642,20 +2646,24 @@ function playSpeechRequest(request) {
     state.speakingUntil = Date.now() + Math.max(request.estimatedDuration, 3000);
   });
   utterance.addEventListener("boundary", () => {
-    if (request.token !== state.speechToken || !state.speechActive) return;
+    if (request.token !== state.speechToken || request.runId !== runId || !state.speechActive) return;
     state.speakingUntil = Date.now() + 1800;
   });
   utterance.addEventListener("end", () => {
+    if (request.runId !== runId) return;
     request.completed = true;
+    if (state.currentUtterance === utterance) state.currentUtterance = null;
     finishSpeechTracking(request.token);
   });
   utterance.addEventListener("error", () => {
+    if (request.runId !== runId) return;
     request.completed = false;
+    if (state.currentUtterance === utterance) state.currentUtterance = null;
     finishSpeechTracking(request.token);
     scheduleSpeechRetry(request);
   });
   state.speechKeepAliveTimer = window.setInterval(() => {
-    if (request.token !== state.speechToken || !state.speechActive) {
+    if (request.token !== state.speechToken || request.runId !== runId || !state.speechActive) {
       clearSpeechKeepAlive();
       return;
     }
@@ -2714,6 +2722,16 @@ function retryLastSpeech(reason = "retry") {
   playSpeechRequest(request);
 }
 
+function replayLastSpeech(reason = "replay") {
+  const request = state.lastSpeechRequest;
+  if (!request || !state.soundEnabled || !("speechSynthesis" in window)) return;
+  if (request.token !== state.speechToken) request.token = state.speechToken;
+  request.completed = false;
+  request.started = false;
+  request.attempts = 0;
+  playSpeechRequest(request);
+}
+
 function applySpeechPronunciations(text) {
   return SPEECH_PRONUNCIATION_RULES.reduce((current, [pattern, reading]) => current.replace(pattern, reading), text);
 }
@@ -2739,6 +2757,7 @@ function finishSpeechTracking(token) {
 function stopSpeechTracking() {
   state.speechToken += 1;
   state.speechActive = false;
+  state.currentUtterance = null;
   clearSpeechKeepAlive();
   clearSpeechRetryTimer();
   closeMouthNow();
