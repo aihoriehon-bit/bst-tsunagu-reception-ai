@@ -283,6 +283,8 @@ const state = {
   testVisitorUntil: 0,
   visitorPerson: null,
   demoVisitorPerson: null,
+  pendingVisitorGreeting: null,
+  announcedVisitorKey: "",
 
   // 社員デモ / 服装識別
   identifyBusy: false,
@@ -1547,20 +1549,11 @@ function updateBehavior() {
     ) {
       state.lastIdentifyAt = now;
       identifyVisitor(3).then((person) => {
-        if (!person || state.behavior !== "attending" || state.visitorPerson) return;
-        state.visitorPerson = person;
-        updateVisitorLabel();
-        if (!isSpeaking()) {
-          speak(
-            person.kind === "clothing"
-              ? `${person.name}の方でしたか。いつもお疲れさまです。お荷物の受け渡しでしたら、こちらで承ります。`
-              : person.kind === "employee"
-                ? `${person.name}さん、お帰りなさい。今日もお疲れ様でした。`
-              : `${person.name}さんでしたか。いつもありがとうございます。`,
-          );
-        }
+        if (!person || state.behavior !== "attending") return;
+        rememberRecognizedVisitor(person);
       });
     }
+    if (flushPendingVisitorGreeting(now)) return;
     if (visitorPresent && !isSpeaking(now) && now - state.lastAttendTalkAt > 30000) {
       state.lastAttendTalkAt = now;
       speak(pickRandomLine(attendIdleTalk));
@@ -1591,17 +1584,27 @@ function beginApproach() {
   setBehavior("approaching");
   hideBubbleTimer();
   state.visitorPerson = null;
+  state.pendingVisitorGreeting = null;
+  state.announcedVisitorKey = "";
   // 歩いている間に並行してデモ人物/服装IDの判定を進める
   const identifyPromise = identifyVisitor();
+  identifyPromise.then((person) => {
+    if (!person || state.behavior !== "attending" || state.returnPending) return;
+    rememberRecognizedVisitor(person);
+  });
   speak("あ、いらっしゃいませ。ただいま参りますね。");
   startWalk(
     walkPointsToGreet(),
     async () => {
       setBehavior("attending");
       state.lastAttendTalkAt = Date.now();
-      state.visitorPerson = await withTimeout(identifyPromise, 2500);
+      const person = await withTimeout(identifyPromise, 2500);
+      if (person) {
+        state.visitorPerson = person;
+        markVisitorGreetingAnnounced(person);
+      }
       updateVisitorLabel();
-      speak(buildArrivalGreeting(state.visitorPerson));
+      speak(buildArrivalGreeting(person));
       playFlourish("bow");
     },
     0,
@@ -1613,6 +1616,8 @@ function beginReturn() {
   state.returnPending = true;
   state.visitorPerson = null;
   state.demoVisitorPerson = null;
+  state.pendingVisitorGreeting = null;
+  state.announcedVisitorKey = "";
   hideBubbleTimer();
   speak("ありがとうございました。それでは、作業に戻りますね。");
   const bowDurationMs = playFlourish("bow");
@@ -1645,6 +1650,61 @@ function buildArrivalGreeting(person) {
     return `${person.name}さん、${greetingWord}。いつもありがとうございます。ご用件があればお気軽にお声がけください。`;
   }
   return `${greetingWord}。有限会社ビジネスシステム通信へようこそ。受付AIのつなぐです。担当者をお呼びしますので、お名前とご用件をお聞かせください。`;
+}
+
+function rememberRecognizedVisitor(person) {
+  if (!person?.name) return false;
+  const normalized = {
+    name: person.name,
+    kind: person.kind || "face",
+  };
+  const key = visitorIdentityKey(normalized);
+  if (state.announcedVisitorKey === key) {
+    state.visitorPerson = normalized;
+    updateVisitorLabel();
+    return false;
+  }
+  if (state.visitorPerson?.name && visitorIdentityKey(state.visitorPerson) === key && state.pendingVisitorGreeting) {
+    return false;
+  }
+  state.visitorPerson = normalized;
+  updateVisitorLabel();
+  queueVisitorGreeting(normalized);
+  return true;
+}
+
+function queueVisitorGreeting(person) {
+  const key = visitorIdentityKey(person);
+  if (!key || state.announcedVisitorKey === key) return;
+  state.pendingVisitorGreeting = {
+    key,
+    person,
+    text: buildArrivalGreeting(person),
+  };
+  flushPendingVisitorGreeting();
+}
+
+function flushPendingVisitorGreeting(now = Date.now()) {
+  const pending = state.pendingVisitorGreeting;
+  if (!pending || state.behavior !== "attending" || state.returnPending || !isVisitorPresent(now)) return false;
+  if (isSpeaking(now)) return false;
+  state.pendingVisitorGreeting = null;
+  state.announcedVisitorKey = pending.key;
+  state.lastAttendTalkAt = now;
+  speak(pending.text);
+  return true;
+}
+
+function markVisitorGreetingAnnounced(person) {
+  const key = visitorIdentityKey(person);
+  if (!key) return;
+  state.announcedVisitorKey = key;
+  if (state.pendingVisitorGreeting?.key === key) state.pendingVisitorGreeting = null;
+}
+
+function visitorIdentityKey(person) {
+  if (!person?.name) return "";
+  return `${person.kind || "face"}:${person.name}`;
 }
 
 function timeGreetingWord() {
