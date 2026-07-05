@@ -199,7 +199,9 @@ const FACE_API_SCRIPT_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1
 const FACE_API_MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.15/model";
 // v3: 顔切り出し+拡大照合に変更したため保存キーを更新（旧登録はやり直し）
 const FACE_DB_STORAGE_KEY = "tsunagu-face-db-v3";
-const FACE_MATCH_THRESHOLD = 0.6; // 特徴量どうしの距離がこれ以下なら同一人物とみなす
+const FACE_MATCH_THRESHOLD = 0.5; // 特徴量どうしの距離がこれ以下なら同一人物とみなす（基準値）
+const FACE_MATCH_THRESHOLD_FLOOR = 0.35; // 自動調整で厳しくしすぎない下限
+const FACE_INTER_RATIO = 0.85; // 登録者同士の最小距離に掛ける安全係数
 const FACE_MATCH_MARGIN = 0.07; // 2位（別の登録者）との距離差がこれ未満なら「紛らわしい」ので確定しない
 const FACE_SAMPLE_COUNT = 3; // 登録1回で自動撮影するサンプル数
 const FACE_MAX_SAMPLES = 12; // 1人あたり保存するサンプル数の上限
@@ -294,6 +296,7 @@ const state = {
   currentFallbackAudio: null,
   speechUnlocked: false,
   ttsPrimed: false,
+  faceMatchThreshold: FACE_MATCH_THRESHOLD,
 
   // GLB内蔵アニメーション
   mixer: null,
@@ -381,6 +384,7 @@ function init() {
   setInterval(updateBehavior, 300);
   initHudEvents();
   initSpeechAutoStart();
+  recomputeFaceThreshold();
   startCamera();
 }
 
@@ -1958,6 +1962,26 @@ function saveFaceDb() {
   } catch (error) {
     console.warn("Face DB could not be saved", error);
   }
+  recomputeFaceThreshold();
+}
+
+// 本人判定のしきい値を、登録者同士が混ざらない値へ自動調整する。
+// 2人以上登録されている場合、登録者間の最小距離×0.85 まで厳しくする（下限0.35）。
+function recomputeFaceThreshold() {
+  let threshold = FACE_MATCH_THRESHOLD;
+  for (let i = 0; i < state.faceDb.length; i += 1) {
+    for (let j = i + 1; j < state.faceDb.length; j += 1) {
+      state.faceDb[i].descriptors.forEach((sampleA) => {
+        state.faceDb[j].descriptors.forEach((sampleB) => {
+          threshold = Math.min(threshold, euclideanDistance(sampleA, sampleB) * FACE_INTER_RATIO);
+        });
+      });
+    }
+  }
+  state.faceMatchThreshold = Math.max(FACE_MATCH_THRESHOLD_FLOOR, threshold);
+  if (state.faceDb.length >= 2) {
+    console.info(`[顔照合] 自動しきい値: ${state.faceMatchThreshold.toFixed(3)}（登録${state.faceDb.length}名）`);
+  }
 }
 
 // 顔識別ライブラリ（face-api.js）と学習済みモデルをCDNから遅延読み込みする
@@ -2070,7 +2094,7 @@ function findBestFaceMatch(descriptor) {
 
 // しきい値内で、かつ2位と十分な差があるときだけ「本人」と確定する
 function isFaceMatchAccepted(best) {
-  if (!best || best.distance > FACE_MATCH_THRESHOLD) return false;
+  if (!best || best.distance > state.faceMatchThreshold) return false;
   if (best.runnerUp && best.runnerUp.distance - best.distance < FACE_MATCH_MARGIN) return false;
   return true;
 }
@@ -2173,7 +2197,7 @@ async function identifyVisitor(attempts = 6) {
               ? `（2位: ${best.runnerUp.name} ${best.runnerUp.distance.toFixed(3)}）`
               : "";
             console.info(
-              `[顔照合] 一番近い: ${best.name} 距離${best.distance.toFixed(3)}/${FACE_MATCH_THRESHOLD}${runnerText}`,
+              `[顔照合] 一番近い: ${best.name} 距離${best.distance.toFixed(3)}/${state.faceMatchThreshold.toFixed(2)}${runnerText}`,
             );
             if (isFaceMatchAccepted(best)) {
               if (lastFaceHit === best.name) return { name: best.name, kind: "face" };
@@ -2241,11 +2265,11 @@ function startMatchTestLoop() {
         const best = findBestFaceMatch(descriptor);
         if (best) {
           const accepted = isFaceMatchAccepted(best);
-          const ambiguous = best.distance <= FACE_MATCH_THRESHOLD && !accepted;
+          const ambiguous = best.distance <= state.faceMatchThreshold && !accepted;
           anyMatch = anyMatch || accepted;
           const runnerText = best.runnerUp ? `、2位: ${best.runnerUp.name} ${best.runnerUp.distance.toFixed(2)}` : "";
           parts.push(
-            `顔: ${best.name}（距離 ${best.distance.toFixed(2)} / ${FACE_MATCH_THRESHOLD}${runnerText}）→ ${accepted ? "本人" : ambiguous ? "紛らわしいため保留" : "別人"}`,
+            `顔: ${best.name}（距離 ${best.distance.toFixed(2)} / ${state.faceMatchThreshold.toFixed(2)}${runnerText}）→ ${accepted ? "本人" : ambiguous ? "紛らわしいため保留" : "別人"}`,
           );
         }
       }
