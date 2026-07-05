@@ -2898,18 +2898,33 @@ function normalizeSpeechAudioKey(text) {
 function chooseJapaneseVoice() {
   if (!("speechSynthesis" in window)) return null;
   const voices = window.speechSynthesis.getVoices();
+  const japanese = voices.filter((voice) => voice.lang?.toLowerCase().startsWith("ja"));
+  if (!japanese.length) return null;
+  // ネットワーク音声（Google日本語など）は繰り返し使うと詰まりやすいため、端末内蔵音声を優先する
   return (
-    voices.find((voice) => voice.lang === "ja-JP" && /Kyoko|Otoya|Google|Microsoft|Japanese|日本/i.test(voice.name)) ||
-    voices.find((voice) => voice.lang === "ja-JP") ||
-    voices.find((voice) => voice.lang?.toLowerCase().startsWith("ja")) ||
-    null
+    japanese.find((voice) => voice.localService && /Kyoko|Otoya/i.test(voice.name)) ||
+    japanese.find((voice) => voice.localService) ||
+    japanese.find((voice) => /Kyoko|Otoya|Google|Microsoft|Japanese|日本/i.test(voice.name)) ||
+    japanese[0]
   );
 }
 
 function scheduleSpeechStartCheck(request) {
   state.speechRetryTimer = window.setTimeout(() => {
     if (request.token !== state.speechToken || request.started || request.completed) return;
-    if (window.speechSynthesis.speaking) return;
+    // startイベントが来ていない場合、speaking=true でも実際には鳴っていない
+    // 「Chromeの読み上げ詰まり」の可能性が高い。信用せず強制リセットして再挑戦する。
+    try {
+      window.speechSynthesis.cancel();
+    } catch (error) {
+      console.warn("Speech reset failed", error);
+    }
+    if ((request.attempts || 0) < 2) {
+      // まずはTTSで再挑戦（名前入りのまま読み上げるため）
+      scheduleSpeechRetry(request);
+      return;
+    }
+    // 2回失敗したら録音音声（名前なし汎用でも可）にフォールバック
     if (playFallbackAudioRequest(request, "speech-start-timeout")) return;
     showSoundPrimer();
     scheduleSpeechRetry(request);
