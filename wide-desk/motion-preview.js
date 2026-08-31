@@ -49,6 +49,8 @@ const FACE_PART_URLS = {
   eyeLeftClosed: "../assets/face-parts/eye-left-closed.png",
   eyeRightClosed: "../assets/face-parts/eye-right-closed.png",
   mouthNeutral: "../assets/face-parts/mouth-neutral.png",
+  mouthHalfOpen: "../assets/face-parts/mouth-half-open.png",
+  mouthWideOpen: "../assets/face-parts/mouth-wide-open.png",
 };
 
 const SPEECH_AUDIO_VERSION = "20260831-voicevox-exact-1";
@@ -159,6 +161,8 @@ let faceState = null;
 let nextBlinkAt = performance.now() + 2100;
 let blinkStartedAt = 0;
 let currentSpeechAudio = null;
+let speechRequestId = 0;
+let speakingMouthTimer = null;
 
 new GLTFLoader().load(
   MODEL_URL,
@@ -208,6 +212,7 @@ new GLTFLoader().load(
 controlsElement.addEventListener("click", (event) => {
   const button = event.target.closest("button");
   if (!button || !mixer) return;
+  cancelSpeechSequence(true);
 
   if (button.hasAttribute("data-sequence")) {
     runSequence();
@@ -226,17 +231,29 @@ speechButtonsElement.addEventListener("click", (event) => {
   speakLine(button.dataset.speech, button);
 });
 
-function speakLine(speechKey, button) {
+async function speakLine(speechKey, button) {
   const line = SPEECH_LINES[speechKey];
   if (!line) return;
-
-  if (currentSpeechAudio) {
-    currentSpeechAudio.pause();
-    currentSpeechAudio.currentTime = 0;
-    currentSpeechAudio = null;
+  if (!mixer) {
+    speechStatusElement.textContent = "キャラクターの読み込み完了後にお試しください";
+    return;
   }
-  speechButtonsElement.querySelectorAll("button").forEach((item) => item.classList.remove("is-speaking"));
+
+  cancelSpeechSequence(false);
+  const ownRequest = speechRequestId;
+  sequenceId += 1;
   button.classList.add("is-speaking");
+  speechStatusElement.textContent = posture < 0.98 ? "立ち上がっています…" : line.text;
+
+  if (posture < 0.98) {
+    playMotion("standUp");
+    setActiveButton("standUp");
+    if (!(await waitForSpeech(getMotionDurationMs("standUp") + 90, ownRequest))) return;
+  }
+
+  if (ownRequest !== speechRequestId) return;
+  playMotion("standIdle");
+  setActiveButton("standIdle");
   speechStatusElement.textContent = line.text;
 
   const audio = new Audio(`${line.audio}?v=${SPEECH_AUDIO_VERSION}`);
@@ -246,8 +263,14 @@ function speakLine(speechKey, button) {
 
   const finish = () => {
     button.classList.remove("is-speaking");
-    if (currentSpeechAudio === audio) currentSpeechAudio = null;
+    if (currentSpeechAudio === audio) {
+      currentSpeechAudio = null;
+      stopLipSync();
+      playMotion("standIdle");
+      setActiveButton("standIdle");
+    }
   };
+  audio.addEventListener("playing", startLipSync, { once: true });
   audio.addEventListener("ended", finish, { once: true });
   audio.addEventListener("error", () => {
     finish();
@@ -257,6 +280,24 @@ function speakLine(speechKey, button) {
   audio.play().catch(() => {
     finish();
     speechStatusElement.textContent = "音声を再生できませんでした。もう一度ボタンを押してください。";
+  });
+}
+
+function cancelSpeechSequence(resetStatus) {
+  speechRequestId += 1;
+  if (currentSpeechAudio) {
+    currentSpeechAudio.pause();
+    currentSpeechAudio.currentTime = 0;
+    currentSpeechAudio = null;
+  }
+  stopLipSync();
+  speechButtonsElement.querySelectorAll("button").forEach((button) => button.classList.remove("is-speaking"));
+  if (resetStatus) speechStatusElement.textContent = "再生したいセリフを選んでください";
+}
+
+function waitForSpeech(milliseconds, ownRequest) {
+  return new Promise((resolve) => {
+    window.setTimeout(() => resolve(ownRequest === speechRequestId), milliseconds);
   });
 }
 
@@ -531,12 +572,12 @@ function createFaceLayer(head) {
   layer.renderOrder = 50;
   head.add(layer);
 
-  faceState = { context, texture, assets: {}, blink: "open" };
+  faceState = { context, texture, assets: {}, blink: "open", mouth: "neutral" };
   Promise.all(
     Object.entries(FACE_PART_URLS).map(([key, url]) => loadImage(url).then((image) => [key, image])),
   ).then((entries) => {
     faceState.assets = Object.fromEntries(entries);
-    drawFace("open");
+    drawFace("open", "neutral");
   }).catch((error) => console.warn("顔パーツの読み込みに失敗しました", error));
 }
 
@@ -549,9 +590,10 @@ function loadImage(url) {
   });
 }
 
-function drawFace(blink) {
+function drawFace(blink, mouth = faceState?.mouth || "neutral") {
   if (!faceState || Object.keys(faceState.assets).length === 0) return;
   faceState.blink = blink;
+  faceState.mouth = mouth;
   const { context: ctx, texture, assets } = faceState;
   ctx.clearRect(0, 0, 512, 512);
 
@@ -564,9 +606,32 @@ function drawFace(blink) {
   const rightEye = isClosed ? assets.eyeRightClosed : isHalf ? assets.eyeRightHalf : assets.eyeRightOpen;
   drawImageContain(ctx, leftEye, 45, eyeY, eyeWidth, eyeHeight);
   drawImageContain(ctx, rightEye, 299, eyeY, eyeWidth, eyeHeight);
-  // 口だけを少し上へ寄せ、目の位置は変えない。
-  drawImageContain(ctx, assets.mouthNeutral, 180, 370, 115, 54);
+  const mouthImage = mouth === "wide"
+    ? assets.mouthWideOpen
+    : mouth === "half"
+      ? assets.mouthHalfOpen
+      : assets.mouthNeutral;
+  const mouthY = mouth === "neutral" ? 370 : mouth === "wide" ? 354 : 360;
+  const mouthHeight = mouth === "neutral" ? 54 : mouth === "wide" ? 76 : 66;
+  drawImageContain(ctx, mouthImage, 180, mouthY, 115, mouthHeight);
   texture.needsUpdate = true;
+}
+
+function startLipSync() {
+  stopLipSync();
+  const mouthFrames = ["half", "wide", "half", "neutral"];
+  let frameIndex = 0;
+  speakingMouthTimer = window.setInterval(() => {
+    if (!faceState) return;
+    drawFace(faceState.blink, mouthFrames[frameIndex % mouthFrames.length]);
+    frameIndex += 1;
+  }, 115);
+}
+
+function stopLipSync() {
+  if (speakingMouthTimer) window.clearInterval(speakingMouthTimer);
+  speakingMouthTimer = null;
+  if (faceState) drawFace(faceState.blink, "neutral");
 }
 
 function drawImageContain(ctx, image, x, y, width, height) {
@@ -584,7 +649,7 @@ function updateBlink(now) {
 
   const elapsed = now - blinkStartedAt;
   const nextFrame = elapsed < 70 ? "half" : elapsed < 150 ? "closed" : elapsed < 220 ? "half" : "open";
-  if (nextFrame !== faceState.blink) drawFace(nextFrame);
+  if (nextFrame !== faceState.blink) drawFace(nextFrame, faceState.mouth);
   if (elapsed >= 230) {
     blinkStartedAt = 0;
     nextBlinkAt = now + 2300 + Math.random() * 2300;
@@ -610,11 +675,13 @@ requestAnimationFrame(animate);
 
 window.playMotion = (motionKey) => {
   if (!MOTIONS[motionKey] || !mixer) return false;
+  cancelSpeechSequence(true);
   sequenceId += 1;
   playManualMotion(motionKey);
   return true;
 };
 window.playMotionSequence = () => {
+  cancelSpeechSequence(true);
   runSequence();
   return true;
 };
