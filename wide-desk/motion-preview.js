@@ -5,10 +5,6 @@ const MODEL_URL = "../blender/tsunagu-reception-actions-20260826.glb?v=20260831-
 const MODEL_FRONT_Y = -Math.PI / 2 + 0.03;
 const SEATED_Y = -0.3;
 const SEATED_Z = -0.08;
-const FACE_CONFIRM_MS = 600;
-const FACE_LOST_MS = 5000;
-const TEST_VISITOR_MS = 10000;
-const DETECT_INTERVAL_MS = 160;
 
 const MOTIONS = {
   deskWork: {
@@ -88,13 +84,6 @@ const loadingElement = document.querySelector("#loading");
 const loadingDetail = document.querySelector("#loadingDetail");
 const speechButtonsElement = document.querySelector("#speechButtons");
 const speechStatusElement = document.querySelector("#speechStatus");
-const cameraViewElement = document.querySelector("#cameraView");
-const cameraPreviewElement = document.querySelector("#cameraPreview");
-const cameraFaceMarkElement = document.querySelector("#cameraFaceMark");
-const cameraStatusElement = document.querySelector("#cameraStatus");
-const visitorStatusElement = document.querySelector("#visitorStatus");
-const cameraToggleElement = document.querySelector("#cameraToggle");
-const visitorTestElement = document.querySelector("#visitorTest");
 
 const scene = new THREE.Scene();
 scene.background = null;
@@ -173,17 +162,6 @@ let blinkStartedAt = 0;
 let currentSpeechAudio = null;
 let speechRequestId = 0;
 let speakingMouthTimer = null;
-let cameraStream = null;
-let faceDetector = null;
-let detectorFailed = false;
-let detectTimer = null;
-let sensorBehaviorTimer = null;
-let faceVisible = false;
-let faceFirstSeenAt = 0;
-let faceLastSeenAt = 0;
-let testVisitorUntil = 0;
-let sensorAttending = false;
-let sensorAutomationActive = false;
 
 new GLTFLoader().load(
   MODEL_URL,
@@ -213,8 +191,7 @@ new GLTFLoader().load(
       }]),
     );
 
-    playMotion("deskWork");
-    setActiveButton("deskWork");
+    runSequence();
   },
   (event) => {
     if (!event.total) {
@@ -253,14 +230,7 @@ speechButtonsElement.addEventListener("click", (event) => {
   speakLine(button.dataset.speech, button);
 });
 
-cameraToggleElement.addEventListener("click", () => {
-  if (cameraStream) stopCamera();
-  else startCamera();
-});
-
-visitorTestElement.addEventListener("click", triggerVisitorTest);
-
-async function speakLine(speechKey, button = null, { onFinish = null } = {}) {
+async function speakLine(speechKey, button) {
   const line = SPEECH_LINES[speechKey];
   if (!line) return;
   if (!mixer) {
@@ -271,7 +241,7 @@ async function speakLine(speechKey, button = null, { onFinish = null } = {}) {
   cancelSpeechSequence(false);
   const ownRequest = speechRequestId;
   sequenceId += 1;
-  button?.classList.add("is-speaking");
+  button.classList.add("is-speaking");
   speechStatusElement.textContent = posture < 0.98 ? "立ち上がっています…" : line.text;
 
   if (posture < 0.98) {
@@ -290,18 +260,14 @@ async function speakLine(speechKey, button = null, { onFinish = null } = {}) {
   audio.volume = 1;
   currentSpeechAudio = audio;
 
-  let finished = false;
   const finish = () => {
-    if (finished) return;
-    finished = true;
-    button?.classList.remove("is-speaking");
+    button.classList.remove("is-speaking");
     if (currentSpeechAudio === audio) {
       currentSpeechAudio = null;
       stopLipSync();
       playMotion("standIdle");
       setActiveButton("standIdle");
     }
-    onFinish?.();
   };
   audio.addEventListener("playing", startLipSync, { once: true });
   audio.addEventListener("ended", finish, { once: true });
@@ -688,234 +654,6 @@ function updateBlink(now) {
     nextBlinkAt = now + 2300 + Math.random() * 2300;
   }
 }
-
-// ============================================================
-// 来客センサー（カメラ + MediaPipe顔検出）
-// ============================================================
-
-async function startCamera() {
-  if (!navigator.mediaDevices?.getUserMedia) {
-    cameraStatusElement.textContent = "このブラウザはカメラ非対応";
-    cameraToggleElement.disabled = true;
-    return;
-  }
-  if (cameraStream) return;
-
-  try {
-    cameraStatusElement.textContent = "カメラ起動中…";
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
-      audio: false,
-    });
-    cameraStream = stream;
-    cameraPreviewElement.srcObject = stream;
-    await cameraPreviewElement.play().catch(() => {});
-    cameraStatusElement.textContent = "カメラ動作中";
-    cameraToggleElement.textContent = "カメラ停止";
-    await ensureFaceDetector();
-    startDetectionLoop();
-  } catch (error) {
-    console.warn("Camera start failed", error);
-    cameraStatusElement.textContent = error?.name === "NotAllowedError"
-      ? "カメラ許可がありません"
-      : "カメラを起動できません";
-    cameraToggleElement.textContent = "カメラ開始";
-  }
-}
-
-function stopCamera({ resetCharacter = true } = {}) {
-  stopDetectionLoop();
-  if (cameraStream) cameraStream.getTracks().forEach((track) => track.stop());
-  cameraStream = null;
-  cameraPreviewElement.srcObject = null;
-  faceVisible = false;
-  testVisitorUntil = 0;
-  cameraStatusElement.textContent = "カメラ停止中";
-  cameraToggleElement.textContent = "カメラ開始";
-  visitorStatusElement.textContent = "来客なし";
-  cameraViewElement.classList.remove("is-detecting");
-  cameraFaceMarkElement.hidden = true;
-  if (resetCharacter) resetSensorCharacter();
-}
-
-async function ensureFaceDetector() {
-  if (faceDetector || detectorFailed) return;
-  try {
-    cameraStatusElement.textContent = "顔検出を準備中…";
-    const vision = await import(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs"
-    );
-    const fileset = await vision.FilesetResolver.forVisionTasks(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm",
-    );
-    faceDetector = await vision.FaceDetector.createFromOptions(fileset, {
-      baseOptions: {
-        modelAssetPath:
-          "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite",
-        delegate: "GPU",
-      },
-      runningMode: "VIDEO",
-      minDetectionConfidence: 0.5,
-    });
-    cameraStatusElement.textContent = "カメラ動作中（顔検出あり）";
-  } catch (error) {
-    console.warn("Face detector failed to load", error);
-    detectorFailed = true;
-    cameraStatusElement.textContent = "顔検出を読み込めません（検知テスト利用可）";
-  }
-}
-
-function startDetectionLoop() {
-  stopDetectionLoop();
-  if (!faceDetector) return;
-  detectTimer = window.setInterval(() => {
-    if (!faceDetector || !cameraStream) return;
-    if (cameraPreviewElement.readyState < 2 || !cameraPreviewElement.videoWidth) return;
-    try {
-      const result = faceDetector.detectForVideo(cameraPreviewElement, performance.now());
-      updateFacePresence(result?.detections?.length || 0);
-    } catch (error) {
-      console.warn("Face detection error", error);
-    }
-  }, DETECT_INTERVAL_MS);
-}
-
-function stopDetectionLoop() {
-  if (!detectTimer) return;
-  window.clearInterval(detectTimer);
-  detectTimer = null;
-}
-
-function updateFacePresence(faceCount) {
-  const now = Date.now();
-  const visible = faceCount > 0;
-  if (visible) {
-    if (!faceVisible) faceFirstSeenAt = now;
-    faceLastSeenAt = now;
-  }
-  faceVisible = visible;
-  cameraViewElement.classList.toggle("is-detecting", visible || testVisitorUntil > now);
-  cameraFaceMarkElement.hidden = !(visible || testVisitorUntil > now);
-  visitorStatusElement.textContent = visible
-    ? faceCount > 1
-      ? `${faceCount}名 いらっしゃいます`
-      : "お客さまを検知しました"
-    : sensorAttending
-      ? "来客を確認中…"
-      : "来客なし";
-}
-
-function startSensorBehaviorLoop() {
-  if (sensorBehaviorTimer) return;
-  sensorBehaviorTimer = window.setInterval(updateSensorBehavior, 250);
-}
-
-function updateSensorBehavior() {
-  if (!mixer) return;
-  const now = Date.now();
-  const testVisitorPresent = testVisitorUntil > now;
-  if (testVisitorPresent) {
-    faceLastSeenAt = now;
-    cameraViewElement.classList.add("is-detecting");
-    cameraFaceMarkElement.hidden = false;
-  } else if (testVisitorUntil > 0) {
-    testVisitorUntil = 0;
-    if (!faceVisible) {
-      cameraViewElement.classList.remove("is-detecting");
-      cameraFaceMarkElement.hidden = true;
-    }
-  }
-
-  const visitorPresent = faceVisible || testVisitorPresent;
-  if (visitorPresent && !sensorAttending) {
-    const confirmed = testVisitorPresent || now - faceFirstSeenAt >= FACE_CONFIRM_MS;
-    if (confirmed) {
-      sensorAttending = true;
-      beginSensorGreeting();
-    }
-    return;
-  }
-
-  if (!visitorPresent && sensorAttending && now - faceLastSeenAt > FACE_LOST_MS) {
-    sensorAttending = false;
-    beginSensorReturn();
-  }
-}
-
-function beginSensorGreeting() {
-  if (!mixer) return;
-  sensorAutomationActive = true;
-  visitorStatusElement.textContent = "お客さまへご挨拶中";
-  speakLine("welcome", null);
-}
-
-function beginSensorReturn() {
-  if (!mixer || !sensorAutomationActive) return;
-  visitorStatusElement.textContent = "お見送り中";
-  speakLine("goodbye", null, { onFinish: runSensorSitDown });
-}
-
-function runSensorSitDown() {
-  if (!mixer) return;
-  if (isSensorVisitorPresent()) {
-    sensorAttending = true;
-    beginSensorGreeting();
-    return;
-  }
-
-  const ownSequence = ++sequenceId;
-  playMotion("bow");
-  setActiveButton("bow");
-  window.setTimeout(() => {
-    if (ownSequence !== sequenceId || isSensorVisitorPresent()) return;
-    playMotion("sitDown");
-    setActiveButton("sitDown");
-    window.setTimeout(() => {
-      if (ownSequence !== sequenceId || isSensorVisitorPresent()) return;
-      playMotion("deskWork");
-      setActiveButton("deskWork");
-      sensorAutomationActive = false;
-      visitorStatusElement.textContent = "来客なし";
-      speechStatusElement.textContent = "再生したいセリフを選んでください";
-    }, getMotionDurationMs("sitDown") + 100);
-  }, getMotionDurationMs("bow") + 250);
-}
-
-function resetSensorCharacter() {
-  const shouldSitDown = sensorAutomationActive && mixer && posture > 0.02;
-  sensorAttending = false;
-  sensorAutomationActive = false;
-  cancelSpeechSequence(false);
-  const ownSequence = ++sequenceId;
-  if (!shouldSitDown) return;
-  playMotion("sitDown");
-  setActiveButton("sitDown");
-  window.setTimeout(() => {
-    if (ownSequence !== sequenceId) return;
-    playMotion("deskWork");
-    setActiveButton("deskWork");
-    speechStatusElement.textContent = "再生したいセリフを選んでください";
-  }, getMotionDurationMs("sitDown") + 100);
-}
-
-function triggerVisitorTest() {
-  const now = Date.now();
-  testVisitorUntil = now + TEST_VISITOR_MS;
-  faceFirstSeenAt = now;
-  faceLastSeenAt = now;
-  visitorStatusElement.textContent = "来客テスト中";
-  cameraViewElement.classList.add("is-detecting");
-  cameraFaceMarkElement.hidden = false;
-  updateSensorBehavior();
-}
-
-function isSensorVisitorPresent(now = Date.now()) {
-  return faceVisible || testVisitorUntil > now;
-}
-
-startSensorBehaviorLoop();
-startCamera();
-window.addEventListener("pagehide", () => stopCamera({ resetCharacter: false }), { once: true });
 
 window.addEventListener("resize", () => {
   updateCameraLayout();

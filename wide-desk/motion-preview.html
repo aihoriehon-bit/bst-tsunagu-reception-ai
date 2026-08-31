@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>つなぐちゃん 動きだけ確認</title>
-    <link rel="stylesheet" href="./motion-preview.css?v=20260831-camera-sensor-1" />
+    <link rel="stylesheet" href="./motion-preview.css?v=20260831-responsive-1" />
   </head>
   <body>
     <main class="preview-stage">
@@ -17,23 +17,6 @@
         </div>
         <p class="hint">正面固定</p>
       </header>
-
-      <section class="camera-panel" aria-label="来客センサーカメラ">
-        <div id="cameraView" class="camera-view">
-          <video id="cameraPreview" autoplay muted playsinline></video>
-          <span id="cameraFaceMark" class="camera-face-mark" hidden>●</span>
-        </div>
-        <div class="camera-info">
-          <strong>来客センサー</strong>
-          <span id="cameraStatus">カメラ起動中…</span>
-          <span id="visitorStatus">来客なし</span>
-        </div>
-        <div class="camera-buttons">
-          <button id="cameraToggle" type="button">カメラ停止</button>
-          <button id="visitorTest" type="button">検知テスト</button>
-        </div>
-        <p class="camera-note">映像は来客検知のみに使用し、保存・送信しません。</p>
-      </section>
 
       <aside class="speech-panel" aria-label="セリフの音声テスト">
         <div class="speech-heading">
@@ -79,6 +62,6 @@
         }
       }
     </script>
-    <script type="module" src="./motion-preview.js?v=20260831-camera-sensor-1"></script>
+    <script type="module" src="./motion-preview.js?v=20260831-responsive-1"></script>
   </body>
 </html>
