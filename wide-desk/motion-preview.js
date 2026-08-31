@@ -90,8 +90,7 @@ scene.background = null;
 scene.fog = new THREE.Fog(0xdce8e6, 4.8, 8.5);
 
 const camera = new THREE.PerspectiveCamera(32, window.innerWidth / window.innerHeight, 0.01, 50);
-camera.position.set(0, 1.35, 4.1);
-camera.lookAt(0, 0.82, -0.32);
+updateCameraLayout();
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -657,10 +656,18 @@ function updateBlink(now) {
 }
 
 window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
+  updateCameraLayout();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+function updateCameraLayout() {
+  const compactLandscape = window.innerHeight <= 560 && window.innerWidth > window.innerHeight;
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.fov = 32;
+  camera.position.set(0, 1.35, compactLandscape ? 3.05 : 4.1);
+  camera.lookAt(0, compactLandscape ? 0.86 : 0.82, -0.32);
+  camera.updateProjectionMatrix();
+}
 
 const clock = new THREE.Clock();
 function animate(now) {
