@@ -53,14 +53,14 @@ const FACE_PART_URLS = {
   mouthWideOpen: "../assets/face-parts/mouth-wide-open.png",
 };
 
-const SPEECH_AUDIO_VERSION = "20260831-voicevox-exact-1";
+const SPEECH_AUDIO_VERSION = "20260831-voicevox-stationary-1";
 const SPEECH_LINES = {
   welcome: {
-    text: "いらっしゃいませ。すぐに伺いますね。",
+    text: "いらっしゃいませ。こちらでご用件をお伺いいたします。",
     audio: "../assets/motion-preview/audio/approach.wav",
   },
   morning: {
-    text: "おはようございます。お待たせしました。有限会社ビジネスシステム通信、受付AIのつなぐです。恐れ入りますが、お名前とご用件をお聞かせいただけますか？",
+    text: "有限会社ビジネスシステム通信、受付AIのつなぐです。恐れ入りますが、お名前とご用件をお聞かせいただけますか？",
     audio: "../assets/motion-preview/audio/arrival-ohayo.wav",
   },
   visitor: {
@@ -68,11 +68,11 @@ const SPEECH_LINES = {
     audio: "../assets/motion-preview/audio/known-visitor.wav",
   },
   calling: {
-    text: "いつもお疲れさまです。お荷物をお預かりします。担当者をお呼びしますので、こちらで少々お待ちください。",
+    text: "いつもお疲れさまです。担当者をお呼びしますので、そのまま少々お待ちください。",
     audio: "../assets/motion-preview/audio/clothing-visitor.wav",
   },
   goodbye: {
-    text: "ありがとうございました。どうぞお気をつけてお帰りください。それでは、デスクに戻りますね。",
+    text: "ありがとうございました。どうぞお気をつけてお帰りください。",
     audio: "../assets/motion-preview/audio/return-to-work.wav",
   },
 };
