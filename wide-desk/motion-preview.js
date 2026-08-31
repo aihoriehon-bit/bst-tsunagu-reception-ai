@@ -549,7 +549,8 @@ function drawFace(blink) {
   const rightEye = isClosed ? assets.eyeRightClosed : isHalf ? assets.eyeRightHalf : assets.eyeRightOpen;
   drawImageContain(ctx, leftEye, 45, eyeY, eyeWidth, eyeHeight);
   drawImageContain(ctx, rightEye, 299, eyeY, eyeWidth, eyeHeight);
-  drawImageContain(ctx, assets.mouthNeutral, 180, 384, 115, 54);
+  // 口だけを少し上へ寄せ、目の位置は変えない。
+  drawImageContain(ctx, assets.mouthNeutral, 180, 370, 115, 54);
   texture.needsUpdate = true;
 }
 
