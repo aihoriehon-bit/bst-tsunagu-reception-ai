@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 const MODEL_URL = "../blender/tsunagu-reception-actions-20260826.glb?v=20260831-pc-gaze-1";
 const MODEL_FRONT_Y = -Math.PI / 2 + 0.03;
@@ -52,11 +51,21 @@ const FACE_PART_URLS = {
   mouthNeutral: "../assets/face-parts/mouth-neutral.png",
 };
 
+const SPEECH_LINES = {
+  welcome: "いらっしゃいませ。受付AIのつなぐです。本日はどのようなご用件でしょうか。",
+  visitor: "こんにちは。ご来訪ありがとうございます。お名前とご用件をお聞かせください。",
+  calling: "担当者をお呼びいたします。恐れ入りますが、そのまま少々お待ちください。",
+  checking: "ただいま確認しております。もう少々お待ちください。",
+  goodbye: "本日はお越しいただき、ありがとうございました。お気をつけてお帰りください。",
+};
+
 const sceneElement = document.querySelector("#scene");
 const actionLabel = document.querySelector("#actionLabel");
 const controlsElement = document.querySelector("#controls");
 const loadingElement = document.querySelector("#loading");
 const loadingDetail = document.querySelector("#loadingDetail");
+const speechButtonsElement = document.querySelector("#speechButtons");
+const speechStatusElement = document.querySelector("#speechStatus");
 
 const scene = new THREE.Scene();
 scene.background = null;
@@ -64,6 +73,7 @@ scene.fog = new THREE.Fog(0xdce8e6, 4.8, 8.5);
 
 const camera = new THREE.PerspectiveCamera(32, window.innerWidth / window.innerHeight, 0.01, 50);
 camera.position.set(2.25, 1.35, 3.45);
+camera.lookAt(0, 0.82, -0.32);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -74,17 +84,6 @@ renderer.toneMappingExposure = 1.12;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 sceneElement.appendChild(renderer.domElement);
-
-const orbit = new OrbitControls(camera, renderer.domElement);
-orbit.target.set(0, 0.82, -0.32);
-orbit.enableDamping = true;
-orbit.dampingFactor = 0.08;
-orbit.enablePan = false;
-orbit.minDistance = 2.35;
-orbit.maxDistance = 5.2;
-orbit.minPolarAngle = Math.PI * 0.25;
-orbit.maxPolarAngle = Math.PI * 0.54;
-orbit.update();
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x8ba09c, 2.5));
 const keyLight = new THREE.DirectionalLight(0xffffff, 3.2);
@@ -203,6 +202,48 @@ controlsElement.addEventListener("click", (event) => {
   sequenceId += 1;
   playManualMotion(motionKey);
 });
+
+speechButtonsElement.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-speech]");
+  if (!button) return;
+  speakLine(button.dataset.speech, button);
+});
+
+function speakLine(speechKey, button) {
+  const text = SPEECH_LINES[speechKey];
+  if (!text) return;
+
+  if (!("speechSynthesis" in window)) {
+    speechStatusElement.textContent = "このブラウザでは音声を再生できません";
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+  speechButtonsElement.querySelectorAll("button").forEach((item) => item.classList.remove("is-speaking"));
+  button.classList.add("is-speaking");
+  speechStatusElement.textContent = text;
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "ja-JP";
+  utterance.rate = 0.96;
+  utterance.pitch = 1.06;
+  utterance.volume = 1;
+
+  const japaneseVoice = window.speechSynthesis
+    .getVoices()
+    .find((voice) => voice.lang.toLowerCase().startsWith("ja"));
+  if (japaneseVoice) utterance.voice = japaneseVoice;
+
+  const finish = () => button.classList.remove("is-speaking");
+  utterance.addEventListener("end", finish, { once: true });
+  utterance.addEventListener("error", (event) => {
+    finish();
+    if (event.error !== "canceled" && event.error !== "interrupted") {
+      speechStatusElement.textContent = "音声を再生できませんでした";
+    }
+  }, { once: true });
+  window.speechSynthesis.speak(utterance);
+}
 
 async function runSequence() {
   if (!mixer) return;
@@ -547,7 +588,6 @@ function animate(now) {
   if (mixer) mixer.update(delta);
   updatePosture(now);
   updateBlink(now);
-  orbit.update();
   renderer.render(scene, camera);
 }
 requestAnimationFrame(animate);

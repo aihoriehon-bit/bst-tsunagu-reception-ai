@@ -41,11 +41,7 @@ button {
 }
 
 .scene canvas {
-  cursor: grab;
-}
-
-.scene canvas:active {
-  cursor: grabbing;
+  cursor: default;
 }
 
 .preview-header {
@@ -85,6 +81,83 @@ h1 {
   font-size: 12px;
   font-weight: 700;
   backdrop-filter: blur(10px);
+}
+
+.speech-panel {
+  position: fixed;
+  z-index: 8;
+  top: 104px;
+  left: 28px;
+  width: min(310px, calc(100vw - 56px));
+  padding: 13px;
+  border: 1px solid rgba(40, 80, 86, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 12px 34px rgba(26, 69, 75, 0.12);
+  backdrop-filter: blur(16px);
+}
+
+.speech-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 9px;
+}
+
+.speech-heading strong {
+  color: #214d54;
+  font-size: 13px;
+}
+
+.speech-heading span {
+  color: #66858a;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.speech-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.speech-buttons button {
+  min-height: 38px;
+  padding: 7px 9px;
+  border: 1px solid rgba(39, 95, 102, 0.14);
+  border-radius: 10px;
+  background: rgba(245, 250, 249, 0.94);
+  color: #31565d;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.25;
+  cursor: pointer;
+  transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.speech-buttons button:hover {
+  background: #e7f2f0;
+  color: #164d56;
+}
+
+.speech-buttons button:active {
+  transform: translateY(1px);
+}
+
+.speech-buttons button.is-speaking {
+  border-color: #1d6670;
+  background: #1d6670;
+  color: #fff;
+}
+
+.speech-status {
+  min-height: 2.8em;
+  margin: 9px 2px 0;
+  color: #58777c;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 .controls {
@@ -213,6 +286,17 @@ h1 {
     display: none;
   }
 
+  .speech-panel {
+    top: 86px;
+    left: 18px;
+    width: min(290px, calc(100vw - 36px));
+    padding: 10px;
+  }
+
+  .speech-status {
+    display: none;
+  }
+
   .controls {
     bottom: 14px;
     justify-content: flex-start;
@@ -229,6 +313,7 @@ h1 {
 
 @media (prefers-reduced-motion: reduce) {
   .controls button,
+  .speech-buttons button,
   .loading {
     transition: none;
   }

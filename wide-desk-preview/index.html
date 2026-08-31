@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>つなぐちゃん 受付動作プレビュー</title>
-    <link rel="stylesheet" href="../wide-desk/motion-preview.css?v=20260831-bg-1" />
+    <link rel="stylesheet" href="../wide-desk/motion-preview.css?v=20260831-speech-1" />
   </head>
   <body>
     <main class="preview-stage">
@@ -15,8 +15,23 @@
           <p class="eyebrow">動きだけ確認</p>
           <h1 id="actionLabel">読み込み中…</h1>
         </div>
-        <p class="hint">ドラッグで角度変更・ホイールで拡大</p>
+        <p class="hint">視点固定</p>
       </header>
+
+      <aside class="speech-panel" aria-label="セリフの音声テスト">
+        <div class="speech-heading">
+          <strong>セリフテスト</strong>
+          <span>ボタンで音声再生</span>
+        </div>
+        <div id="speechButtons" class="speech-buttons">
+          <button type="button" data-speech="welcome">受付のご挨拶</button>
+          <button type="button" data-speech="visitor">お名前・ご用件</button>
+          <button type="button" data-speech="calling">担当者を呼ぶ</button>
+          <button type="button" data-speech="checking">確認中のご案内</button>
+          <button type="button" data-speech="goodbye">お見送り</button>
+        </div>
+        <p id="speechStatus" class="speech-status" aria-live="polite">再生したいセリフを選んでください</p>
+      </aside>
 
       <section id="controls" class="controls" aria-label="動作選択">
         <button class="sequence-button is-active" type="button" data-sequence>
@@ -46,6 +61,6 @@
         }
       }
     </script>
-    <script type="module" src="../wide-desk/motion-preview.js?v=20260831-pc-gaze-1"></script>
+    <script type="module" src="../wide-desk/motion-preview.js?v=20260831-speech-1"></script>
   </body>
 </html>
