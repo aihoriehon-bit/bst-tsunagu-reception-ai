@@ -84,6 +84,111 @@ h1 {
   backdrop-filter: blur(10px);
 }
 
+.camera-panel {
+  position: fixed;
+  z-index: 8;
+  top: 88px;
+  right: 28px;
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 8px 10px;
+  width: min(300px, calc(100vw - 56px));
+  padding: 10px;
+  border: 1px solid rgba(40, 80, 86, 0.14);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 12px 34px rgba(26, 69, 75, 0.13);
+  color: #31565d;
+  backdrop-filter: blur(16px);
+}
+
+.camera-view {
+  position: relative;
+  width: 76px;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 2px solid rgba(39, 95, 102, 0.2);
+  border-radius: 10px;
+  background: #17343a;
+}
+
+.camera-view.is-detecting {
+  border-color: #20a47d;
+  box-shadow: 0 0 0 3px rgba(32, 164, 125, 0.14);
+}
+
+.camera-view video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.camera-face-mark {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  color: #32d39f;
+  font-size: 11px;
+  text-shadow: 0 0 5px rgba(50, 211, 159, 0.75);
+}
+
+.camera-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+.camera-info strong {
+  color: #214d54;
+  font-size: 12px;
+}
+
+#cameraStatus {
+  color: #66858a;
+}
+
+#visitorStatus {
+  color: #b36321;
+  font-weight: 800;
+}
+
+.camera-buttons {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.camera-buttons button {
+  min-height: 34px;
+  padding: 5px 8px;
+  border: 1px solid rgba(39, 95, 102, 0.18);
+  border-radius: 9px;
+  background: rgba(238, 247, 245, 0.96);
+  color: #31565d;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.camera-buttons button:hover {
+  background: #dcefeb;
+  color: #164d56;
+}
+
+.camera-note {
+  grid-column: 1 / -1;
+  margin: -1px 1px 0;
+  color: rgba(73, 104, 109, 0.74);
+  font-size: 8px;
+  line-height: 1.35;
+}
+
 .speech-panel {
   position: fixed;
   z-index: 8;
@@ -312,6 +417,44 @@ h1 {
     font-size: clamp(20px, 6vw, 26px);
   }
 
+  .camera-panel {
+    top: max(10px, env(safe-area-inset-top));
+    right: 10px;
+    grid-template-columns: 54px minmax(0, 1fr);
+    gap: 5px 7px;
+    width: min(246px, calc(100vw - 112px));
+    padding: 7px;
+    border-radius: 12px;
+  }
+
+  .camera-view {
+    width: 54px;
+    border-radius: 8px;
+  }
+
+  .camera-info {
+    gap: 1px;
+    font-size: 8px;
+  }
+
+  .camera-info strong {
+    font-size: 10px;
+  }
+
+  .camera-buttons {
+    gap: 5px;
+  }
+
+  .camera-buttons button {
+    min-height: 28px;
+    padding: 3px 5px;
+    font-size: 8px;
+  }
+
+  .camera-note {
+    display: none;
+  }
+
   .speech-panel {
     top: auto;
     right: 10px;
@@ -388,7 +531,7 @@ h1 {
   }
 
   .preview-header {
-    inset: max(10px, env(safe-area-inset-top)) auto auto 12px;
+    display: none;
   }
 
   .preview-header .eyebrow,
@@ -399,6 +542,38 @@ h1 {
 
   h1 {
     font-size: 18px;
+  }
+
+  .camera-panel {
+    top: max(10px, env(safe-area-inset-top));
+    right: auto;
+    left: max(10px, env(safe-area-inset-left));
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 5px 7px;
+    width: min(280px, 44vw);
+    padding: 8px;
+    border-radius: 12px;
+  }
+
+  .camera-view {
+    width: 64px;
+  }
+
+  .camera-info {
+    font-size: 8px;
+  }
+
+  .camera-info strong {
+    font-size: 10px;
+  }
+
+  .camera-buttons button {
+    min-height: 28px;
+    font-size: 8px;
+  }
+
+  .camera-note {
+    display: none;
   }
 
   .speech-panel {
