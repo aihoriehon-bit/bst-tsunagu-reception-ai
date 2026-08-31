@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>つなぐちゃん 動きだけ確認</title>
+    <link rel="stylesheet" href="./motion-preview.css?v=20260831-bg-1" />
+  </head>
+  <body>
+    <main class="preview-stage">
+      <div id="scene" class="scene" aria-label="受付キャラクターの動作確認"></div>
+
+      <header class="preview-header">
+        <div>
+          <p class="eyebrow">動きだけ確認</p>
+          <h1 id="actionLabel">読み込み中…</h1>
+        </div>
+        <p class="hint">ドラッグで角度変更・ホイールで拡大</p>
+      </header>
+
+      <section id="controls" class="controls" aria-label="動作選択">
+        <button class="sequence-button is-active" type="button" data-sequence>
+          <span class="play-mark">▶</span>
+          一連再生
+        </button>
+        <div class="divider" aria-hidden="true"></div>
+        <button type="button" data-action="deskWork">PC作業</button>
+        <button type="button" data-action="standUp">立ち上がり</button>
+        <button type="button" data-action="standIdle">立ち待機</button>
+        <button type="button" data-action="bow">お辞儀</button>
+        <button type="button" data-action="sitDown">座り直し</button>
+      </section>
+
+      <div id="loading" class="loading" role="status">
+        <div class="loader" aria-hidden="true"></div>
+        <strong>キャラクターを読み込んでいます</strong>
+        <span id="loadingDetail">0%</span>
+      </div>
+    </main>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.165.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.165.0/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module" src="./motion-preview.js?v=20260831-pc-gaze-1"></script>
+  </body>
+</html>

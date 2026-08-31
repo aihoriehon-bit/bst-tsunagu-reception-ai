@@ -1,0 +1,235 @@
+:root {
+  color-scheme: light;
+  font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+  background: #edf3f2;
+  color: #17343a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+}
+
+.preview-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 480px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(245, 249, 248, 0.2), rgba(224, 235, 232, 0.32)),
+    url("../assets/motion-preview/reception-office-background-20260831.png") center center / cover no-repeat,
+    #e7efed;
+}
+
+.scene,
+.scene canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.scene canvas {
+  cursor: grab;
+}
+
+.scene canvas:active {
+  cursor: grabbing;
+}
+
+.preview-header {
+  position: fixed;
+  z-index: 5;
+  inset: 24px 28px auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  pointer-events: none;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: #498088;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+h1 {
+  margin: 0;
+  color: #173d44;
+  font-size: clamp(22px, 2.6vw, 34px);
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+}
+
+.hint {
+  margin: 2px 0 0;
+  padding: 8px 12px;
+  border: 1px solid rgba(48, 94, 100, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  color: #55747a;
+  font-size: 12px;
+  font-weight: 700;
+  backdrop-filter: blur(10px);
+}
+
+.controls {
+  position: fixed;
+  z-index: 8;
+  left: 50%;
+  bottom: 22px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: max-content;
+  max-width: calc(100vw - 28px);
+  padding: 8px;
+  border: 1px solid rgba(40, 80, 86, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 14px 45px rgba(26, 69, 75, 0.15);
+  transform: translateX(-50%);
+  backdrop-filter: blur(18px);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.controls::-webkit-scrollbar {
+  display: none;
+}
+
+.controls button {
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: #31565d;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.controls button:hover {
+  background: #ecf4f3;
+  color: #164d56;
+}
+
+.controls button:active {
+  transform: translateY(1px);
+}
+
+.controls button.is-active {
+  background: #1d6670;
+  color: #fff;
+  box-shadow: 0 7px 16px rgba(29, 102, 112, 0.22);
+}
+
+.sequence-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.play-mark {
+  font-size: 10px;
+}
+
+.divider {
+  width: 1px;
+  height: 28px;
+  margin: 0 2px;
+  background: rgba(42, 86, 92, 0.15);
+}
+
+.loading {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(237, 244, 243, 0.9);
+  color: #244d54;
+  transition: opacity 380ms ease, visibility 380ms ease;
+  backdrop-filter: blur(8px);
+}
+
+.loading.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.loading strong {
+  margin-top: 6px;
+  font-size: 15px;
+}
+
+.loading span {
+  color: #66858a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.loader {
+  width: 34px;
+  height: 34px;
+  border: 3px solid rgba(32, 103, 112, 0.16);
+  border-top-color: #206770;
+  border-radius: 50%;
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 720px) {
+  .preview-header {
+    inset: 18px 18px auto;
+  }
+
+  .hint {
+    display: none;
+  }
+
+  .controls {
+    bottom: 14px;
+    justify-content: flex-start;
+    max-width: calc(100vw - 20px);
+    border-radius: 15px;
+  }
+
+  .controls button {
+    min-height: 39px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .controls button,
+  .loading {
+    transition: none;
+  }
+}
