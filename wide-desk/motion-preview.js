@@ -51,15 +51,15 @@ const FACE_PART_URLS = {
   mouthNeutral: "../assets/face-parts/mouth-neutral.png",
 };
 
-const SPEECH_AUDIO_VERSION = "20260831-user-voice-1";
+const SPEECH_AUDIO_VERSION = "20260831-voicevox-exact-1";
 const SPEECH_LINES = {
-  intro: {
-    text: "受付AIのつなぐです。デスクで仕事をしながら、ご来客をお待ちしています。どうぞよろしくお願いします。",
-    audio: "../assets/motion-preview/audio/startup.wav",
-  },
   welcome: {
     text: "いらっしゃいませ。すぐに伺いますね。",
     audio: "../assets/motion-preview/audio/approach.wav",
+  },
+  morning: {
+    text: "おはようございます。お待たせしました。有限会社ビジネスシステム通信、受付AIのつなぐです。恐れ入りますが、お名前とご用件をお聞かせいただけますか？",
+    audio: "../assets/motion-preview/audio/arrival-ohayo.wav",
   },
   visitor: {
     text: "いつもありがとうございます。今日はどのようなご用件でしょうか？",
