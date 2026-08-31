@@ -51,12 +51,28 @@ const FACE_PART_URLS = {
   mouthNeutral: "../assets/face-parts/mouth-neutral.png",
 };
 
+const SPEECH_AUDIO_VERSION = "20260831-user-voice-1";
 const SPEECH_LINES = {
-  welcome: "いらっしゃいませ。受付AIのつなぐです。本日はどのようなご用件でしょうか。",
-  visitor: "こんにちは。ご来訪ありがとうございます。お名前とご用件をお聞かせください。",
-  calling: "担当者をお呼びいたします。恐れ入りますが、そのまま少々お待ちください。",
-  checking: "ただいま確認しております。もう少々お待ちください。",
-  goodbye: "本日はお越しいただき、ありがとうございました。お気をつけてお帰りください。",
+  intro: {
+    text: "受付AIのつなぐです。デスクで仕事をしながら、ご来客をお待ちしています。どうぞよろしくお願いします。",
+    audio: "../assets/motion-preview/audio/startup.wav",
+  },
+  welcome: {
+    text: "いらっしゃいませ。すぐに伺いますね。",
+    audio: "../assets/motion-preview/audio/approach.wav",
+  },
+  visitor: {
+    text: "いつもありがとうございます。今日はどのようなご用件でしょうか？",
+    audio: "../assets/motion-preview/audio/known-visitor.wav",
+  },
+  calling: {
+    text: "いつもお疲れさまです。お荷物をお預かりします。担当者をお呼びしますので、こちらで少々お待ちください。",
+    audio: "../assets/motion-preview/audio/clothing-visitor.wav",
+  },
+  goodbye: {
+    text: "ありがとうございました。どうぞお気をつけてお帰りください。それでは、デスクに戻りますね。",
+    audio: "../assets/motion-preview/audio/return-to-work.wav",
+  },
 };
 
 const sceneElement = document.querySelector("#scene");
@@ -142,6 +158,7 @@ let sequenceId = 0;
 let faceState = null;
 let nextBlinkAt = performance.now() + 2100;
 let blinkStartedAt = 0;
+let currentSpeechAudio = null;
 
 new GLTFLoader().load(
   MODEL_URL,
@@ -210,39 +227,37 @@ speechButtonsElement.addEventListener("click", (event) => {
 });
 
 function speakLine(speechKey, button) {
-  const text = SPEECH_LINES[speechKey];
-  if (!text) return;
+  const line = SPEECH_LINES[speechKey];
+  if (!line) return;
 
-  if (!("speechSynthesis" in window)) {
-    speechStatusElement.textContent = "このブラウザでは音声を再生できません";
-    return;
+  if (currentSpeechAudio) {
+    currentSpeechAudio.pause();
+    currentSpeechAudio.currentTime = 0;
+    currentSpeechAudio = null;
   }
-
-  window.speechSynthesis.cancel();
   speechButtonsElement.querySelectorAll("button").forEach((item) => item.classList.remove("is-speaking"));
   button.classList.add("is-speaking");
-  speechStatusElement.textContent = text;
+  speechStatusElement.textContent = line.text;
 
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "ja-JP";
-  utterance.rate = 0.96;
-  utterance.pitch = 1.06;
-  utterance.volume = 1;
+  const audio = new Audio(`${line.audio}?v=${SPEECH_AUDIO_VERSION}`);
+  audio.preload = "auto";
+  audio.volume = 1;
+  currentSpeechAudio = audio;
 
-  const japaneseVoice = window.speechSynthesis
-    .getVoices()
-    .find((voice) => voice.lang.toLowerCase().startsWith("ja"));
-  if (japaneseVoice) utterance.voice = japaneseVoice;
-
-  const finish = () => button.classList.remove("is-speaking");
-  utterance.addEventListener("end", finish, { once: true });
-  utterance.addEventListener("error", (event) => {
+  const finish = () => {
+    button.classList.remove("is-speaking");
+    if (currentSpeechAudio === audio) currentSpeechAudio = null;
+  };
+  audio.addEventListener("ended", finish, { once: true });
+  audio.addEventListener("error", () => {
     finish();
-    if (event.error !== "canceled" && event.error !== "interrupted") {
-      speechStatusElement.textContent = "音声を再生できませんでした";
-    }
+    speechStatusElement.textContent = "音声を再生できませんでした";
   }, { once: true });
-  window.speechSynthesis.speak(utterance);
+
+  audio.play().catch(() => {
+    finish();
+    speechStatusElement.textContent = "音声を再生できませんでした。もう一度ボタンを押してください。";
+  });
 }
 
 async function runSequence() {
