@@ -4,36 +4,40 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>つなぐちゃん 受付動作プレビュー</title>
-    <link rel="stylesheet" href="../wide-desk/motion-preview.css?v=20260909-pronunciation-1" />
+    <link rel="stylesheet" href="../wide-desk/motion-preview.css?v=20260909-hud-1" />
   </head>
   <body>
     <main class="preview-stage">
       <div id="scene" class="scene" aria-label="受付キャラクターの動作確認"></div>
 
-      <header class="preview-header">
-        <div>
-          <p class="eyebrow">動きだけ確認</p>
-          <h1 id="actionLabel">読み込み中…</h1>
-        </div>
-        <p class="hint">正面固定</p>
-      </header>
+      <header class="hud-top">
+        <section id="cameraPanel" class="camera-panel" aria-label="来客センサーカメラ">
+          <div id="cameraView" class="camera-view">
+            <video id="cameraPreview" autoplay muted playsinline></video>
+            <span id="cameraFaceMark" class="camera-face-mark" hidden>●</span>
+          </div>
+          <div class="camera-info">
+            <strong>来客センサー</strong>
+            <span id="cameraStatus">カメラ起動中…</span>
+            <span id="visitorStatus">来客なし</span>
+            <span class="camera-note">映像は来客検知にのみ使用し、保存・送信しません。<br />検知処理はこの端末内で行われます。</span>
+          </div>
+          <div class="camera-buttons">
+            <button id="cameraToggle" type="button">カメラ停止</button>
+            <button id="visitorTest" type="button">来客テスト</button>
+            <button id="employeeDemoToggle" type="button">社員デモ</button>
+          </div>
+        </section>
 
-      <section class="camera-panel" aria-label="来客センサーカメラ">
-        <div id="cameraView" class="camera-view">
-          <video id="cameraPreview" autoplay muted playsinline></video>
-          <span id="cameraFaceMark" class="camera-face-mark" hidden>●</span>
+        <div class="hud-right">
+          <button id="sensorPanelToggle" class="panel-toggle is-active" type="button" aria-controls="cameraPanel" aria-pressed="true">センサーON</button>
+          <span id="stateChip" class="state-chip" data-state="working">作業中</span>
+          <span id="clockText" aria-label="現在時刻">--:--</span>
+          <button id="soundToggle" class="icon-button is-active" type="button" aria-label="音声を停止" title="音声を停止"><span aria-hidden="true">♪</span></button>
         </div>
-        <div class="camera-info">
-          <strong>来客センサー</strong>
-          <span id="cameraStatus">カメラ起動中…</span>
-          <span id="visitorStatus">来客なし</span>
-        </div>
-        <div class="camera-buttons">
-          <button id="cameraToggle" type="button">カメラ停止</button>
-          <button id="visitorTest" type="button">検知テスト</button>
-        </div>
-        <p class="camera-note">映像は来客検知のみに使用し、保存・送信しません。</p>
-      </section>
+
+        <h1 id="actionLabel" class="sr-only">読み込み中…</h1>
+      </header>
 
       <aside class="speech-panel" aria-label="セリフの音声テスト">
         <div class="speech-heading">
@@ -48,7 +52,6 @@
           <button type="button" data-speech="goodbye">お見送り</button>
         </div>
         <div class="speech-tools">
-          <button id="soundToggle" type="button">音声を停止</button>
           <label><input id="autoSpeech" type="checkbox" checked />待機中も話す</label>
         </div>
         <details class="extra-speech">
@@ -100,6 +103,6 @@
         }
       }
     </script>
-    <script type="module" src="../wide-desk/motion-preview.js?v=20260909-pronunciation-1"></script>
+    <script type="module" src="../wide-desk/motion-preview.js?v=20260909-hud-1"></script>
   </body>
 </html>
