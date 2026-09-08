@@ -1,5 +1,6 @@
 """Generate the approved preview lines using the installed, loopback-only VOICEVOX."""
 import array
+import argparse
 import io
 import json
 from pathlib import Path
@@ -27,21 +28,32 @@ def inspect_wav(data):
     return params, frames, peak
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--keys', nargs='*', help='Regenerate only these line keys.')
+    args = parser.parse_args()
     speakers = json.loads(request('/speakers'))
     speaker = next(s for s in speakers if s['name'] == '春日部つむぎ')
     style = next(s for s in speaker['styles'] if s['name'] == 'ノーマル')
     style_id = style['id']
     source = (ROOT / 'wide-desk/additional-speech.js').read_text()
     lines = json.loads(source.split('export const EXTRA_SPEECH = ', 1)[1].rstrip().removesuffix(';'))
+    if args.keys:
+        unknown = set(args.keys) - {line['key'] for line in lines}
+        if unknown:
+            parser.error('Unknown line keys: ' + ', '.join(sorted(unknown)))
+        lines = [line for line in lines if line['key'] in args.keys]
     OUT.mkdir(parents=True, exist_ok=True)
     with wave.open(str(ROOT / 'assets/motion-preview/audio/arrival-ohayo.wav'), 'rb') as base:
         base_params = base.getparams()
         base_frames = base.readframes(base_params.nframes)
     assert base_params.sampwidth == 2 and base_params.nchannels == 1
     report = {'speaker': speaker['name'], 'style': style['name'], 'style_id': style_id, 'files': []}
+    report_path = OUT / 'generation.json'
+    if args.keys and report_path.exists():
+        report = json.loads(report_path.read_text())
     for line in lines:
         # Explicit readings for the two abbreviations, without editing the user's dictionary.
-        spoken = line['text'].replace('AI', 'エーアイ').replace('LED', 'エルイーディー')
+        spoken = line.get('spokenText', line['text']).replace('AI', 'エーアイ').replace('LED', 'エルイーディー')
         query = json.loads(request('/audio_query?' + urllib.parse.urlencode({'speaker': style_id, 'text': spoken}), b''))
         query['speedScale'] = 1.0
         query['outputSamplingRate'] = base_params.framerate
@@ -49,8 +61,13 @@ def main():
         audio = request('/synthesis?speaker=' + str(style_id), json.dumps(query).encode())
         params, frames, peak = inspect_wav(audio)
         (OUT / (line['key'] + '.wav')).write_bytes(audio)
-        report['files'].append({'key': line['key'], 'text': line['text'], 'seconds': round(params.nframes / params.framerate, 3), 'peak': peak})
-        print(line['key'], report['files'][-1]['seconds'], 'seconds', flush=True)
+        record = {'key': line['key'], 'text': line['text'], 'spoken_text': spoken, 'kana': query['kana'], 'seconds': round(params.nframes / params.framerate, 3), 'peak': peak}
+        index = next((i for i, item in enumerate(report['files']) if item['key'] == line['key']), None)
+        if index is None:
+            report['files'].append(record)
+        else:
+            report['files'][index] = record
+        print(line['key'], record['seconds'], 'seconds', record['kana'], flush=True)
         if line['group'] == 'prefix':
             assert params.framerate == base_params.framerate
             path = OUT / (line['key'] + '-arrival.wav')
@@ -58,8 +75,8 @@ def main():
                 merged.setparams(base_params)
                 merged.writeframes(frames + bytes(int(params.framerate * 0.18) * 2) + base_frames)
             inspect_wav(path.read_bytes())
-    (OUT / 'generation.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
-    print('Validated 16 generated clips and 3 joined reception greetings.', flush=True)
+    report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
+    print(f'Validated {len(lines)} generated clips and {sum(line["group"] == "prefix" for line in lines)} joined reception greetings.', flush=True)
 
 if __name__ == '__main__':
     main()

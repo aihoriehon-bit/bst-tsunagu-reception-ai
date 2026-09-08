@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { EXTRA_SPEECH } from "./additional-speech.js?v=20260909-1";
+import { EXTRA_SPEECH } from "./additional-speech.js?v=20260909-pronunciation-1";
 
 const MODEL_URL = "../blender/tsunagu-reception-actions-20260826.glb?v=20260831-pc-gaze-1";
 const MODEL_FRONT_Y = -Math.PI / 2 + 0.03;
@@ -58,7 +58,7 @@ const FACE_PART_URLS = {
   mouthWideOpen: "../assets/face-parts/mouth-wide-open.png",
 };
 
-const SPEECH_AUDIO_VERSION = "20260909-voicevox-1";
+const SPEECH_AUDIO_VERSION = "20260909-pronunciation-1";
 const SPEECH_LINES = {
   welcome: {
     text: "いらっしゃいませ。こちらでご用件をお伺いいたします。",

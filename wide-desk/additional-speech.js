@@ -25,6 +25,7 @@ export const EXTRA_SPEECH = [
     "key": "idleAppointment",
     "label": "お約束の確認",
     "text": "お約束のある方は、お名前と担当者名をお聞かせください。",
+    "spokenText": "お約束のあるかたは、お名前と担当者名をお聞かせください。",
     "group": "attend",
     "audio": "../assets/motion-preview/audio/voicevox-20260909/idleAppointment.wav"
   },
@@ -109,6 +110,7 @@ export const EXTRA_SPEECH = [
     "key": "yamato",
     "label": "ヤマトの方",
     "text": "いつもお疲れさまです。ヤマトの方ですね。担当者をお呼びしますので、そのまま少々お待ちください。",
+    "spokenText": "いつもお疲れさまです。ヤマトのかたですね。担当者をお呼びしますので、そのまま少々お待ちください。",
     "group": "named",
     "audio": "../assets/motion-preview/audio/voicevox-20260909/yamato.wav"
   }
