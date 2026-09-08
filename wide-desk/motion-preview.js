@@ -220,7 +220,6 @@ let workLineIndex = 0;
 let attendLineIndex = 0;
 const soundToggle = document.querySelector("#soundToggle");
 const extraSpeechSelect = document.querySelector("#extraSpeechSelect");
-const extraSpeechDetails = document.querySelector(".extra-speech");
 const visitorProfileElement = document.querySelector("#visitorProfile");
 for (const [name, keys] of [
   ["起動・作業中", EXTRA_SPEECH.filter(line => line.group === "work").map(line => line.key)],
@@ -257,9 +256,8 @@ sensorPanelToggleElement.addEventListener("click", () => {
   setSensorPanelVisible(cameraPanelElement.hidden);
 });
 employeeDemoToggleElement.addEventListener("click", () => {
-  extraSpeechDetails.open = true;
-  speechStatusElement.textContent = "呼びかけ相手を選び、来客テストを押してください";
-  visitorProfileElement.focus({ preventScroll: true });
+  visitorProfileElement.value = "employeeSato";
+  triggerVisitorTest();
 });
 
 updateSoundToggle();

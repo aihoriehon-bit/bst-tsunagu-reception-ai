@@ -385,6 +385,24 @@ button {
   text-align: right;
 }
 
+.voice-credit-fixed {
+  position: fixed;
+  z-index: 9;
+  right: max(10px, env(safe-area-inset-right));
+  bottom: max(8px, env(safe-area-inset-bottom));
+  margin: 0;
+  padding: 5px 8px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.58);
+  color: rgba(37, 77, 84, 0.7);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  pointer-events: none;
+  backdrop-filter: blur(6px);
+}
+
 .controls {
   position: fixed;
   z-index: 8;
