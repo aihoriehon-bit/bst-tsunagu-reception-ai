@@ -118,6 +118,11 @@ const cameraStatusElement = document.querySelector("#cameraStatus");
 const visitorStatusElement = document.querySelector("#visitorStatus");
 const cameraToggleElement = document.querySelector("#cameraToggle");
 const visitorTestElement = document.querySelector("#visitorTest");
+const employeeDemoToggleElement = document.querySelector("#employeeDemoToggle");
+const cameraPanelElement = document.querySelector("#cameraPanel");
+const sensorPanelToggleElement = document.querySelector("#sensorPanelToggle");
+const stateChipElement = document.querySelector("#stateChip");
+const clockTextElement = document.querySelector("#clockText");
 
 const scene = new THREE.Scene();
 scene.background = null;
@@ -215,6 +220,8 @@ let workLineIndex = 0;
 let attendLineIndex = 0;
 const soundToggle = document.querySelector("#soundToggle");
 const extraSpeechSelect = document.querySelector("#extraSpeechSelect");
+const extraSpeechDetails = document.querySelector(".extra-speech");
+const visitorProfileElement = document.querySelector("#visitorProfile");
 for (const [name, keys] of [
   ["起動・作業中", EXTRA_SPEECH.filter(line => line.group === "work").map(line => line.key)],
   ["お客様へのご案内", EXTRA_SPEECH.filter(line => line.group === "attend").map(line => line.key)],
@@ -236,7 +243,7 @@ document.querySelector("#extraSpeechPlay").addEventListener("click", () => speak
 soundToggle.addEventListener("click", () => {
   soundEnabled = !soundEnabled;
   cancelSpeechSequence(false);
-  soundToggle.textContent = soundEnabled ? "音声を停止" : "音声を開始";
+  updateSoundToggle();
   if (soundEnabled) {
     // Start inside the click event before animation awaits to unlock browser audio.
     speakLine(sensorAttending ? visitorSpeechKey() : "startup", null, { keepPose: true });
@@ -246,6 +253,19 @@ soundToggle.addEventListener("click", () => {
   }
 });
 document.querySelector("#autoSpeech").addEventListener("change", () => { lastSpeechAt = Date.now(); });
+sensorPanelToggleElement.addEventListener("click", () => {
+  setSensorPanelVisible(cameraPanelElement.hidden);
+});
+employeeDemoToggleElement.addEventListener("click", () => {
+  extraSpeechDetails.open = true;
+  speechStatusElement.textContent = "呼びかけ相手を選び、来客テストを押してください";
+  visitorProfileElement.focus({ preventScroll: true });
+});
+
+updateSoundToggle();
+setSensorPanelVisible(true, { persist: false });
+updateClock();
+window.setInterval(updateClock, 1000);
 
 new GLTFLoader().load(
   MODEL_URL,
@@ -393,13 +413,13 @@ async function speakLine(speechKey, button = null, { onFinish = null, keepPose =
   };
 
   audio.play().then(() => {
-    if (ownRequest === speechRequestId) soundToggle.textContent = "音声を停止";
+    if (ownRequest === speechRequestId) updateSoundToggle();
   }).catch((error) => {
     if (ownRequest !== speechRequestId) return;
     finish(true);
     if (error.name === "NotAllowedError") {
       soundEnabled = false;
-      soundToggle.textContent = "音声を開始";
+      updateSoundToggle();
       speechStatusElement.textContent = "「音声を開始」を押すと声が出ます";
     } else speechStatusElement.textContent = "音声を再生できませんでした。再生ボタンでお試しください。";
   });
@@ -492,10 +512,58 @@ function playMotion(motionKey) {
   action.fadeIn(0.2).play();
   currentAction = action;
   currentMotionKey = motionKey;
+  updateStateChip(motionKey);
 
   const postureDuration = motion.postureMotion ? clip.duration * 1000 : 0;
   setPosture(motion.posture, postureDuration);
   actionLabel.textContent = motion.label;
+}
+
+function updateStateChip(motionKey = currentMotionKey) {
+  const state = motionKey === "deskWork"
+    ? "working"
+    : motionKey === "standUp"
+      ? "approaching"
+      : motionKey === "standIdle"
+        ? "attending"
+        : "returning";
+  const label = {
+    working: "作業中",
+    approaching: "立ち上がり中",
+    attending: "接客中",
+    returning: motionKey === "sitDown" ? "着席中" : "お辞儀中",
+  }[state];
+  stateChipElement.dataset.state = state;
+  stateChipElement.textContent = label;
+}
+
+function updateClock() {
+  clockTextElement.textContent = new Intl.DateTimeFormat("ja-JP", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date());
+}
+
+function updateSoundToggle() {
+  soundToggle.classList.toggle("is-active", soundEnabled);
+  const label = soundEnabled ? "音声を停止" : "音声を開始";
+  soundToggle.setAttribute("aria-label", label);
+  soundToggle.title = label;
+}
+
+function setSensorPanelVisible(visible, { persist = true } = {}) {
+  cameraPanelElement.hidden = !visible;
+  sensorPanelToggleElement.classList.toggle("is-active", visible);
+  sensorPanelToggleElement.setAttribute("aria-pressed", visible ? "true" : "false");
+  sensorPanelToggleElement.textContent = visible ? "センサーON" : "センサーOFF";
+  sensorPanelToggleElement.title = visible ? "来客センサーを隠す" : "来客センサーを表示";
+  if (!persist) return;
+  try {
+    window.localStorage.setItem("tsunagu-preview-sensor-panel", visible ? "visible" : "hidden");
+  } catch (error) {
+    console.warn("センサーパネルの表示状態を保存できませんでした", error);
+  }
 }
 
 function setPosture(target, duration = 0) {
