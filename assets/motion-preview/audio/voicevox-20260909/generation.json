@@ -1,0 +1,103 @@
+{
+  "speaker": "春日部つむぎ",
+  "style": "ノーマル",
+  "style_id": 8,
+  "files": [
+    {
+      "key": "startup",
+      "text": "受付AIのつなぐです。受付で仕事をしながら、ご来客をお待ちしています。どうぞよろしくお願いします。",
+      "seconds": 7.648,
+      "peak": 15829
+    },
+    {
+      "key": "idleRequest",
+      "text": "ご用件がお決まりになりましたら、いつでもお声がけくださいね。",
+      "seconds": 4.181,
+      "peak": 13800
+    },
+    {
+      "key": "idleServices",
+      "text": "防犯カメラや業務用無線、LED工事、映像音響設備についてもご案内できます。",
+      "seconds": 6.976,
+      "peak": 12760
+    },
+    {
+      "key": "idleAppointment",
+      "text": "お約束のある方は、お名前と担当者名をお聞かせください。",
+      "seconds": 4.267,
+      "peak": 17666
+    },
+    {
+      "key": "workMemo",
+      "text": "受付メモを確認しています。",
+      "seconds": 1.973,
+      "peak": 10617
+    },
+    {
+      "key": "workPrepare",
+      "text": "次のお客様をお迎えする準備をしています。",
+      "seconds": 3.008,
+      "peak": 14405
+    },
+    {
+      "key": "workSchedule",
+      "text": "今日の来客予定を確認しています。",
+      "seconds": 2.411,
+      "peak": 14262
+    },
+    {
+      "key": "greetingMorning",
+      "text": "おはようございます。",
+      "seconds": 1.269,
+      "peak": 12009
+    },
+    {
+      "key": "greetingDay",
+      "text": "こんにちは。",
+      "seconds": 0.939,
+      "peak": 15991
+    },
+    {
+      "key": "greetingEvening",
+      "text": "こんばんは。",
+      "seconds": 0.843,
+      "peak": 16270
+    },
+    {
+      "key": "employeeSato",
+      "text": "佐藤さん、お帰りなさい。今日もお疲れさまです。何かお手伝いできることはありますか？",
+      "seconds": 6.645,
+      "peak": 15324
+    },
+    {
+      "key": "employeeTanaka",
+      "text": "田中さん、お帰りなさい。今日もお疲れさまです。何かお手伝いできることはありますか？",
+      "seconds": 6.603,
+      "peak": 13697
+    },
+    {
+      "key": "fukudaMorning",
+      "text": "福田さん、おはようございます。いつもありがとうございます。今日はどのようなご用件でしょうか？",
+      "seconds": 6.805,
+      "peak": 16196
+    },
+    {
+      "key": "fukudaDay",
+      "text": "福田さん、こんにちは。いつもありがとうございます。今日はどのようなご用件でしょうか？",
+      "seconds": 6.443,
+      "peak": 16506
+    },
+    {
+      "key": "fukudaEvening",
+      "text": "福田さん、こんばんは。いつもありがとうございます。今日はどのようなご用件でしょうか？",
+      "seconds": 6.389,
+      "peak": 16385
+    },
+    {
+      "key": "yamato",
+      "text": "いつもお疲れさまです。ヤマトの方ですね。担当者をお呼びしますので、そのまま少々お待ちください。",
+      "seconds": 7.456,
+      "peak": 16391
+    }
+  ]
+}

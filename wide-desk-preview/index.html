@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>つなぐちゃん 受付動作プレビュー</title>
-    <link rel="stylesheet" href="../wide-desk/motion-preview.css?v=20260831-camera-sensor-1" />
+    <link rel="stylesheet" href="../wide-desk/motion-preview.css?v=20260909-voicevox-1" />
   </head>
   <body>
     <main class="preview-stage">
@@ -47,6 +47,27 @@
           <button type="button" data-speech="calling">担当者を呼ぶ</button>
           <button type="button" data-speech="goodbye">お見送り</button>
         </div>
+        <div class="speech-tools">
+          <button id="soundToggle" type="button">音声を停止</button>
+          <label><input id="autoSpeech" type="checkbox" checked />待機中も話す</label>
+        </div>
+        <details class="extra-speech">
+          <summary>追加セリフ・呼びかけ相手</summary>
+          <label for="extraSpeechSelect">試したいセリフ</label>
+          <div class="extra-speech-row">
+            <select id="extraSpeechSelect"></select>
+            <button id="extraSpeechPlay" type="button">再生</button>
+          </div>
+          <label for="visitorProfile">カメラ検知時の呼びかけ相手</label>
+          <select id="visitorProfile">
+            <option value="guest">通常のお客様（時間帯別）</option>
+            <option value="employeeSato">佐藤さん</option>
+            <option value="employeeTanaka">田中さん</option>
+            <option value="fukuda">福田さん（時間帯別）</option>
+            <option value="yamato">ヤマトの方</option>
+          </select>
+          <p>相手は手動で選択します。顔から名前を判別する機能ではありません。</p>
+        </details>
         <p id="speechStatus" class="speech-status" aria-live="polite">再生したいセリフを選んでください</p>
         <p class="voice-credit">VOICEVOX:春日部つむぎ</p>
       </aside>
@@ -79,6 +100,6 @@
         }
       }
     </script>
-    <script type="module" src="../wide-desk/motion-preview.js?v=20260831-camera-sensor-1"></script>
+    <script type="module" src="../wide-desk/motion-preview.js?v=20260909-voicevox-1"></script>
   </body>
 </html>

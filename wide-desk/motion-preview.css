@@ -211,6 +211,39 @@ h1 {
   margin-bottom: 9px;
 }
 
+.speech-panel {
+  max-height: calc(100dvh - 210px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.speech-tools { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+.speech-tools label { display: flex; align-items: center; gap: 4px; font-size: 12px; }
+.speech-tools button, .extra-speech button {
+  min-height: 36px;
+  border: 1px solid #b7ced1;
+  border-radius: 8px;
+  background: #eef6f4;
+  color: #214d54;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.extra-speech { margin-top: 10px; font-size: 12px; color: #31565d; }
+.extra-speech summary { cursor: pointer; min-height: 26px; font-weight: 700; }
+.extra-speech label { display: block; margin: 8px 0 5px; }
+.extra-speech select { min-width: 0; width: 100%; padding: 8px 4px; font: inherit; font-size: 16px; color: #214d54; border: 1px solid #b7ced1; border-radius: 8px; background: white; }
+.extra-speech-row { display: flex; gap: 6px; }
+.extra-speech-row button { flex-shrink: 0; }
+.extra-speech p { line-height: 1.5; margin-bottom: 0; }
+.speech-panel :focus-visible { outline: 2px solid #1d6670; outline-offset: 2px; }
+
+@media (max-width: 640px) and (orientation: portrait) {
+  .speech-panel { max-height: 42dvh; }
+}
+@media (max-height: 560px) and (orientation: landscape) {
+  .speech-panel { max-height: calc(100dvh - 88px); }
+}
+
 .speech-heading strong {
   color: #214d54;
   font-size: 13px;

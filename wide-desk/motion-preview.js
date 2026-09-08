@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { EXTRA_SPEECH } from "./additional-speech.js?v=20260909-1";
 
 const MODEL_URL = "../blender/tsunagu-reception-actions-20260826.glb?v=20260831-pc-gaze-1";
 const MODEL_FRONT_Y = -Math.PI / 2 + 0.03;
@@ -7,7 +8,7 @@ const SEATED_Y = -0.3;
 const SEATED_Z = -0.08;
 const FACE_CONFIRM_MS = 600;
 const FACE_LOST_MS = 5000;
-const TEST_VISITOR_MS = 10000;
+const TEST_VISITOR_MS = 24000; // 立ち上がり＋挨拶＋受付案内を最後まで確認できる長さ。
 const DETECT_INTERVAL_MS = 160;
 
 const MOTIONS = {
@@ -57,7 +58,7 @@ const FACE_PART_URLS = {
   mouthWideOpen: "../assets/face-parts/mouth-wide-open.png",
 };
 
-const SPEECH_AUDIO_VERSION = "20260831-voicevox-stationary-1";
+const SPEECH_AUDIO_VERSION = "20260909-voicevox-1";
 const SPEECH_LINES = {
   welcome: {
     text: "いらっしゃいませ。こちらでご用件をお伺いいたします。",
@@ -80,6 +81,28 @@ const SPEECH_LINES = {
     audio: "../assets/motion-preview/audio/return-to-work.wav",
   },
 };
+
+for (const line of EXTRA_SPEECH) SPEECH_LINES[line.key] = line;
+for (const key of ["greetingMorning", "greetingDay", "greetingEvening"]) {
+  SPEECH_LINES[`${key}Arrival`] = {
+    label: `${SPEECH_LINES[key].label}＋受付案内`,
+    text: SPEECH_LINES[key].text + SPEECH_LINES.morning.text,
+    audio: SPEECH_LINES[key].audio.replace(".wav", "-arrival.wav"),
+  };
+}
+
+function timeSpeechKey(hour = new Date().getHours()) {
+  return hour >= 5 && hour < 11 ? "greetingMorningArrival"
+    : hour >= 11 && hour < 18 ? "greetingDayArrival" : "greetingEveningArrival";
+}
+
+function visitorSpeechKey() {
+  const target = document.querySelector("#visitorProfile").value;
+  if (target === "fukuda") {
+    return { greetingMorningArrival: "fukudaMorning", greetingDayArrival: "fukudaDay", greetingEveningArrival: "fukudaEvening" }[timeSpeechKey()];
+  }
+  return ["employeeSato", "employeeTanaka", "yamato"].includes(target) ? target : timeSpeechKey();
+}
 
 const sceneElement = document.querySelector("#scene");
 const actionLabel = document.querySelector("#actionLabel");
@@ -184,6 +207,45 @@ let faceLastSeenAt = 0;
 let testVisitorUntil = 0;
 let sensorAttending = false;
 let sensorAutomationActive = false;
+const speechPlayer = new Audio();
+let soundEnabled = true;
+let speechBusy = false;
+let lastSpeechAt = Date.now();
+let workLineIndex = 0;
+let attendLineIndex = 0;
+const soundToggle = document.querySelector("#soundToggle");
+const extraSpeechSelect = document.querySelector("#extraSpeechSelect");
+for (const [name, keys] of [
+  ["起動・作業中", EXTRA_SPEECH.filter(line => line.group === "work").map(line => line.key)],
+  ["お客様へのご案内", EXTRA_SPEECH.filter(line => line.group === "attend").map(line => line.key)],
+  ["時間帯別の受付案内", ["greetingMorningArrival", "greetingDayArrival", "greetingEveningArrival"]],
+  ["名前・会社入り", EXTRA_SPEECH.filter(line => line.group === "named").map(line => line.key)],
+  ["短い挨拶", EXTRA_SPEECH.filter(line => line.group === "prefix").map(line => line.key)],
+]) {
+  const group = document.createElement("optgroup");
+  group.label = name;
+  for (const key of keys) {
+    const option = document.createElement("option");
+    option.value = key;
+    option.textContent = SPEECH_LINES[key].label;
+    group.append(option);
+  }
+  extraSpeechSelect.append(group);
+}
+document.querySelector("#extraSpeechPlay").addEventListener("click", () => speakLine(extraSpeechSelect.value));
+soundToggle.addEventListener("click", () => {
+  soundEnabled = !soundEnabled;
+  cancelSpeechSequence(false);
+  soundToggle.textContent = soundEnabled ? "音声を停止" : "音声を開始";
+  if (soundEnabled) {
+    // Start inside the click event before animation awaits to unlock browser audio.
+    speakLine(sensorAttending ? visitorSpeechKey() : "startup", null, { keepPose: true });
+  } else {
+    speechStatusElement.textContent = "音声停止中";
+    if (sensorAutomationActive && !isSensorVisitorPresent()) runSensorSitDown();
+  }
+});
+document.querySelector("#autoSpeech").addEventListener("change", () => { lastSpeechAt = Date.now(); });
 
 new GLTFLoader().load(
   MODEL_URL,
@@ -215,6 +277,7 @@ new GLTFLoader().load(
 
     playMotion("deskWork");
     setActiveButton("deskWork");
+    speakLine("startup", null, { keepPose: true });
   },
   (event) => {
     if (!event.total) {
@@ -260,7 +323,7 @@ cameraToggleElement.addEventListener("click", () => {
 
 visitorTestElement.addEventListener("click", triggerVisitorTest);
 
-async function speakLine(speechKey, button = null, { onFinish = null } = {}) {
+async function speakLine(speechKey, button = null, { onFinish = null, keepPose = false } = {}) {
   const line = SPEECH_LINES[speechKey];
   if (!line) return;
   if (!mixer) {
@@ -269,55 +332,86 @@ async function speakLine(speechKey, button = null, { onFinish = null } = {}) {
   }
 
   cancelSpeechSequence(false);
+  speechBusy = true;
   const ownRequest = speechRequestId;
   sequenceId += 1;
   button?.classList.add("is-speaking");
-  speechStatusElement.textContent = posture < 0.98 ? "立ち上がっています…" : line.text;
+  const workSpeech = line.group === "work";
+  speechStatusElement.textContent = line.text;
 
-  if (posture < 0.98) {
+  if (!keepPose && workSpeech && posture > 0.02) {
+    playMotion("sitDown");
+    setActiveButton("sitDown");
+    if (!(await waitForSpeech(getMotionDurationMs("sitDown") + 90, ownRequest))) return;
+  } else if (!keepPose && !workSpeech && posture < 0.98) {
+    speechStatusElement.textContent = "立ち上がっています…";
     playMotion("standUp");
     setActiveButton("standUp");
     if (!(await waitForSpeech(getMotionDurationMs("standUp") + 90, ownRequest))) return;
   }
 
   if (ownRequest !== speechRequestId) return;
-  playMotion("standIdle");
-  setActiveButton("standIdle");
+  const restingMotion = keepPose ? (posture < 0.5 ? "deskWork" : "standIdle") : workSpeech ? "deskWork" : "standIdle";
+  playMotion(restingMotion);
+  setActiveButton(restingMotion);
   speechStatusElement.textContent = line.text;
 
-  const audio = new Audio(`${line.audio}?v=${SPEECH_AUDIO_VERSION}`);
+  if (!soundEnabled) {
+    speechBusy = false;
+    button?.classList.remove("is-speaking");
+    speechStatusElement.textContent = "音声停止中です。「音声を開始」を押してください";
+    onFinish?.();
+    return;
+  }
+  const audio = speechPlayer;
+  audio.src = `${line.audio}?v=${SPEECH_AUDIO_VERSION}`;
   audio.preload = "auto";
   audio.volume = 1;
   currentSpeechAudio = audio;
 
   let finished = false;
-  const finish = () => {
-    if (finished) return;
+  const finish = (failed = false) => {
+    if (finished || ownRequest !== speechRequestId) return;
     finished = true;
     button?.classList.remove("is-speaking");
     if (currentSpeechAudio === audio) {
       currentSpeechAudio = null;
+      speechBusy = false;
+      lastSpeechAt = Date.now();
       stopLipSync();
-      playMotion("standIdle");
-      setActiveButton("standIdle");
+      playMotion(restingMotion);
+      setActiveButton(restingMotion);
     }
-    onFinish?.();
+    if (!failed) onFinish?.();
+    else if (speechKey === "goodbye" && sensorAutomationActive && !isSensorVisitorPresent()) runSensorSitDown();
   };
-  audio.addEventListener("playing", startLipSync, { once: true });
-  audio.addEventListener("ended", finish, { once: true });
-  audio.addEventListener("error", () => {
-    finish();
+  audio.onplaying = startLipSync;
+  audio.onended = () => finish();
+  audio.onerror = () => {
+    finish(true);
     speechStatusElement.textContent = "音声を再生できませんでした";
-  }, { once: true });
+  };
 
-  audio.play().catch(() => {
-    finish();
-    speechStatusElement.textContent = "音声を再生できませんでした。もう一度ボタンを押してください。";
+  audio.play().then(() => {
+    if (ownRequest === speechRequestId) soundToggle.textContent = "音声を停止";
+  }).catch((error) => {
+    if (ownRequest !== speechRequestId) return;
+    finish(true);
+    if (error.name === "NotAllowedError") {
+      soundEnabled = false;
+      soundToggle.textContent = "音声を開始";
+      speechStatusElement.textContent = "「音声を開始」を押すと声が出ます";
+    } else speechStatusElement.textContent = "音声を再生できませんでした。再生ボタンでお試しください。";
   });
 }
 
 function cancelSpeechSequence(resetStatus) {
   speechRequestId += 1;
+  speechBusy = false;
+  lastSpeechAt = Date.now();
+  speechPlayer.onplaying = null;
+  speechPlayer.onended = null;
+  speechPlayer.onerror = null;
   if (currentSpeechAudio) {
     currentSpeechAudio.pause();
     currentSpeechAudio.currentTime = 0;
@@ -839,14 +933,33 @@ function updateSensorBehavior() {
   if (!visitorPresent && sensorAttending && now - faceLastSeenAt > FACE_LOST_MS) {
     sensorAttending = false;
     beginSensorReturn();
+    return;
+  }
+  updateAutomaticSpeech(now);
+}
+
+function updateAutomaticSpeech(now) {
+  if (!soundEnabled || speechBusy || document.hidden || !document.querySelector("#autoSpeech").checked) return;
+  if (sensorAttending && sensorAutomationActive && isSensorVisitorPresent() && currentMotionKey === "standIdle" && now - lastSpeechAt >= 30000) {
+    const keys = ["idleRequest", "idleServices", "idleAppointment"];
+    speakLine(keys[attendLineIndex++ % keys.length]);
+  } else if (!sensorAttending && !sensorAutomationActive && !isSensorVisitorPresent() && currentMotionKey === "deskWork" && now - lastSpeechAt >= 60000) {
+    const keys = ["workMemo", "workPrepare", "workSchedule"];
+    speakLine(keys[workLineIndex++ % keys.length], null, { keepPose: true });
   }
 }
 
 function beginSensorGreeting() {
   if (!mixer) return;
   sensorAutomationActive = true;
+  attendLineIndex = 0;
   visitorStatusElement.textContent = "お客さまへご挨拶中";
-  speakLine("welcome", null);
+  const greetingSequence = sequenceId + 1;
+  speakLine("welcome", null, { onFinish: () => {
+    if (soundEnabled && sequenceId === greetingSequence && sensorAttending && isSensorVisitorPresent()) {
+      speakLine(visitorSpeechKey());
+    }
+  } });
 }
 
 function beginSensorReturn() {
