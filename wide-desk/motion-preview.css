@@ -264,6 +264,11 @@ button {
   color: #ffffff;
 }
 
+.speech-panel[hidden],
+.controls[hidden] {
+  display: none !important;
+}
+
 .speech-panel {
   position: fixed;
   z-index: 8;
