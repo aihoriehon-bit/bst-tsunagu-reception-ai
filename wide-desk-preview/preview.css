@@ -27,3 +27,20 @@
 .handsfree-summary button { font-size: 13px; padding: 6px 10px; min-height: 36px; }
 .handsfree-conversation summary { cursor: pointer; font-size: 13px; color: #456970; padding-top: 7px; }
 .handsfree-conversation #conversationBody { width: 100%; padding: 8px 0 0; border: 0; background: transparent; box-shadow: none; max-height: min(360px, 45dvh); }
+.handsfree-conversation { width: min(460px, calc(100vw - 28px)); max-width: none; max-height: calc(100dvh - 120px); overflow-y: auto; overscroll-behavior: contain; border: 2px solid #70898f; padding: 14px 16px; }
+.turn-cue { padding: 0 0 12px; }
+.turn-label { display: inline-block; padding: 4px 10px; border-radius: 6px; background: #e8eff1; color: #294b55; font-size: .875rem; font-weight: 700; line-height: 1.4; }
+.turn-cue .conversation-status { display: block; margin-top: 8px; font-size: clamp(1.2rem, 2.2vw, 1.5rem); font-weight: 800; line-height: 1.4; letter-spacing: .02em; overflow-wrap: anywhere; }
+.turn-detail { margin: 6px 0 0; color: #34545d; font-size: .875rem; line-height: 1.6; }
+.handsfree-conversation[data-turn="listening"] { border-color: #16804d; background: #effff5; box-shadow: 0 0 0 4px #16804d25, 0 5px 22px #163a452b; }
+[data-turn="listening"] .turn-label { background: #14663f; color: #fff; }
+[data-turn="listening"] .conversation-status { color: #125934; }
+.handsfree-conversation[data-turn="speaking"] { border-color: #ad690e; background: #fff9eb; }
+[data-turn="speaking"] .turn-label { background: #805000; color: #fff; }
+[data-turn="speaking"] .conversation-status { color: #744800; }
+.handsfree-conversation[data-turn="error"] { border-color: #a74039; background: #fff4f2; }
+[data-turn="error"] .turn-label { background: #8a302b; color: #fff; }
+.handsfree-summary button { min-height: 44px; font-size: .875rem; }
+.handsfree-conversation summary, .handsfree-conversation .conversation-note { font-size: .875rem; }
+@media (max-width: 600px) { .handsfree-conversation { padding: 11px 12px; } .turn-cue { padding-bottom: 8px; } }
+@media (max-height: 560px) { .handsfree-conversation { width: min(410px, calc(100vw - 28px)); max-height: 46dvh; } }

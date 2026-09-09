@@ -52,3 +52,14 @@ test('three service failures stop reconnecting until explicit retry', () => {
   for (let i = 0; i < 3; i++) { f.sessions[i].onerror({ error: 'network' }); f.sessions[i].onend(); f.tick(2000); }
   assert.equal(f.listener.blocked, true); assert.equal(f.sessions.length, 3); assert.equal(f.jobs.size, 0);
 });
+test('turn indicator clears during speech end, silence restart and watchdog restart', () => {
+  const f = fixture(); f.listener.update({ enabled: true, active: true, present: true });
+  assert.equal(f.statuses.at(-1), 'preparing');
+  f.tick(650); assert.equal(f.statuses.at(-1), 'listening');
+  f.sessions[0].onspeechend(); assert.equal(f.statuses.at(-1), 'processing');
+  f.sessions[0].onaudioend(); assert.equal(f.statuses.at(-1), 'processing');
+  f.sessions[0].onend(); assert.equal(f.statuses.at(-1), 'preparing');
+  f.tick(650); assert.equal(f.statuses.at(-1), 'listening');
+  f.tick(25000); assert.equal(f.statuses.at(-1), 'preparing');
+  f.tick(650); assert.equal(f.statuses.at(-1), 'listening');
+});

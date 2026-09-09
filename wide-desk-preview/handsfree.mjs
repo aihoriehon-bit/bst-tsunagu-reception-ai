@@ -10,7 +10,7 @@ export function createHandsfree({ Recognition, onText, onStatus, schedule = setT
   }
   function queue(delay = 650) {
     unschedule(restart); restart = null;
-    if (eligible() && !current) restart = schedule(start, delay);
+    if (eligible() && !current) { onStatus('preparing'); restart = schedule(start, delay); }
   }
   function start() {
     restart = null;
@@ -20,16 +20,19 @@ export function createHandsfree({ Recognition, onText, onStatus, schedule = setT
     r.lang = 'ja-JP'; r.continuous = false; r.interimResults = false; r.maxAlternatives = 1;
     const valid = () => own === token && current === r && eligible();
     r.onstart = () => { if (valid()) { started = true; onStatus('listening'); } };
+    r.onspeechend = () => { if (valid()) onStatus('processing'); };
+    r.onaudioend = () => { if (valid()) onStatus('processing'); };
     r.onresult = event => {
       if (!valid()) return;
       const result = event.results[event.resultIndex];
       const text = result?.isFinal ? String(result[0]?.transcript || '').trim() : '';
       if (!text) return;
-      failures = 0; stop(); onText(text.slice(0, 300));
+      failures = 0; stop(); onStatus('processing'); onText(text.slice(0, 300));
     };
     r.onerror = event => {
       if (!valid()) return;
       error = event.error;
+      onStatus('preparing');
       if (['not-allowed', 'service-not-allowed', 'audio-capture', 'language-not-supported'].includes(error)) {
         blocked = true; stop(); onStatus(error === 'not-allowed' || error === 'service-not-allowed' ? 'permission' : 'unavailable');
       } else if (error !== 'no-speech' && ++failures >= 3) { blocked = true; stop(); onStatus('network'); }
