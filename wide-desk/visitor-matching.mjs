@@ -47,8 +47,22 @@ export function greetingForIdentity(person, defaultKey) {
   if (person.role === 'employee') {
     if (name === '佐藤') return 'employeeSato';
     if (name === '田中') return 'employeeTanaka';
-    return 'visitor';
+    return 'employeeGeneric';
   }
   if (name === '福田') return ({ greetingMorningArrival: 'fukudaMorning', greetingDayArrival: 'fukudaDay', greetingEveningArrival: 'fukudaEvening' })[defaultKey] || 'visitor';
   return 'visitor';
+}
+
+export function receptionPlan(person, defaultKey, demoKey = null) {
+  const role = demoKey?.startsWith('employee') ? 'employee'
+    : demoKey === 'calling' ? 'delivery'
+      : person?.source === 'clothing' ? 'delivery' : person?.role || 'guest';
+  const greeting = demoKey || greetingForIdentity(person, defaultKey);
+  return {
+    role,
+    // Registered guests already have a complete greeting; do not ask their purpose twice.
+    greeting: !person && !demoKey ? ['welcome', greeting] : [greeting],
+    idle: role === 'guest' ? ['idleRequest', 'idleServices', 'idleAppointment'] : [],
+    goodbye: role === 'employee' ? 'employeeGoodbye' : 'goodbye',
+  };
 }

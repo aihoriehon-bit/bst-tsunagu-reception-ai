@@ -1,6 +1,20 @@
 // 生成元台本。既存のユーザー生成音声はそのまま利用する。
 export const EXTRA_SPEECH = [
   {
+    "key": "employeeGeneric",
+    "label": "社員への挨拶",
+    "text": "お帰りなさい。今日もお疲れさまです。何かお手伝いできることはありますか？",
+    "group": "employee",
+    "audio": "../assets/motion-preview/audio/voicevox-20260909/employeeGeneric.wav"
+  },
+  {
+    "key": "employeeGoodbye",
+    "label": "社員への見送り",
+    "text": "お疲れさまです。何かありましたら、いつでもお声がけくださいね。",
+    "group": "employee",
+    "audio": "../assets/motion-preview/audio/voicevox-20260909/employeeGoodbye.wav"
+  },
+  {
     "key": "startup",
     "label": "起動時の挨拶",
     "text": "受付AIのつなぐです。受付で仕事をしながら、ご来客をお待ちしています。どうぞよろしくお願いします。",

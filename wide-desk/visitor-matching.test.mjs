@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { matchFace, matchClothing, clothingSignature, greetingForIdentity } from './visitor-matching.mjs';
+import { matchFace, matchClothing, clothingSignature, greetingForIdentity, receptionPlan } from './visitor-matching.mjs';
 
 const face = x => Array(128).fill(x);
 const sato = { id: 'sato', name: '佐藤', role: 'employee', descriptors: [face(0.1)] };
@@ -26,10 +26,29 @@ test('regular and delivery greetings never default to Sato', () => {
   const key = 'greetingDayArrival';
   assert.equal(greetingForIdentity(null, key), key);
   assert.equal(greetingForIdentity({ ...guest, source: 'face' }, key), 'visitor');
-  assert.equal(greetingForIdentity({ ...sato, name: '鈴木', source: 'face' }, key), 'visitor');
+  assert.equal(greetingForIdentity({ ...sato, name: '鈴木', source: 'face' }, key), 'employeeGeneric');
   assert.equal(greetingForIdentity({ ...sato, source: 'face' }, key), 'employeeSato');
   assert.equal(greetingForIdentity({ ...sato, source: 'clothing' }, key), 'calling');
   assert.equal(greetingForIdentity({ ...sato, role: 'delivery', source: 'face' }, key), 'calling');
+});
+
+test('employee and delivery conversations exclude customer sales and appointment prompts', () => {
+  for (const demo of ['employeeSato', 'employeeTanaka']) {
+    const plan = receptionPlan(null, 'greetingDayArrival', demo);
+    assert.deepEqual(plan.greeting, [demo]);
+    assert.deepEqual(plan.idle, []);
+    assert.equal(plan.goodbye, 'employeeGoodbye');
+  }
+  const employee = receptionPlan({ ...sato, name: '鈴木' }, 'greetingDayArrival');
+  assert.deepEqual(employee.greeting, ['employeeGeneric']);
+  assert.equal(employee.goodbye, 'employeeGoodbye');
+  for (const source of ['face', 'clothing']) {
+    const delivery = receptionPlan({ name: '配達', role: 'delivery', source }, 'greetingDayArrival');
+    assert.deepEqual(delivery.greeting, ['calling']);
+    assert.deepEqual(delivery.idle, []);
+  }
+  assert.deepEqual(receptionPlan(guest, 'greetingDayArrival').greeting, ['visitor']);
+  assert.deepEqual(receptionPlan(null, 'greetingDayArrival').greeting, ['welcome', 'greetingDayArrival']);
 });
 test('clothing is a tentative delivery match, with gray tops rejected', () => {
   const green = clothingSignature([0, 150, 50, 255, 0, 150, 50, 255]);

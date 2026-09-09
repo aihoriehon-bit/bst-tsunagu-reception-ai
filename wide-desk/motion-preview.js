@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { EXTRA_SPEECH } from "./additional-speech.js?v=20260909-pronunciation-1";
-import { createVisitorRecognition } from "./visitor-recognition.js?v=20260909-recognition-1";
-import { greetingForIdentity } from "./visitor-matching.mjs";
+import { EXTRA_SPEECH } from "./additional-speech.js?v=20260909-conversation-1";
+import { createVisitorRecognition } from "./visitor-recognition.js?v=20260909-conversation-1";
+import { receptionPlan } from "./visitor-matching.mjs?v=20260909-conversation-1";
 
 const MODEL_URL = "../blender/tsunagu-reception-actions-20260826.glb?v=20260831-pc-gaze-1";
 const MODEL_FRONT_Y = -Math.PI / 2 + 0.03;
@@ -206,6 +206,8 @@ let faceLastSeenAt = 0;
 let testVisitorUntil = 0;
 let pendingTestSpeechKey = null;
 let currentVisitorSpeechKey = null;
+let currentReceptionPlan = null;
+let greetingPending = false;
 let sensorAttending = false;
 let sensorAutomationActive = false;
 const speechPlayer = new Audio();
@@ -251,13 +253,20 @@ document.querySelector("#extraSpeechPlay").addEventListener("click", () => speak
 soundToggle.addEventListener("click", () => {
   soundEnabled = !soundEnabled;
   cancelSpeechSequence(false);
+  sequenceId += 1;
+  greetingPending = false;
   updateSoundToggle();
   if (soundEnabled) {
-    // Start inside the click event before animation awaits to unlock browser audio.
-    speakLine(sensorAttending ? (currentVisitorSpeechKey || timeSpeechKey()) : "startup", null, { keepPose: true });
+    if (sensorAttending && !currentReceptionPlan) beginSensorGreeting();
+    else if (sensorAttending) {
+      greetingPending = true;
+      playReceptionGreeting(0);
+    } else if (sensorAutomationActive) runSensorSitDown();
+    else speakLine("startup");
   } else {
     speechStatusElement.textContent = "音声停止中";
     if (sensorAutomationActive && !isSensorVisitorPresent()) runSensorSitDown();
+    else if (!sensorAttending) returnToDeskAfterStartup();
   }
 });
 document.querySelector("#autoSpeech").addEventListener("change", () => { lastSpeechAt = Date.now(); });
@@ -352,12 +361,18 @@ cameraToggleElement.addEventListener("click", () => {
 
 visitorTestElement.addEventListener("click", () => triggerVisitorTest());
 
-async function speakLine(speechKey, button = null, { onFinish = null, keepPose = false, standForSpeech = false } = {}) {
+async function speakLine(speechKey, button = null, { onFinish = null, onFailure = null, keepPose = false, standForSpeech = false } = {}) {
   const line = SPEECH_LINES[speechKey];
   if (!line) return;
   if (!mixer) {
     speechStatusElement.textContent = "キャラクターの読み込み完了後にお試しください";
     return;
+  }
+
+  if (speechKey === "startup") {
+    standForSpeech = true;
+    keepPose = false;
+    onFinish ||= returnToDeskAfterStartup;
   }
 
   cancelSpeechSequence(false);
@@ -373,7 +388,7 @@ async function speakLine(speechKey, button = null, { onFinish = null, keepPose =
     playMotion("standUp");
     setActiveButton("standUp");
     if (!(await waitForSpeech(getMotionDurationMs("standUp") + 90, ownRequest))) return;
-  } else if (!keepPose && workSpeech && posture > 0.02) {
+  } else if (!standForSpeech && !keepPose && workSpeech && posture > 0.02) {
     playMotion("sitDown");
     setActiveButton("sitDown");
     if (!(await waitForSpeech(getMotionDurationMs("sitDown") + 90, ownRequest))) return;
@@ -423,7 +438,8 @@ async function speakLine(speechKey, button = null, { onFinish = null, keepPose =
       setActiveButton(restingMotion);
     }
     if (!failed || speechKey === "startup") onFinish?.();
-    else if (speechKey === "goodbye" && sensorAutomationActive && !isSensorVisitorPresent()) runSensorSitDown();
+    else if (onFailure) onFailure();
+    else if (["goodbye", "employeeGoodbye"].includes(speechKey) && sensorAutomationActive && !isSensorVisitorPresent()) runSensorSitDown();
   };
   audio.onplaying = startLipSync;
   audio.onended = () => finish();
@@ -980,10 +996,12 @@ function updateFacePresence(faceCount) {
   faceVisible = visible;
   cameraViewElement.classList.toggle("is-detecting", visible || testVisitorUntil > now);
   cameraFaceMarkElement.hidden = !(visible || testVisitorUntil > now);
-  visitorStatusElement.textContent = visible
+  visitorStatusElement.textContent = testVisitorUntil > now
+    ? currentReceptionPlan?.role === "employee" ? "社員デモ中" : currentReceptionPlan?.role === "delivery" ? "配達受付中" : "来客テスト中"
+    : visible
     ? faceCount > 1
       ? `${faceCount}名 いらっしゃいます`
-      : "お客さまを検知しました"
+      : currentReceptionPlan?.role === "employee" ? "社員の方に対応中" : currentReceptionPlan?.role === "delivery" ? "配達の受付中" : "来訪者を検知しました"
     : sensorAttending
       ? "来客を確認中…"
       : "来客なし";
@@ -1004,6 +1022,12 @@ function updateSensorBehavior() {
     cameraFaceMarkElement.hidden = false;
   } else if (testVisitorUntil > 0) {
     testVisitorUntil = 0;
+    pendingTestSpeechKey = null;
+    if (faceVisible && sensorAttending) {
+      // Once a demo expires, resolve the real camera visitor afresh.
+      beginSensorGreeting();
+      return;
+    }
     if (!faceVisible) {
       cameraViewElement.classList.remove("is-detecting");
       cameraFaceMarkElement.hidden = true;
@@ -1029,9 +1053,10 @@ function updateSensorBehavior() {
 }
 
 function updateAutomaticSpeech(now) {
-  if (!soundEnabled || speechBusy || document.hidden || !document.querySelector("#autoSpeech").checked) return;
+  if (!soundEnabled || speechBusy || greetingPending || document.hidden || !document.querySelector("#autoSpeech").checked) return;
   if (sensorAttending && sensorAutomationActive && isSensorVisitorPresent() && currentMotionKey === "standIdle" && now - lastSpeechAt >= 30000) {
-    const keys = ["idleRequest", "idleServices", "idleAppointment"];
+    const keys = currentReceptionPlan?.idle || [];
+    if (!keys.length) return;
     speakLine(keys[attendLineIndex++ % keys.length]);
   } else if (!sensorAttending && !sensorAutomationActive && !isSensorVisitorPresent() && currentMotionKey === "deskWork" && now - lastSpeechAt >= 60000) {
     const keys = ["workMemo", "workPrepare", "workSchedule"];
@@ -1039,32 +1064,58 @@ function updateAutomaticSpeech(now) {
   }
 }
 
-function beginSensorGreeting() {
+async function beginSensorGreeting() {
   if (!mixer) return;
+  cancelSpeechSequence(false);
+  const ownSequence = ++sequenceId;
+  greetingPending = true;
   sensorAutomationActive = true;
   attendLineIndex = 0;
   const testGreeting = pendingTestSpeechKey;
   const isTest = testVisitorUntil > Date.now();
-  currentVisitorSpeechKey = testGreeting || timeSpeechKey();
+  currentReceptionPlan = null;
+  currentVisitorSpeechKey = null;
+  visitorStatusElement.textContent = "来訪者を確認中…";
+  // Stand while identifying; choose the entire conversation before the first word.
+  const identityPromise = isTest ? Promise.resolve(null) : visitorRecognition.identify(4500).catch(() => null);
+  let standing = Promise.resolve(true);
+  if (posture < 0.98) {
+    playMotion("standUp");
+    setActiveButton("standUp");
+    standing = waitFor(getMotionDurationMs("standUp") + 90, ownSequence);
+  }
+  const [identity] = await Promise.all([identityPromise, standing]);
+  if (sequenceId !== ownSequence || !sensorAttending || !isSensorVisitorPresent() || visitorRecognition.paused) return;
+  currentReceptionPlan = receptionPlan(identity, timeSpeechKey(), testGreeting);
   pendingTestSpeechKey = null;
-  visitorStatusElement.textContent = "お客さまへご挨拶中";
-  const greetingSequence = sequenceId + 1;
-  speakLine("welcome", null, { onFinish: async () => {
-    if (soundEnabled && sequenceId === greetingSequence && sensorAttending && isSensorVisitorPresent()) {
-      // Resolve after the welcome/stand-up, allowing several independent face matches.
-      // Demo choices never become a camera identity or leak into a later visit.
-      const identity = isTest ? null : await visitorRecognition.identify();
-      if (!soundEnabled || sequenceId !== greetingSequence || !sensorAttending || !isSensorVisitorPresent()) return;
-      currentVisitorSpeechKey = testGreeting || greetingForIdentity(identity, timeSpeechKey());
-      speakLine(currentVisitorSpeechKey);
-    }
-  } });
+  visitorStatusElement.textContent = currentReceptionPlan.role === "employee" ? "社員へご挨拶中"
+    : currentReceptionPlan.role === "delivery" ? "配達の受付中" : "お客さまへご挨拶中";
+  playReceptionGreeting(0);
+}
+
+function playReceptionGreeting(index) {
+  const key = currentReceptionPlan?.greeting[index];
+  if (!key) { greetingPending = false; return; }
+  currentVisitorSpeechKey = key;
+  const expectedSequence = sequenceId + 1;
+  speakLine(key, null, {
+    onFinish: () => {
+      if (sequenceId !== expectedSequence || !sensorAttending || !isSensorVisitorPresent()) return;
+      if (!soundEnabled) { greetingPending = false; return; }
+      playReceptionGreeting(index + 1);
+    },
+    onFailure: () => { greetingPending = false; },
+  });
 }
 
 function beginSensorReturn() {
   if (!mixer || !sensorAutomationActive) return;
+  cancelSpeechSequence(false);
+  sequenceId += 1;
+  greetingPending = false;
   visitorStatusElement.textContent = "お見送り中";
-  speakLine("goodbye", null, { onFinish: runSensorSitDown });
+  if (!currentReceptionPlan) { runSensorSitDown(); return; }
+  speakLine(currentReceptionPlan.goodbye, null, { onFinish: runSensorSitDown, onFailure: runSensorSitDown });
 }
 
 function returnToDeskAfterStartup() {
@@ -1100,6 +1151,8 @@ function runSensorSitDown() {
       setActiveButton("deskWork");
       sensorAutomationActive = false;
       currentVisitorSpeechKey = null;
+      currentReceptionPlan = null;
+      greetingPending = false;
       visitorStatusElement.textContent = "来客なし";
       speechStatusElement.textContent = "再生したいセリフを選んでください";
     }, getMotionDurationMs("sitDown") + 100);
@@ -1112,6 +1165,8 @@ function resetSensorCharacter() {
   sensorAutomationActive = false;
   pendingTestSpeechKey = null;
   currentVisitorSpeechKey = null;
+  currentReceptionPlan = null;
+  greetingPending = false;
   cancelSpeechSequence(false);
   const ownSequence = ++sequenceId;
   if (!shouldSitDown) return;
@@ -1127,18 +1182,15 @@ function resetSensorCharacter() {
 
 function triggerVisitorTest(speechKey = null) {
   const now = Date.now();
-  pendingTestSpeechKey = sensorAttending ? null : speechKey;
+  pendingTestSpeechKey = speechKey;
   testVisitorUntil = now + TEST_VISITOR_MS;
   faceFirstSeenAt = now;
   faceLastSeenAt = now;
   visitorStatusElement.textContent = "来客テスト中";
   cameraViewElement.classList.add("is-detecting");
   cameraFaceMarkElement.hidden = false;
-  if (sensorAttending && speechKey) {
-    currentVisitorSpeechKey = speechKey;
-    speakLine(speechKey);
-  }
-  updateSensorBehavior();
+  if (sensorAttending) beginSensorGreeting();
+  else updateSensorBehavior();
 }
 
 function isSensorVisitorPresent(now = Date.now()) {

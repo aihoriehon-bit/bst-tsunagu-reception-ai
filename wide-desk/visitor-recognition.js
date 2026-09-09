@@ -210,9 +210,9 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
       faces = next; facesAt = Date.now();
     },
     current() { return !dialog.open && singleFace() && Date.now() - identityAt < 1800 ? identity : null; },
-    async identify() {
+    async identify(timeoutMs = 2400) {
       if (!db.people.length && !db.uniforms.length) return null;
-      const own = epoch, deadline = Date.now() + 2400;
+      const own = epoch, deadline = Date.now() + timeoutMs;
       while (own === epoch && singleFace() && !dialog.open && Date.now() < deadline) {
         if (identity && Date.now() - identityAt < 1800) return identity;
         if (modelError && !db.uniforms.length) return null;
