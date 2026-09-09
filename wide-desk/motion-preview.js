@@ -96,14 +96,6 @@ function timeSpeechKey(hour = new Date().getHours()) {
     : hour >= 11 && hour < 18 ? "greetingDayArrival" : "greetingEveningArrival";
 }
 
-function visitorSpeechKey() {
-  const target = document.querySelector("#visitorProfile").value;
-  if (target === "fukuda") {
-    return { greetingMorningArrival: "fukudaMorning", greetingDayArrival: "fukudaDay", greetingEveningArrival: "fukudaEvening" }[timeSpeechKey()];
-  }
-  return ["employeeSato", "employeeTanaka", "yamato"].includes(target) ? target : timeSpeechKey();
-}
-
 const sceneElement = document.querySelector("#scene");
 const actionLabel = document.querySelector("#actionLabel");
 const controlsElement = document.querySelector("#controls");
@@ -210,6 +202,8 @@ let faceVisible = false;
 let faceFirstSeenAt = 0;
 let faceLastSeenAt = 0;
 let testVisitorUntil = 0;
+let pendingTestSpeechKey = null;
+let currentVisitorSpeechKey = null;
 let sensorAttending = false;
 let sensorAutomationActive = false;
 const speechPlayer = new Audio();
@@ -220,7 +214,6 @@ let workLineIndex = 0;
 let attendLineIndex = 0;
 const soundToggle = document.querySelector("#soundToggle");
 const extraSpeechSelect = document.querySelector("#extraSpeechSelect");
-const visitorProfileElement = document.querySelector("#visitorProfile");
 for (const [name, keys] of [
   ["起動・作業中", EXTRA_SPEECH.filter(line => line.group === "work").map(line => line.key)],
   ["お客様へのご案内", EXTRA_SPEECH.filter(line => line.group === "attend").map(line => line.key)],
@@ -245,7 +238,7 @@ soundToggle.addEventListener("click", () => {
   updateSoundToggle();
   if (soundEnabled) {
     // Start inside the click event before animation awaits to unlock browser audio.
-    speakLine(sensorAttending ? visitorSpeechKey() : "startup", null, { keepPose: true });
+    speakLine(sensorAttending ? (currentVisitorSpeechKey || timeSpeechKey()) : "startup", null, { keepPose: true });
   } else {
     speechStatusElement.textContent = "音声停止中";
     if (sensorAutomationActive && !isSensorVisitorPresent()) runSensorSitDown();
@@ -256,8 +249,7 @@ sensorPanelToggleElement.addEventListener("click", () => {
   setSensorPanelVisible(cameraPanelElement.hidden);
 });
 employeeDemoToggleElement.addEventListener("click", () => {
-  visitorProfileElement.value = "employeeSato";
-  triggerVisitorTest();
+  triggerVisitorTest("employeeSato");
 });
 
 updateSoundToggle();
@@ -339,7 +331,7 @@ cameraToggleElement.addEventListener("click", () => {
   else startCamera();
 });
 
-visitorTestElement.addEventListener("click", triggerVisitorTest);
+visitorTestElement.addEventListener("click", () => triggerVisitorTest());
 
 async function speakLine(speechKey, button = null, { onFinish = null, keepPose = false } = {}) {
   const line = SPEECH_LINES[speechKey];
@@ -1019,11 +1011,13 @@ function beginSensorGreeting() {
   if (!mixer) return;
   sensorAutomationActive = true;
   attendLineIndex = 0;
+  currentVisitorSpeechKey = pendingTestSpeechKey || timeSpeechKey();
+  pendingTestSpeechKey = null;
   visitorStatusElement.textContent = "お客さまへご挨拶中";
   const greetingSequence = sequenceId + 1;
   speakLine("welcome", null, { onFinish: () => {
     if (soundEnabled && sequenceId === greetingSequence && sensorAttending && isSensorVisitorPresent()) {
-      speakLine(visitorSpeechKey());
+      speakLine(currentVisitorSpeechKey);
     }
   } });
 }
@@ -1054,6 +1048,7 @@ function runSensorSitDown() {
       playMotion("deskWork");
       setActiveButton("deskWork");
       sensorAutomationActive = false;
+      currentVisitorSpeechKey = null;
       visitorStatusElement.textContent = "来客なし";
       speechStatusElement.textContent = "再生したいセリフを選んでください";
     }, getMotionDurationMs("sitDown") + 100);
@@ -1064,6 +1059,8 @@ function resetSensorCharacter() {
   const shouldSitDown = sensorAutomationActive && mixer && posture > 0.02;
   sensorAttending = false;
   sensorAutomationActive = false;
+  pendingTestSpeechKey = null;
+  currentVisitorSpeechKey = null;
   cancelSpeechSequence(false);
   const ownSequence = ++sequenceId;
   if (!shouldSitDown) return;
@@ -1077,8 +1074,9 @@ function resetSensorCharacter() {
   }, getMotionDurationMs("sitDown") + 100);
 }
 
-function triggerVisitorTest() {
+function triggerVisitorTest(speechKey = null) {
   const now = Date.now();
+  pendingTestSpeechKey = sensorAttending ? null : speechKey;
   testVisitorUntil = now + TEST_VISITOR_MS;
   faceFirstSeenAt = now;
   faceLastSeenAt = now;
