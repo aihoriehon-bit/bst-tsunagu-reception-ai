@@ -287,7 +287,10 @@ new GLTFLoader().load(
 
     playMotion("deskWork");
     setActiveButton("deskWork");
-    speakLine("startup", null, { keepPose: true });
+    speakLine("startup", null, {
+      standForSpeech: true,
+      onFinish: returnToDeskAfterStartup,
+    });
   },
   (event) => {
     if (!event.total) {
@@ -333,7 +336,7 @@ cameraToggleElement.addEventListener("click", () => {
 
 visitorTestElement.addEventListener("click", () => triggerVisitorTest());
 
-async function speakLine(speechKey, button = null, { onFinish = null, keepPose = false } = {}) {
+async function speakLine(speechKey, button = null, { onFinish = null, keepPose = false, standForSpeech = false } = {}) {
   const line = SPEECH_LINES[speechKey];
   if (!line) return;
   if (!mixer) {
@@ -349,7 +352,12 @@ async function speakLine(speechKey, button = null, { onFinish = null, keepPose =
   const workSpeech = line.group === "work";
   speechStatusElement.textContent = line.text;
 
-  if (!keepPose && workSpeech && posture > 0.02) {
+  if (standForSpeech && posture < 0.98) {
+    speechStatusElement.textContent = "立ち上がっています…";
+    playMotion("standUp");
+    setActiveButton("standUp");
+    if (!(await waitForSpeech(getMotionDurationMs("standUp") + 90, ownRequest))) return;
+  } else if (!keepPose && workSpeech && posture > 0.02) {
     playMotion("sitDown");
     setActiveButton("sitDown");
     if (!(await waitForSpeech(getMotionDurationMs("sitDown") + 90, ownRequest))) return;
@@ -361,7 +369,13 @@ async function speakLine(speechKey, button = null, { onFinish = null, keepPose =
   }
 
   if (ownRequest !== speechRequestId) return;
-  const restingMotion = keepPose ? (posture < 0.5 ? "deskWork" : "standIdle") : workSpeech ? "deskWork" : "standIdle";
+  const restingMotion = standForSpeech
+    ? "standIdle"
+    : keepPose
+      ? (posture < 0.5 ? "deskWork" : "standIdle")
+      : workSpeech
+        ? "deskWork"
+        : "standIdle";
   playMotion(restingMotion);
   setActiveButton(restingMotion);
   speechStatusElement.textContent = line.text;
@@ -392,7 +406,7 @@ async function speakLine(speechKey, button = null, { onFinish = null, keepPose =
       playMotion(restingMotion);
       setActiveButton(restingMotion);
     }
-    if (!failed) onFinish?.();
+    if (!failed || speechKey === "startup") onFinish?.();
     else if (speechKey === "goodbye" && sensorAutomationActive && !isSensorVisitorPresent()) runSensorSitDown();
   };
   audio.onplaying = startLipSync;
@@ -1026,6 +1040,18 @@ function beginSensorReturn() {
   if (!mixer || !sensorAutomationActive) return;
   visitorStatusElement.textContent = "お見送り中";
   speakLine("goodbye", null, { onFinish: runSensorSitDown });
+}
+
+function returnToDeskAfterStartup() {
+  if (!mixer || sensorAttending || isSensorVisitorPresent()) return;
+  const ownSequence = ++sequenceId;
+  playMotion("sitDown");
+  setActiveButton("sitDown");
+  window.setTimeout(() => {
+    if (ownSequence !== sequenceId || sensorAttending || isSensorVisitorPresent()) return;
+    playMotion("deskWork");
+    setActiveButton("deskWork");
+  }, getMotionDurationMs("sitDown") + 100);
 }
 
 function runSensorSitDown() {
