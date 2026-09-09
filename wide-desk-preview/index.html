@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>つなぐちゃん 受付動作プレビュー</title>
-    <link rel="stylesheet" href="../wide-desk/motion-preview.css?v=20260909-clean-ui-2" />
+    <link rel="stylesheet" href="../wide-desk/motion-preview.css?v=20260909-recognition-1" />
   </head>
   <body>
     <main class="preview-stage">
@@ -20,7 +20,7 @@
             <strong>来客センサー</strong>
             <span id="cameraStatus">カメラ起動中…</span>
             <span id="visitorStatus">来客なし</span>
-            <span class="camera-note">映像は来客検知にのみ使用し、保存・送信しません。<br />検知処理はこの端末内で行われます。</span>
+            <span class="camera-note">映像は来客検知と顔・制服の照合に使用し、保存・送信しません。登録した特徴量と名前はこのブラウザ内に保存します。</span>
           </div>
           <div class="camera-buttons">
             <button id="cameraToggle" type="button">カメラ停止</button>
@@ -104,6 +104,6 @@
         }
       }
     </script>
-    <script type="module" src="../wide-desk/motion-preview.js?v=20260909-startup-stand-1"></script>
+    <script type="module" src="../wide-desk/motion-preview.js?v=20260909-recognition-1"></script>
   </body>
 </html>

@@ -144,7 +144,9 @@ button {
 }
 
 .camera-buttons {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  align-content: center;
   flex: 0 0 auto;
   flex-direction: column;
   justify-content: center;
@@ -268,6 +270,26 @@ button {
 .controls[hidden] {
   display: none !important;
 }
+
+.recognition-status { display: block; color: #fff2b3; font-size: 12px; line-height: 1.4; }
+.identity-dialog { box-sizing: border-box; width: min(560px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow: auto; border: 1px solid #b7ced1; border-radius: 18px; padding: 22px; color: #214d54; background: #f8fcfc; box-shadow: 0 15px 60px #123b4660; font-size: 16px; }
+.identity-dialog::backdrop { background: #102e3880; }
+.identity-preview { display: block; width: min(100%, 280px); aspect-ratio: 4 / 3; object-fit: cover; transform: scaleX(-1); background: #173b45; border-radius: 10px; margin: 12px auto; }
+.identity-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.identity-dialog h2 { font-size: 22px; margin: 0; }
+.identity-dialog p { line-height: 1.6; font-size: 14px; }
+.identity-dialog label { display: block; margin: 12px 0; }
+.identity-dialog input:not([type=checkbox]), .identity-dialog select { box-sizing: border-box; display: block; width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #a8c3c7; border-radius: 8px; font: inherit; color: #214d54; background: white; }
+.identity-dialog button { min-height: 42px; padding: 8px 12px; border: 1px solid #9fbfc4; border-radius: 8px; background: #e8f4f4; color: #214d54; font: inherit; cursor: pointer; }
+.identity-dialog button:disabled { opacity: .55; cursor: wait; }
+.identity-dialog .identity-consent { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; }
+.identity-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.identity-dialog [data-message] { min-height: 1.5em; font-weight: bold; }
+.identity-dialog ul { list-style: none; padding: 0; }
+.identity-dialog li { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; border-top: 1px solid #d7e4e7; padding: 10px 0; }
+.identity-dialog li span { flex: 1; overflow-wrap: anywhere; min-width: 100px; }
+.identity-dialog li select { width: auto; max-width: 120px; margin: 0; }
+.identity-dialog :focus-visible { outline: 3px solid #0c858d; outline-offset: 2px; }
 
 .speech-panel {
   position: fixed;

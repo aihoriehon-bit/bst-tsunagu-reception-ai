@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { EXTRA_SPEECH } from "./additional-speech.js?v=20260909-pronunciation-1";
+import { createVisitorRecognition } from "./visitor-recognition.js?v=20260909-recognition-1";
+import { greetingForIdentity } from "./visitor-matching.mjs";
 
 const MODEL_URL = "../blender/tsunagu-reception-actions-20260826.glb?v=20260831-pc-gaze-1";
 const MODEL_FRONT_Y = -Math.PI / 2 + 0.03;
@@ -214,6 +216,20 @@ let workLineIndex = 0;
 let attendLineIndex = 0;
 const soundToggle = document.querySelector("#soundToggle");
 const extraSpeechSelect = document.querySelector("#extraSpeechSelect");
+const visitorRecognition = createVisitorRecognition({
+  video: cameraPreviewElement,
+  panel: cameraPanelElement,
+  onRegistrationChange(open) {
+    if (open) {
+      testVisitorUntil = 0;
+      resetSensorCharacter();
+      if (mixer) playManualMotion(posture > 0.02 ? "sitDown" : "deskWork");
+    } else {
+      faceFirstSeenAt = Date.now();
+    }
+  },
+  onDelivery: () => triggerVisitorTest("calling"),
+});
 for (const [name, keys] of [
   ["起動・作業中", EXTRA_SPEECH.filter(line => line.group === "work").map(line => line.key)],
   ["お客様へのご案内", EXTRA_SPEECH.filter(line => line.group === "attend").map(line => line.key)],
@@ -895,6 +911,7 @@ function stopCamera({ resetCharacter = true } = {}) {
   cameraStream = null;
   cameraPreviewElement.srcObject = null;
   faceVisible = false;
+  visitorRecognition.reset();
   testVisitorUntil = 0;
   cameraStatusElement.textContent = "カメラ停止中";
   cameraToggleElement.textContent = "カメラ開始";
@@ -939,6 +956,7 @@ function startDetectionLoop() {
     if (cameraPreviewElement.readyState < 2 || !cameraPreviewElement.videoWidth) return;
     try {
       const result = faceDetector.detectForVideo(cameraPreviewElement, performance.now());
+      visitorRecognition.updateFaces(result?.detections || []);
       updateFacePresence(result?.detections?.length || 0);
     } catch (error) {
       console.warn("Face detection error", error);
@@ -977,7 +995,7 @@ function startSensorBehaviorLoop() {
 }
 
 function updateSensorBehavior() {
-  if (!mixer) return;
+  if (!mixer || visitorRecognition.paused) return;
   const now = Date.now();
   const testVisitorPresent = testVisitorUntil > now;
   if (testVisitorPresent) {
@@ -1025,12 +1043,19 @@ function beginSensorGreeting() {
   if (!mixer) return;
   sensorAutomationActive = true;
   attendLineIndex = 0;
-  currentVisitorSpeechKey = pendingTestSpeechKey || timeSpeechKey();
+  const testGreeting = pendingTestSpeechKey;
+  const isTest = testVisitorUntil > Date.now();
+  currentVisitorSpeechKey = testGreeting || timeSpeechKey();
   pendingTestSpeechKey = null;
   visitorStatusElement.textContent = "お客さまへご挨拶中";
   const greetingSequence = sequenceId + 1;
-  speakLine("welcome", null, { onFinish: () => {
+  speakLine("welcome", null, { onFinish: async () => {
     if (soundEnabled && sequenceId === greetingSequence && sensorAttending && isSensorVisitorPresent()) {
+      // Resolve after the welcome/stand-up, allowing several independent face matches.
+      // Demo choices never become a camera identity or leak into a later visit.
+      const identity = isTest ? null : await visitorRecognition.identify();
+      if (!soundEnabled || sequenceId !== greetingSequence || !sensorAttending || !isSensorVisitorPresent()) return;
+      currentVisitorSpeechKey = testGreeting || greetingForIdentity(identity, timeSpeechKey());
       speakLine(currentVisitorSpeechKey);
     }
   } });
@@ -1109,6 +1134,10 @@ function triggerVisitorTest(speechKey = null) {
   visitorStatusElement.textContent = "来客テスト中";
   cameraViewElement.classList.add("is-detecting");
   cameraFaceMarkElement.hidden = false;
+  if (sensorAttending && speechKey) {
+    currentVisitorSpeechKey = speechKey;
+    speakLine(speechKey);
+  }
   updateSensorBehavior();
 }
 
