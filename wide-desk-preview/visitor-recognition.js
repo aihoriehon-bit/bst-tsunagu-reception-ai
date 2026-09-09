@@ -1,5 +1,7 @@
 import { ROLES, validVector, matchFace, clothingSignature, matchClothing } from './visitor-matching.mjs?v=20260909-2';
-import { saveNameAudio, deleteNameAudio, previewName, cancelNameVoice } from './name-voice.js?v=20260909-2';
+import { previewName, cancelNameVoice } from './name-voice.js?v=20260909-5';
+import { readingFor, loadKanaBank, tokenizeReading } from './kana-name.mjs?v=20260909-5';
+import { nameApprovalToken, isNameApproved, createNameAudition } from './name-confirmation.mjs?v=20260909-5';
 
 const STORAGE_KEY = 'tsunagu-preview-identities-v2';
 const API_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.15/dist/face-api.esm.js';
@@ -34,13 +36,15 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     <p>登録中は自動の挨拶を休止します。カメラに1人で、明るい場所で写ってください。</p>
     <video class="identity-preview" autoplay muted playsinline aria-label="登録用カメラ映像"></video>
     <label>お名前・会社名<input id="identityName" maxlength="40" autocomplete="off" placeholder="例：佐藤／ヤマト"></label>
-    <label>読みがな<input id="identityReading" maxlength="60" autocomplete="off" placeholder="例：さとう（「さん」は自動で付きます）"></label>
-    <label>名前を呼ぶVOICEVOX音声（任意）<input id="identityAudio" type="file" accept="audio/wav,.wav"></label>
-    <p class="identity-note">「さとうさん」のように名前全体を生成したWAVを選べます。未設定の名前は端末の声で読み上げます。音声はこのブラウザに保存します。</p>
+    <label>読みがな<input id="identityReading" maxlength="40" autocomplete="off" placeholder="例：えみた（「さん」は自動で付きます）"></label>
+    <p class="identity-note">名前音声は試作版です。春日部つむぎの140音をつなぎます。追加ソフト・音声ファイルは不要ですが、名前によって発音やアクセントが崩れることがあります。必ず試聴し、気になる場合は名前呼びをOFFのままにしてください。漢字のお名前には読みがなを入力してください。</p>
+    <div class="identity-actions"><button type="button" data-test-name>① 名前を試聴</button></div>
+    <label class="identity-consent"><input id="identityNameApproved" type="checkbox" disabled>② この発音を確認しました・名前を呼ぶ</label>
+    <p class="identity-note" data-name-state>試聴が終わるとチェックできます。名前や読みがなを変えたら、もう一度試聴してください。</p>
     <label>区分<select id="identityRole"><option value="employee">社員</option><option value="guest">お客様</option><option value="delivery">配達</option></select></label>
     <label class="identity-consent"><input id="identityConsent" type="checkbox">本人から顔登録の了承を得ています</label>
     <div class="identity-actions"><button type="button" data-face>顔を登録（3回撮影）</button><button type="button" data-uniform>配達の制服を登録</button></div>
-    <div class="identity-actions"><button type="button" data-save-name>登録済みの読み・音声を保存</button><button type="button" data-test-name>呼びかけを確認</button></div>
+    <div class="identity-actions"><button type="button" data-save-name>登録済みの名前音声設定を保存</button></div>
     <p class="identity-note">制服は胸からお腹まで写してください。色が似た服でも反応するため「配達の可能性」として扱います。判断できない場合はカメラ欄の「配達受付」を使えます。</p>
     <p class="identity-note">同じ名前でもう一度撮影すると、顔のサンプルを追加できます。普段使う距離・明るさで登録すると照合しやすくなります。この確認版の登録変更はトップページには反映されません。</p>
     <p data-message role="status"></p>
@@ -50,38 +54,63 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
   document.body.append(dialog);
   const q = s => dialog.querySelector(s);
   const message = text => { q('[data-message]').textContent = text; };
+  const audition = createNameAudition(); let auditionId = 0;
+  const formPerson = () => ({ name: q('#identityName').value.trim(), reading: q('#identityReading').value.trim() });
+  function refreshApproval() {
+    q('#identityNameApproved').disabled = capturing || !audition.canApprove(formPerson());
+  }
+  function clearAudition() {
+    auditionId++; cancelNameVoice(); audition.clear();
+    q('#identityNameApproved').checked = false;
+    q('[data-test-name]').disabled = capturing;
+    q('[data-name-state]').textContent = '名前呼びOFF。試聴が終わったら、発音を確認してチェックしてください。';
+    refreshApproval();
+  }
+  function approvalForForm() {
+    return q('#identityNameApproved').checked && audition.canApprove(formPerson()) ? nameApprovalToken(formPerson()) : '';
+  }
+  for (const id of ['#identityName', '#identityReading']) q(id).addEventListener('input', clearAudition);
   const setBusy = value => {
     capturing = value;
     dialog.querySelectorAll('input, select, button:not([data-close])').forEach(el => { el.disabled = value; });
+    refreshApproval();
   };
   open.addEventListener('click', () => {
     reset(); dialog.showModal(); onRegistrationChange(true); render();
+    loadKanaBank().catch(() => {});
     q('video').srcObject = video.srcObject;
     q('video').play().catch(() => {});
     message(storageError ? '保存データを読み込めませんでした。登録内容を確認してください。' : '顔を正面から写して登録してください。');
   });
   q('[data-close]').addEventListener('click', () => dialog.close());
-  dialog.addEventListener('close', () => { cancelNameVoice(); q('video').srcObject = null; reset(); onRegistrationChange(false); });
+  dialog.addEventListener('close', () => { clearAudition(); q('video').srcObject = null; reset(); onRegistrationChange(false); });
   q('[data-face]').addEventListener('click', () => register(false));
   q('[data-uniform]').addEventListener('click', () => register(true));
   q('[data-save-name]').addEventListener('click', async () => {
     const p = db.people.find(p => p.name === q('#identityName').value.trim());
-    if (!p) { message('一覧の「読み・音声」を押すか、先に顔を登録してください。'); return; }
+    if (!p) { message('一覧の「読みがな」を押すか、先に顔を登録してください。'); return; }
     setBusy(true);
     try {
-      if (q('#identityAudio').files[0]) await saveNameAudio(p.id, q('#identityAudio').files[0]);
-      save({ ...db, people: db.people.map(x => x.id === p.id ? { ...x, reading: q('#identityReading').value.trim() } : x) });
-      q('#identityAudio').value = ''; render(); message('読み・音声を保存しました。「呼びかけを確認」でお試しください。');
+      const nameAudioApproval = approvalForForm();
+      save({ ...db, people: db.people.map(x => x.id === p.id ? { ...x, reading: q('#identityReading').value.trim(), nameAudioApproval } : x) });
+      render(); message(nameAudioApproval ? '名前呼びONで保存しました。確認した音声で呼びかけます。' : '名前呼びOFFで保存しました。名前を呼ばずに挨拶します。');
     } catch (error) { message(error.message || '保存できませんでした。'); }
     finally { setBusy(false); }
   });
   q('[data-test-name]').addEventListener('click', async () => {
-    if (q('#identityAudio').files.length) { message('選んだ音声を先に保存してからお試しください。'); return; }
     const name = q('#identityName').value.trim();
     if (!name) { message('お名前を入力してください。'); return; }
-    const p = db.people.find(p => p.name === name);
-    try { await previewName({ ...p, name, reading: q('#identityReading').value.trim() }); }
-    catch { message('音声を再生できません。端末の日本語音声、または保存したWAVをご確認ください。'); }
+    clearAudition(); const own = auditionId, person = formPerson();
+    q('[data-test-name]').disabled = true;
+    try {
+      message('名前の音声を準備しています…');
+      const completed = await previewName(person);
+      if (!completed || own !== auditionId || !dialog.open) return;
+      audition.completed(person); refreshApproval();
+      q('[data-name-state]').textContent = '聞こえた発音でよければ②をチェックして保存してください。名前を呼ばない設定でも登録できます。';
+      message('試聴が終わりました。発音をご確認ください。');
+    } catch (error) { if (own === auditionId) message(error.message || '音声を再生できません。読みがなと通信状態をご確認ください。'); }
+    finally { if (own === auditionId) q('[data-test-name]').disabled = false; }
   });
   q('[data-import]').addEventListener('click', () => {
     try {
@@ -98,7 +127,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
   function sanitize(value) {
     const read = (items, key, n) => (Array.isArray(items) ? items : []).filter(p => p && typeof p.name === 'string' && p.name.trim() && Array.isArray(p[key]))
       .map(p => ({ id: typeof p.id === 'string' ? p.id : crypto.randomUUID(), name: p.name.trim().slice(0, 40),
-        role: ROLES[p.role] ? p.role : 'guest', reading: typeof p.reading === 'string' ? p.reading.slice(0, 60) : '', [key]: p[key].filter(v => validVector(v, n)).slice(-12) }))
+        role: ROLES[p.role] ? p.role : 'guest', reading: typeof p.reading === 'string' ? p.reading.slice(0, 60) : '', nameAudioApproval: typeof p.nameAudioApproval === 'string' ? p.nameAudioApproval.slice(0, 400) : '', [key]: p[key].filter(v => validVector(v, n)).slice(-12) }))
       .filter(p => p[key].length).slice(0, 100);
     return { people: read(value?.people, 'descriptors', 128), uniforms: read(value?.uniforms, 'signatures', 19) };
   }
@@ -159,6 +188,10 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     if (!singleFace()) { message('カメラを開始し、1人で顔を写してください。'); return; }
     setBusy(true); reset(); const own = epoch;
     try {
+      if (!uniform && approvalForForm()) {
+        const { manifest } = await loadKanaBank();
+        tokenizeReading(readingFor({ name, reading: q('#identityReading').value.trim() }), manifest.entries);
+      }
       // Wait for the current inference to release its shared snapshot canvas.
       while (busy) { await delay(100); if (own !== epoch) return; }
       message('登録の準備中…初回は識別モデルを読み込みます。');
@@ -182,11 +215,10 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
       const key = uniform ? 'uniforms' : 'people', vectors = uniform ? 'signatures' : 'descriptors';
       const previous = db[key].find(p => p.name === name);
       if (!previous && db[key].length >= 100) throw new Error('登録は100件までです。不要な登録を削除してください。');
-      const entry = { id: previous?.id || crypto.randomUUID(), name, role: uniform ? 'delivery' : role, reading: q('#identityReading').value.trim() || previous?.reading || '',
+      const entry = { id: previous?.id || crypto.randomUUID(), name, role: uniform ? 'delivery' : role, reading: q('#identityReading').value.trim(), nameAudioApproval: uniform ? '' : approvalForForm(),
         [vectors]: [...(previous?.[vectors] || []), ...captured].slice(-12) };
-      if (!uniform && q('#identityAudio').files[0]) await saveNameAudio(entry.id, q('#identityAudio').files[0]);
       const next = { ...db, [key]: [...db[key].filter(p => p.id !== entry.id), entry] };
-      save(next); q('#identityAudio').value = ''; render(); message(`${name}を${uniform ? '配達の制服' : ROLES[role]}として登録しました。画面を閉じると照合を再開します。`);
+      save(next); render(); message(`${name}を${uniform ? '配達の制服' : ROLES[role]}として登録しました。画面を閉じると照合を再開します。`);
     } catch (error) { if (dialog.open) message(error.name === 'QuotaExceededError' || error.name === 'SecurityError' ? 'このブラウザに保存できませんでした。保存設定をご確認ください。' : error.message || '登録できませんでした。もう一度お試しください。'); }
     finally { setBusy(false); }
   }
@@ -194,14 +226,16 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     const list = q('[data-list]'); list.replaceChildren();
     for (const key of ['people', 'uniforms']) for (const p of db[key]) {
       const li = document.createElement('li'), label = document.createElement('span');
-      label.textContent = `${key === 'people' ? '顔' : '制服'}：${p.name}`; li.append(label);
+      label.textContent = `${key === 'people' ? '顔' : '制服'}：${p.name}${key === 'people' ? isNameApproved(p) ? '（名前呼びON）' : '（名前呼びOFF・未確認）' : ''}`; li.append(label);
       if (key === 'people') {
-        const edit = document.createElement('button'); edit.type = 'button'; edit.textContent = '読み・音声';
-        edit.addEventListener('click', () => { q('#identityName').value = p.name; q('#identityReading').value = p.reading || ''; q('#identityRole').value = p.role; q('#identityAudio').value = ''; q('#identityReading').focus(); });
+        const edit = document.createElement('button'); edit.type = 'button'; edit.textContent = '読みがな';
+        edit.addEventListener('click', () => {
+          clearAudition(); q('#identityName').value = p.name; q('#identityReading').value = p.reading || ''; q('#identityRole').value = p.role;
+          if (isNameApproved(p)) { audition.completed(p); q('#identityNameApproved').checked = true; }
+          refreshApproval(); q('#identityReading').focus();
+          q('[data-name-state]').textContent = isNameApproved(p) ? '保存済みの確認した発音を使います。チェックを外して保存すると名前呼びOFFになります。' : 'まだ発音を確認していません。① 名前を試聴してください。';
+        });
         li.append(edit);
-        const removeAudio = document.createElement('button'); removeAudio.type = 'button'; removeAudio.textContent = '名前音声を解除';
-        removeAudio.addEventListener('click', async () => { try { await deleteNameAudio(p.id); message('名前音声を解除しました。端末の読み上げに戻ります。'); } catch { message('解除できませんでした。'); } });
-        li.append(removeAudio);
         const select = document.createElement('select'); select.setAttribute('aria-label', `${p.name}の区分`);
         for (const [value, label] of Object.entries(ROLES)) select.add(new Option(label, value));
         select.value = p.role;
@@ -213,7 +247,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
       const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '削除';
       remove.addEventListener('click', () => {
         if (!confirm(`${p.name}の${key === 'people' ? '顔' : '制服'}登録を削除しますか？`)) return;
-        try { save({ ...db, [key]: db[key].filter(x => x.id !== p.id) }); if (key === 'people') deleteNameAudio(p.id).catch(() => {}); render(); message('登録を削除しました。'); }
+        try { save({ ...db, [key]: db[key].filter(x => x.id !== p.id) }); render(); message('登録を削除しました。'); }
         catch { message('削除内容を保存できませんでした。'); }
       }); li.append(remove); list.append(li);
     }
@@ -242,6 +276,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
   const timer = setInterval(() => { scan().catch(() => { reset(); live.textContent = '識別できません・通常受付中'; }); }, 500);
   // Load before the first visitor arrives, rather than spending their greeting window downloading models.
   if (db.people.length) ensureApi().catch(() => {});
+  if (db.people.length) loadKanaBank().catch(() => {});
   live.textContent = '顔・配達の登録から識別を設定できます';
   return {
     get paused() { return dialog.open; },

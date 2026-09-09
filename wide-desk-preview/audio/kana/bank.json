@@ -1,0 +1,988 @@
+{
+  "version": 3,
+  "speaker": "VOICEVOX:春日部つむぎ",
+  "style": 8,
+  "sampleRate": 24000,
+  "entries": {
+    "あ": {
+      "start": 0,
+      "frames": 4707,
+      "vowel": "a",
+      "kana": "ア'",
+      "peak": 10199
+    },
+    "い": {
+      "start": 4707,
+      "frames": 4707,
+      "vowel": "i",
+      "kana": "イ'",
+      "peak": 5359
+    },
+    "う": {
+      "start": 9414,
+      "frames": 4724,
+      "vowel": "u",
+      "kana": "ウ'",
+      "peak": 5007
+    },
+    "え": {
+      "start": 14138,
+      "frames": 4745,
+      "vowel": "e",
+      "kana": "エ'",
+      "peak": 7072
+    },
+    "お": {
+      "start": 18883,
+      "frames": 4691,
+      "vowel": "o",
+      "kana": "オ'",
+      "peak": 10418
+    },
+    "か": {
+      "start": 23574,
+      "frames": 5354,
+      "vowel": "a",
+      "kana": "カ'",
+      "peak": 8731
+    },
+    "き": {
+      "start": 28928,
+      "frames": 5591,
+      "vowel": "i",
+      "kana": "キ'",
+      "peak": 8297
+    },
+    "く": {
+      "start": 34519,
+      "frames": 5055,
+      "vowel": "u",
+      "kana": "ク'",
+      "peak": 6159
+    },
+    "け": {
+      "start": 39574,
+      "frames": 4935,
+      "vowel": "e",
+      "kana": "ケ'",
+      "peak": 8502
+    },
+    "こ": {
+      "start": 44509,
+      "frames": 5067,
+      "vowel": "o",
+      "kana": "コ'",
+      "peak": 14051
+    },
+    "さ": {
+      "start": 49576,
+      "frames": 6314,
+      "vowel": "a",
+      "kana": "サ'",
+      "peak": 7472
+    },
+    "し": {
+      "start": 55890,
+      "frames": 6563,
+      "vowel": "i",
+      "kana": "シ'",
+      "peak": 5364
+    },
+    "す": {
+      "start": 62453,
+      "frames": 6601,
+      "vowel": "u",
+      "kana": "ス'",
+      "peak": 6818
+    },
+    "せ": {
+      "start": 69054,
+      "frames": 6349,
+      "vowel": "e",
+      "kana": "セ'",
+      "peak": 7736
+    },
+    "そ": {
+      "start": 75403,
+      "frames": 6436,
+      "vowel": "o",
+      "kana": "ソ'",
+      "peak": 13819
+    },
+    "た": {
+      "start": 81839,
+      "frames": 4872,
+      "vowel": "a",
+      "kana": "タ'",
+      "peak": 8381
+    },
+    "ち": {
+      "start": 86711,
+      "frames": 6304,
+      "vowel": "i",
+      "kana": "チ'",
+      "peak": 6185
+    },
+    "つ": {
+      "start": 93015,
+      "frames": 6069,
+      "vowel": "u",
+      "kana": "ツ'",
+      "peak": 6287
+    },
+    "て": {
+      "start": 99084,
+      "frames": 4790,
+      "vowel": "e",
+      "kana": "テ'",
+      "peak": 8234
+    },
+    "と": {
+      "start": 103874,
+      "frames": 4858,
+      "vowel": "o",
+      "kana": "ト'",
+      "peak": 11414
+    },
+    "な": {
+      "start": 108732,
+      "frames": 5441,
+      "vowel": "a",
+      "kana": "ナ'",
+      "peak": 7017
+    },
+    "に": {
+      "start": 114173,
+      "frames": 5392,
+      "vowel": "i",
+      "kana": "ニ'",
+      "peak": 7719
+    },
+    "ぬ": {
+      "start": 119565,
+      "frames": 5465,
+      "vowel": "u",
+      "kana": "ヌ'",
+      "peak": 5525
+    },
+    "ね": {
+      "start": 125030,
+      "frames": 5471,
+      "vowel": "e",
+      "kana": "ネ'",
+      "peak": 5486
+    },
+    "の": {
+      "start": 130501,
+      "frames": 5405,
+      "vowel": "o",
+      "kana": "ノ'",
+      "peak": 10987
+    },
+    "は": {
+      "start": 135906,
+      "frames": 6029,
+      "vowel": "a",
+      "kana": "ハ'",
+      "peak": 6955
+    },
+    "ひ": {
+      "start": 141935,
+      "frames": 6073,
+      "vowel": "i",
+      "kana": "ヒ'",
+      "peak": 4776
+    },
+    "ふ": {
+      "start": 148008,
+      "frames": 5698,
+      "vowel": "u",
+      "kana": "フ'",
+      "peak": 5832
+    },
+    "へ": {
+      "start": 153706,
+      "frames": 5338,
+      "vowel": "e",
+      "kana": "ヘ'",
+      "peak": 7906
+    },
+    "ほ": {
+      "start": 159044,
+      "frames": 5228,
+      "vowel": "o",
+      "kana": "ホ'",
+      "peak": 13192
+    },
+    "ま": {
+      "start": 164272,
+      "frames": 5405,
+      "vowel": "a",
+      "kana": "マ'",
+      "peak": 10749
+    },
+    "み": {
+      "start": 169677,
+      "frames": 5473,
+      "vowel": "i",
+      "kana": "ミ'",
+      "peak": 9322
+    },
+    "む": {
+      "start": 175150,
+      "frames": 5417,
+      "vowel": "u",
+      "kana": "ム'",
+      "peak": 6313
+    },
+    "め": {
+      "start": 180567,
+      "frames": 5431,
+      "vowel": "e",
+      "kana": "メ'",
+      "peak": 7063
+    },
+    "も": {
+      "start": 185998,
+      "frames": 5376,
+      "vowel": "o",
+      "kana": "モ'",
+      "peak": 12361
+    },
+    "や": {
+      "start": 191374,
+      "frames": 5734,
+      "vowel": "a",
+      "kana": "ヤ'",
+      "peak": 7877
+    },
+    "ゆ": {
+      "start": 197108,
+      "frames": 6833,
+      "vowel": "u",
+      "kana": "ユ'",
+      "peak": 6902
+    },
+    "よ": {
+      "start": 203941,
+      "frames": 5734,
+      "vowel": "o",
+      "kana": "ヨ'",
+      "peak": 10994
+    },
+    "ら": {
+      "start": 209675,
+      "frames": 5433,
+      "vowel": "a",
+      "kana": "ラ'",
+      "peak": 9015
+    },
+    "り": {
+      "start": 215108,
+      "frames": 5491,
+      "vowel": "i",
+      "kana": "リ'",
+      "peak": 7331
+    },
+    "る": {
+      "start": 220599,
+      "frames": 5472,
+      "vowel": "u",
+      "kana": "ル'",
+      "peak": 4989
+    },
+    "れ": {
+      "start": 226071,
+      "frames": 5477,
+      "vowel": "e",
+      "kana": "レ'",
+      "peak": 7357
+    },
+    "ろ": {
+      "start": 231548,
+      "frames": 5563,
+      "vowel": "o",
+      "kana": "ロ'",
+      "peak": 11652
+    },
+    "わ": {
+      "start": 237111,
+      "frames": 5321,
+      "vowel": "a",
+      "kana": "ワ'",
+      "peak": 12743
+    },
+    "を": {
+      "start": 242432,
+      "frames": 4691,
+      "vowel": "o",
+      "kana": "ヲ'",
+      "peak": 10418
+    },
+    "ん": {
+      "start": 247123,
+      "frames": 4858,
+      "vowel": "n",
+      "kana": "ン'",
+      "peak": 5261
+    },
+    "が": {
+      "start": 251981,
+      "frames": 5173,
+      "vowel": "a",
+      "kana": "ガ'",
+      "peak": 7489
+    },
+    "ぎ": {
+      "start": 257154,
+      "frames": 5161,
+      "vowel": "i",
+      "kana": "ギ'",
+      "peak": 7511
+    },
+    "ぐ": {
+      "start": 262315,
+      "frames": 5127,
+      "vowel": "u",
+      "kana": "グ'",
+      "peak": 6150
+    },
+    "げ": {
+      "start": 267442,
+      "frames": 5403,
+      "vowel": "e",
+      "kana": "ゲ'",
+      "peak": 7311
+    },
+    "ご": {
+      "start": 272845,
+      "frames": 5083,
+      "vowel": "o",
+      "kana": "ゴ'",
+      "peak": 13234
+    },
+    "ざ": {
+      "start": 277928,
+      "frames": 5525,
+      "vowel": "a",
+      "kana": "ザ'",
+      "peak": 8148
+    },
+    "じ": {
+      "start": 283453,
+      "frames": 6823,
+      "vowel": "i",
+      "kana": "ジ'",
+      "peak": 7396
+    },
+    "ず": {
+      "start": 290276,
+      "frames": 5796,
+      "vowel": "u",
+      "kana": "ズ'",
+      "peak": 7964
+    },
+    "ぜ": {
+      "start": 296072,
+      "frames": 5257,
+      "vowel": "e",
+      "kana": "ゼ'",
+      "peak": 6738
+    },
+    "ぞ": {
+      "start": 301329,
+      "frames": 5270,
+      "vowel": "o",
+      "kana": "ゾ'",
+      "peak": 11763
+    },
+    "だ": {
+      "start": 306599,
+      "frames": 4875,
+      "vowel": "a",
+      "kana": "ダ'",
+      "peak": 9423
+    },
+    "ぢ": {
+      "start": 311474,
+      "frames": 6823,
+      "vowel": "i",
+      "kana": "ヂ'",
+      "peak": 7396
+    },
+    "づ": {
+      "start": 318297,
+      "frames": 5796,
+      "vowel": "u",
+      "kana": "ヅ'",
+      "peak": 7964
+    },
+    "で": {
+      "start": 324093,
+      "frames": 4835,
+      "vowel": "e",
+      "kana": "デ'",
+      "peak": 6648
+    },
+    "ど": {
+      "start": 328928,
+      "frames": 4893,
+      "vowel": "o",
+      "kana": "ド'",
+      "peak": 10810
+    },
+    "ば": {
+      "start": 333821,
+      "frames": 4831,
+      "vowel": "a",
+      "kana": "バ'",
+      "peak": 10808
+    },
+    "び": {
+      "start": 338652,
+      "frames": 4936,
+      "vowel": "i",
+      "kana": "ビ'",
+      "peak": 9673
+    },
+    "ぶ": {
+      "start": 343588,
+      "frames": 4931,
+      "vowel": "u",
+      "kana": "ブ'",
+      "peak": 6310
+    },
+    "べ": {
+      "start": 348519,
+      "frames": 5122,
+      "vowel": "e",
+      "kana": "ベ'",
+      "peak": 6920
+    },
+    "ぼ": {
+      "start": 353641,
+      "frames": 4864,
+      "vowel": "o",
+      "kana": "ボ'",
+      "peak": 11776
+    },
+    "ぱ": {
+      "start": 358505,
+      "frames": 4806,
+      "vowel": "a",
+      "kana": "パ'",
+      "peak": 12510
+    },
+    "ぴ": {
+      "start": 363311,
+      "frames": 4877,
+      "vowel": "i",
+      "kana": "ピ'",
+      "peak": 7905
+    },
+    "ぷ": {
+      "start": 368188,
+      "frames": 4811,
+      "vowel": "u",
+      "kana": "プ'",
+      "peak": 7261
+    },
+    "ぺ": {
+      "start": 372999,
+      "frames": 4769,
+      "vowel": "e",
+      "kana": "ペ'",
+      "peak": 8762
+    },
+    "ぽ": {
+      "start": 377768,
+      "frames": 4814,
+      "vowel": "o",
+      "kana": "ポ'",
+      "peak": 14326
+    },
+    "ゔ": {
+      "start": 382582,
+      "frames": 5071,
+      "vowel": "u",
+      "kana": "ヴ'",
+      "peak": 6682
+    },
+    "きゃ": {
+      "start": 387653,
+      "frames": 5677,
+      "vowel": "a",
+      "kana": "キャ'",
+      "peak": 12731
+    },
+    "きゅ": {
+      "start": 393330,
+      "frames": 6325,
+      "vowel": "u",
+      "kana": "キュ'",
+      "peak": 9942
+    },
+    "きょ": {
+      "start": 399655,
+      "frames": 5671,
+      "vowel": "o",
+      "kana": "キョ'",
+      "peak": 13813
+    },
+    "ぎゃ": {
+      "start": 405326,
+      "frames": 7091,
+      "vowel": "a",
+      "kana": "ギャ'",
+      "peak": 12467
+    },
+    "ぎゅ": {
+      "start": 412417,
+      "frames": 7099,
+      "vowel": "u",
+      "kana": "ギュ'",
+      "peak": 8641
+    },
+    "ぎょ": {
+      "start": 419516,
+      "frames": 7055,
+      "vowel": "o",
+      "kana": "ギョ'",
+      "peak": 15944
+    },
+    "しゃ": {
+      "start": 426571,
+      "frames": 6362,
+      "vowel": "a",
+      "kana": "シャ'",
+      "peak": 6907
+    },
+    "しゅ": {
+      "start": 432933,
+      "frames": 6376,
+      "vowel": "u",
+      "kana": "シュ'",
+      "peak": 7467
+    },
+    "しょ": {
+      "start": 439309,
+      "frames": 6348,
+      "vowel": "o",
+      "kana": "ショ'",
+      "peak": 11953
+    },
+    "じゃ": {
+      "start": 445657,
+      "frames": 6576,
+      "vowel": "a",
+      "kana": "ジャ'",
+      "peak": 10266
+    },
+    "じゅ": {
+      "start": 452233,
+      "frames": 7193,
+      "vowel": "u",
+      "kana": "ジュ'",
+      "peak": 8150
+    },
+    "じょ": {
+      "start": 459426,
+      "frames": 5367,
+      "vowel": "o",
+      "kana": "ジョ'",
+      "peak": 11572
+    },
+    "ちゃ": {
+      "start": 464793,
+      "frames": 5701,
+      "vowel": "a",
+      "kana": "チャ'",
+      "peak": 8863
+    },
+    "ちゅ": {
+      "start": 470494,
+      "frames": 6284,
+      "vowel": "u",
+      "kana": "チュ'",
+      "peak": 9934
+    },
+    "ちょ": {
+      "start": 476778,
+      "frames": 5451,
+      "vowel": "o",
+      "kana": "チョ'",
+      "peak": 11147
+    },
+    "にゃ": {
+      "start": 482229,
+      "frames": 6669,
+      "vowel": "a",
+      "kana": "ニャ'",
+      "peak": 12636
+    },
+    "にゅ": {
+      "start": 488898,
+      "frames": 6969,
+      "vowel": "u",
+      "kana": "ニュ'",
+      "peak": 9944
+    },
+    "にょ": {
+      "start": 495867,
+      "frames": 6420,
+      "vowel": "o",
+      "kana": "ニョ'",
+      "peak": 15023
+    },
+    "ひゃ": {
+      "start": 502287,
+      "frames": 6322,
+      "vowel": "a",
+      "kana": "ヒャ'",
+      "peak": 7164
+    },
+    "ひゅ": {
+      "start": 508609,
+      "frames": 6643,
+      "vowel": "u",
+      "kana": "ヒュ'",
+      "peak": 7120
+    },
+    "ひょ": {
+      "start": 515252,
+      "frames": 6570,
+      "vowel": "o",
+      "kana": "ヒョ'",
+      "peak": 14872
+    },
+    "びゃ": {
+      "start": 521822,
+      "frames": 6449,
+      "vowel": "a",
+      "kana": "ビャ'",
+      "peak": 12985
+    },
+    "びゅ": {
+      "start": 528271,
+      "frames": 7042,
+      "vowel": "u",
+      "kana": "ビュ'",
+      "peak": 9013
+    },
+    "びょ": {
+      "start": 535313,
+      "frames": 6413,
+      "vowel": "o",
+      "kana": "ビョ'",
+      "peak": 15194
+    },
+    "ぴゃ": {
+      "start": 541726,
+      "frames": 6047,
+      "vowel": "a",
+      "kana": "ピャ'",
+      "peak": 13718
+    },
+    "ぴゅ": {
+      "start": 547773,
+      "frames": 6262,
+      "vowel": "u",
+      "kana": "ピュ'",
+      "peak": 10233
+    },
+    "ぴょ": {
+      "start": 554035,
+      "frames": 5675,
+      "vowel": "o",
+      "kana": "ピョ'",
+      "peak": 15944
+    },
+    "みゃ": {
+      "start": 559710,
+      "frames": 6134,
+      "vowel": "a",
+      "kana": "ミャ'",
+      "peak": 11005
+    },
+    "みゅ": {
+      "start": 565844,
+      "frames": 6937,
+      "vowel": "u",
+      "kana": "ミュ'",
+      "peak": 7328
+    },
+    "みょ": {
+      "start": 572781,
+      "frames": 6431,
+      "vowel": "o",
+      "kana": "ミョ'",
+      "peak": 13420
+    },
+    "りゃ": {
+      "start": 579212,
+      "frames": 6260,
+      "vowel": "a",
+      "kana": "リャ'",
+      "peak": 11122
+    },
+    "りゅ": {
+      "start": 585472,
+      "frames": 7055,
+      "vowel": "u",
+      "kana": "リュ'",
+      "peak": 8089
+    },
+    "りょ": {
+      "start": 592527,
+      "frames": 6272,
+      "vowel": "o",
+      "kana": "リョ'",
+      "peak": 15646
+    },
+    "いぇ": {
+      "start": 598799,
+      "frames": 5766,
+      "vowel": "e",
+      "kana": "イェ'",
+      "peak": 6687
+    },
+    "うぃ": {
+      "start": 604565,
+      "frames": 7295,
+      "vowel": "i",
+      "kana": "ウィ'",
+      "peak": 8683
+    },
+    "うぇ": {
+      "start": 611860,
+      "frames": 5492,
+      "vowel": "e",
+      "kana": "ウェ'",
+      "peak": 7457
+    },
+    "うぉ": {
+      "start": 617352,
+      "frames": 5326,
+      "vowel": "o",
+      "kana": "ウォ'",
+      "peak": 12184
+    },
+    "きぇ": {
+      "start": 622678,
+      "frames": 5513,
+      "vowel": "e",
+      "kana": "キェ'",
+      "peak": 8055
+    },
+    "ぎぇ": {
+      "start": 628191,
+      "frames": 7068,
+      "vowel": "e",
+      "kana": "ギェ'",
+      "peak": 10980
+    },
+    "しぇ": {
+      "start": 635259,
+      "frames": 6350,
+      "vowel": "e",
+      "kana": "シェ'",
+      "peak": 6486
+    },
+    "じぇ": {
+      "start": 641609,
+      "frames": 5843,
+      "vowel": "e",
+      "kana": "ジェ'",
+      "peak": 6625
+    },
+    "ちぇ": {
+      "start": 647452,
+      "frames": 5283,
+      "vowel": "e",
+      "kana": "チェ'",
+      "peak": 8282
+    },
+    "にぇ": {
+      "start": 652735,
+      "frames": 6690,
+      "vowel": "e",
+      "kana": "ニェ'",
+      "peak": 8995
+    },
+    "ひぇ": {
+      "start": 659425,
+      "frames": 6060,
+      "vowel": "e",
+      "kana": "ヒェ'",
+      "peak": 7519
+    },
+    "びぇ": {
+      "start": 665485,
+      "frames": 6205,
+      "vowel": "e",
+      "kana": "ビェ'",
+      "peak": 10352
+    },
+    "ぴぇ": {
+      "start": 671690,
+      "frames": 6102,
+      "vowel": "e",
+      "kana": "ピェ'",
+      "peak": 10746
+    },
+    "みぇ": {
+      "start": 677792,
+      "frames": 6126,
+      "vowel": "e",
+      "kana": "ミェ'",
+      "peak": 7265
+    },
+    "りぇ": {
+      "start": 683918,
+      "frames": 5922,
+      "vowel": "e",
+      "kana": "リェ'",
+      "peak": 7704
+    },
+    "てぃ": {
+      "start": 689840,
+      "frames": 4849,
+      "vowel": "i",
+      "kana": "ティ'",
+      "peak": 5261
+    },
+    "でぃ": {
+      "start": 694689,
+      "frames": 4840,
+      "vowel": "i",
+      "kana": "ディ'",
+      "peak": 7497
+    },
+    "とぅ": {
+      "start": 699529,
+      "frames": 4842,
+      "vowel": "u",
+      "kana": "トゥ'",
+      "peak": 6369
+    },
+    "どぅ": {
+      "start": 704371,
+      "frames": 4937,
+      "vowel": "u",
+      "kana": "ドゥ'",
+      "peak": 5637
+    },
+    "てゅ": {
+      "start": 709308,
+      "frames": 5119,
+      "vowel": "u",
+      "kana": "テュ'",
+      "peak": 5603
+    },
+    "でゅ": {
+      "start": 714427,
+      "frames": 7429,
+      "vowel": "u",
+      "kana": "デュ'",
+      "peak": 8523
+    },
+    "つぁ": {
+      "start": 721856,
+      "frames": 5684,
+      "vowel": "a",
+      "kana": "ツァ'",
+      "peak": 8856
+    },
+    "つぃ": {
+      "start": 727540,
+      "frames": 6562,
+      "vowel": "i",
+      "kana": "ツィ'",
+      "peak": 6023
+    },
+    "つぇ": {
+      "start": 734102,
+      "frames": 5303,
+      "vowel": "e",
+      "kana": "ツェ'",
+      "peak": 8105
+    },
+    "つぉ": {
+      "start": 739405,
+      "frames": 5676,
+      "vowel": "o",
+      "kana": "ツォ'",
+      "peak": 11177
+    },
+    "ふぁ": {
+      "start": 745081,
+      "frames": 6045,
+      "vowel": "a",
+      "kana": "ファ'",
+      "peak": 10928
+    },
+    "ふぃ": {
+      "start": 751126,
+      "frames": 5892,
+      "vowel": "i",
+      "kana": "フィ'",
+      "peak": 6791
+    },
+    "ふぇ": {
+      "start": 757018,
+      "frames": 5796,
+      "vowel": "e",
+      "kana": "フェ'",
+      "peak": 7795
+    },
+    "ふぉ": {
+      "start": 762814,
+      "frames": 5171,
+      "vowel": "o",
+      "kana": "フォ'",
+      "peak": 13094
+    },
+    "ゔぁ": {
+      "start": 767985,
+      "frames": 4910,
+      "vowel": "a",
+      "kana": "ヴァ'",
+      "peak": 13816
+    },
+    "ゔぃ": {
+      "start": 772895,
+      "frames": 5017,
+      "vowel": "i",
+      "kana": "ヴィ'",
+      "peak": 8150
+    },
+    "ゔぇ": {
+      "start": 777912,
+      "frames": 5100,
+      "vowel": "e",
+      "kana": "ヴェ'",
+      "peak": 6769
+    },
+    "ゔぉ": {
+      "start": 783012,
+      "frames": 4936,
+      "vowel": "o",
+      "kana": "ヴォ'",
+      "peak": 12319
+    },
+    "ゔゅ": {
+      "start": 787948,
+      "frames": 7042,
+      "vowel": "u",
+      "kana": "ヴュ'",
+      "peak": 9013
+    },
+    "さん": {
+      "start": 794990,
+      "frames": 11644,
+      "vowel": "n",
+      "kana": "サン'",
+      "peak": 10125
+    }
+  }
+}

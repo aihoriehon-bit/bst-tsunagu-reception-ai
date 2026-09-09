@@ -1,4 +1,6 @@
-// Full-name WAV recordings stay on this device; no registered names are published.
+import { kanaNameAudio, readingFor } from './kana-name.mjs?v=20260909-5';
+import { isNameApproved } from './name-confirmation.mjs?v=20260909-5';
+// Existing uploaded WAVs stay stored, but reading alone now selects VOICEVOX audio.
 const database = () => new Promise((resolve, reject) => {
   let expired = false;
   const timer = setTimeout(() => { expired = true; reject(new Error('音声の保存先を開けませんでした。')); }, 4000);
@@ -39,24 +41,21 @@ export async function deleteNameAudio(id) {
   urls.delete(id);
 }
 export const callName = value => String(value || '').trim().replace(/(?:さん|様|さま)[。\s]*$/, '') + 'さん';
-export async function nameLine(person) {
+export async function nameLine(person, { audition = false } = {}) {
   if (!person?.name) return null;
-  let blob = null;
-  try { if (person.id) blob = await record(person.id); } catch { /* Device speech remains available. */ }
+  if (!audition && !isNameApproved(person)) throw new Error('名前の音声は未確認です。「顔・配達登録」で試聴して保存してください。');
   let audio;
-  if (blob) {
-    if (!urls.has(person.id)) urls.set(person.id, URL.createObjectURL(blob));
-    audio = urls.get(person.id);
-  }
   const name = person.name.normalize('NFKC').replace(/\s/g, '').replace(/(?:さん|様|さま)$/, '');
   const usualReading = { 佐藤: 'さとう', 田中: 'たなか', 福田: 'ふくだ' };
-  if (!audio && (!person.reading || person.reading === usualReading[name]) && usualReading[name]) {
+  if (usualReading[name] && readingFor(person) === usualReading[name]) {
     audio = './audio/' + ({ 佐藤: 'nameSato', 田中: 'nameTanaka', 福田: 'nameFukuda' })[name] + '.wav';
   }
-  return { text: callName(person.name) + '。', audio, spokenText: callName(person.reading || person.name), group: 'named' };
+  audio ||= await kanaNameAudio(person);
+  return { text: callName(person.name) + '。', audio, group: 'named' };
 }
-let utterance = null, previewAudio = null, cancelPreview = null;
+let utterance = null, previewAudio = null, cancelPreview = null, previewRequest = 0;
 export function cancelNameVoice() {
+  previewRequest++;
   cancelPreview?.(); cancelPreview = null;
   if (utterance) { utterance.onend = utterance.onerror = utterance.onstart = null; window.speechSynthesis?.cancel(); utterance = null; }
   if (previewAudio) { previewAudio.pause(); previewAudio = null; }
@@ -74,12 +73,13 @@ export function speakDeviceName(text, { onstart, onend, onerror } = {}) {
 }
 export async function previewName(person) {
   cancelNameVoice();
-  const line = await nameLine(person);
-  if (!line) return;
+  const own = previewRequest;
+  const line = await nameLine(person, { audition: true });
+  if (!line || own !== previewRequest) return false;
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => { cancelNameVoice(); reject(new Error('再生が始まりませんでした。')); }, 18000);
-    cancelPreview = () => { clearTimeout(timer); resolve(); };
-    const finish = failed => { clearTimeout(timer); cancelPreview = null; failed ? reject(new Error('音声を再生できません。')) : resolve(); };
+    const timer = setTimeout(() => { reject(new Error('音声の再生を完了できませんでした。')); cancelNameVoice(); }, 18000);
+    cancelPreview = () => { clearTimeout(timer); resolve(false); };
+    const finish = failed => { if (own !== previewRequest) return; clearTimeout(timer); cancelPreview = null; failed ? reject(new Error('音声を再生できません。')) : resolve(true); };
     if (line.audio) {
       const audio = new Audio(line.audio); previewAudio = audio;
       audio.onended = () => finish(false); audio.onerror = () => finish(true);

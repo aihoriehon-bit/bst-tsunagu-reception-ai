@@ -60,6 +60,14 @@ test('arbitrary registered names precede the role greeting without doubling a na
     assert.deepEqual(f.spoken, ['registeredName', role === 'employee' ? 'employeeGeneric' : role === 'delivery' ? 'calling' : 'visitor']);
   }
 });
+test('a missing reading or failed name bank still permits the role greeting', async () => {
+  const f = fixture({ name: '山本', source: 'face', role: 'employee' });
+  f.state.speechStatusElement = {};
+  f.state.nameLine = async () => { throw Error('読みがなを入力してください'); };
+  await f.state.beginSensorGreeting();
+  assert.deepEqual(f.spoken, ['employeeGeneric']);
+  f.state.finish(); assert.equal(f.state.greetingPending, false);
+});
 test('automatic conversation suppresses idle speech while camera departure remains active', () => {
   const f = fixture(); f.state.conversation.active = true; f.state.faceVisible = true;
   f.state.currentReceptionPlan = receptionPlan(null, 'greetingDayArrival');

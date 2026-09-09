@@ -1,9 +1,9 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { EXTRA_SPEECH } from "../wide-desk/additional-speech.js?v=20260909-conversation-1";
-import { createVisitorRecognition } from "./visitor-recognition.js?v=20260909-2";
+import { createVisitorRecognition } from "./visitor-recognition.js?v=20260909-5";
 import { receptionPlan } from "./visitor-matching.mjs?v=20260909-2";
-import { nameLine, cancelNameVoice, speakDeviceName } from "./name-voice.js?v=20260909-2";
+import { nameLine, cancelNameVoice, speakDeviceName } from "./name-voice.js?v=20260909-5";
 import { createConversation, DIALOGUE_LINES } from "./automatic-conversation.js?v=20260909-3";
 
 const MODEL_URL = "../blender/tsunagu-reception-actions-20260826.glb?v=20260831-pc-gaze-1";
@@ -1134,7 +1134,15 @@ async function beginSensorGreeting() {
   if (sequenceId !== ownSequence || !sensorAttending || !isSensorVisitorPresent() || visitorRecognition.paused) return;
   currentReceptionPlan = receptionPlan(identity, timeSpeechKey(), testGreeting);
   if (currentReceptionPlan.identity) {
-    const line = await nameLine(identity);
+    let line;
+    try { line = await nameLine(identity); }
+    catch (error) {
+      // Old registrations without a reading must not break reception or switch voices.
+      if (sequenceId === ownSequence) {
+        currentReceptionPlan.greeting = currentReceptionPlan.greeting.filter(key => key !== "registeredName");
+        speechStatusElement.textContent = error.message;
+      }
+    }
     if (sequenceId !== ownSequence || !sensorAttending || !isSensorVisitorPresent() || visitorRecognition.paused || conversation.active) return;
     SPEECH_LINES.registeredName = line;
   }
