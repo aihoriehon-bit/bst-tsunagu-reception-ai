@@ -9,6 +9,15 @@ export function nameApprovalToken(person) {
 export function isNameApproved(person) {
   return Boolean(person?.name && person?.nameAudioApproval === nameApprovalToken(person));
 }
+// Face/name registration enables calling by default. Audition is advisory;
+// only an explicit OFF preference suppresses an otherwise readable name.
+export function shouldCallName(person) {
+  return Boolean(person?.name && person.nameCallingEnabled !== false);
+}
+export function hasNameReading(person) {
+  const reading = readingFor(person);
+  return reading.length > 0 && reading.length <= 40 && /^[ぁ-ゖー]+$/.test(reading);
+}
 export function createNameAudition() {
   let played = '';
   return {

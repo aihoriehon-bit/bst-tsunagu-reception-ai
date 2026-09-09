@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 import { receptionPlan } from './visitor-matching.mjs';
+import { nameLine as realNameLine } from './name-voice.js';
 
 const source = readFileSync(new URL('./app.js', import.meta.url), 'utf8');
 // Execute the actual orchestration with deterministic camera, motion and audio adapters.
@@ -59,6 +60,28 @@ test('arbitrary registered names precede the role greeting without doubling a na
     f.state.finish();
     assert.deepEqual(f.spoken, ['registeredName', role === 'employee' ? 'employeeGeneric' : role === 'delivery' ? 'calling' : 'visitor']);
   }
+});
+test('real name generator starts every registered face role with its name without an audition approval', async () => {
+  for (const role of ['employee', 'guest', 'delivery']) {
+    const f = fixture({ id: 'known', name: '佐藤', reading: 'さとう', nameAudioApproval: '', role, source: 'face' });
+    f.state.nameLine = realNameLine; f.state.speechStatusElement = {};
+    await f.state.beginSensorGreeting();
+    assert.deepEqual(f.spoken, ['registeredName']);
+    assert.equal(f.state.SPEECH_LINES.registeredName.audio, './audio/nameSato.wav');
+    f.state.finish();
+    assert.equal(f.spoken[1], role === 'employee' ? 'employeeGeneric' : role === 'guest' ? 'visitor' : 'calling');
+  }
+});
+test('explicit name OFF still uses role-appropriate greeting and clothing never calls an individual name', async () => {
+  for (const role of ['employee', 'guest', 'delivery']) {
+    const f = fixture({ id: 'known', name: '佐藤', role, source: 'face', nameCallingEnabled: false });
+    f.state.nameLine = realNameLine; f.state.speechStatusElement = {};
+    await f.state.beginSensorGreeting();
+    assert.deepEqual(f.spoken, [role === 'employee' ? 'employeeGeneric' : role === 'guest' ? 'visitor' : 'calling']);
+  }
+  const f = fixture({ name: '佐藤', source: 'clothing', role: 'delivery' });
+  f.state.nameLine = () => { throw Error('Must not infer an individual from clothing'); };
+  await f.state.beginSensorGreeting(); assert.deepEqual(f.spoken, ['calling']);
 });
 test('a missing reading or failed name bank still permits the role greeting', async () => {
   const f = fixture({ name: '山本', source: 'face', role: 'employee' });

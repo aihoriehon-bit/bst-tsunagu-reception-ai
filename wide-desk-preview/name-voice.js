@@ -1,5 +1,5 @@
 import { kanaNameAudio, readingFor } from './kana-name.mjs?v=20260909-5';
-import { isNameApproved } from './name-confirmation.mjs?v=20260909-5';
+import { shouldCallName } from './name-confirmation.mjs?v=20260909-7';
 // Existing uploaded WAVs stay stored, but reading alone now selects VOICEVOX audio.
 const database = () => new Promise((resolve, reject) => {
   let expired = false;
@@ -43,7 +43,7 @@ export async function deleteNameAudio(id) {
 export const callName = value => String(value || '').trim().replace(/(?:さん|様|さま)[。\s]*$/, '') + 'さん';
 export async function nameLine(person, { audition = false } = {}) {
   if (!person?.name) return null;
-  if (!audition && !isNameApproved(person)) throw new Error('名前の音声は未確認です。「顔・配達登録」で試聴して保存してください。');
+  if (!audition && !shouldCallName(person)) throw new Error('この方の名前呼びはOFFです。');
   let audio;
   const name = person.name.normalize('NFKC').replace(/\s/g, '').replace(/(?:さん|様|さま)$/, '');
   const usualReading = { 佐藤: 'さとう', 田中: 'たなか', 福田: 'ふくだ' };
