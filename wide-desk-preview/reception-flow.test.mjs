@@ -16,7 +16,7 @@ function fixture(identity = null, demo = null) {
     sensorAttending: true, attendLineIndex: 0, workLineIndex: 0, currentReceptionPlan: null,
     currentVisitorSpeechKey: null, pendingTestSpeechKey: demo, testVisitorUntil: demo ? Date.now() + 24000 : 0,
     soundEnabled: true, speechBusy: false, posture: 0, currentMotionKey: 'deskWork', lastSpeechAt: 0,
-    greetingStartedAt: 0, conversation: { active: false, close() {} }, SPEECH_LINES: {},
+    greetingStartedAt: 0, conversation: { active: false, close() { this.active = false; }, beginReception() { this.active = true; }, setPresence(value) { this.present = value; }, setAudible() {} }, SPEECH_LINES: {},
     nameLine: async person => ({ text: person.name + 'さん。', spokenText: person.name + 'さん' }),
     faceFirstSeenAt: 0, faceLastSeenAt: 0, TEST_VISITOR_MS: 24000,
     faceVisible: false, FACE_CONFIRM_MS: 600, FACE_LOST_MS: 5000,
@@ -60,10 +60,26 @@ test('arbitrary registered names precede the role greeting without doubling a na
     assert.deepEqual(f.spoken, ['registeredName', role === 'employee' ? 'employeeGeneric' : role === 'delivery' ? 'calling' : 'visitor']);
   }
 });
-test('manual conversation suspends camera and automatic speech', () => {
+test('automatic conversation suppresses idle speech while camera departure remains active', () => {
   const f = fixture(); f.state.conversation.active = true; f.state.faceVisible = true;
+  f.state.currentReceptionPlan = receptionPlan(null, 'greetingDayArrival');
+  f.state.visitorRecognition.current = () => null;
   f.state.updateSensorBehavior(); f.state.updateAutomaticSpeech(Date.now());
   assert.deepEqual(f.spoken, []);
+  f.state.currentReceptionPlan = receptionPlan(null, 'greetingDayArrival');
+  f.state.sensorAutomationActive = true;
+  f.state.faceVisible = false; f.state.faceLastSeenAt = Date.now() - 6000;
+  f.state.updateSensorBehavior();
+  assert.equal(f.state.conversation.active, false);
+  assert.equal(f.spoken.at(-1), 'goodbye');
+});
+
+test('camera greeting completion opens listening without another hello or conversation button', async () => {
+  const f = fixture(); await f.state.beginSensorGreeting();
+  assert.equal(f.state.conversation.active, false);
+  f.state.finish(); f.state.finish();
+  assert.equal(f.state.conversation.active, true);
+  assert.deepEqual(f.spoken, ['welcome', 'greetingDayArrival']);
 });
 test('late recognition calls a registered name after the anonymous greeting', async () => {
   const f = fixture(); await f.state.beginSensorGreeting(); f.state.finish(); f.state.finish();

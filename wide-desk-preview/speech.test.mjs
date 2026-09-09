@@ -10,6 +10,7 @@ function fixture(line) {
     mixer: {}, SPEECH_LINES: { registeredName: line }, SPEECH_AUDIO_VERSION: 'test',
     deviceVoiceTimeout: null, speechRequestId: 0, speechBusy: false, sequenceId: 0,
     speechPlayer: audio, currentSpeechAudio: null, posture: 0, soundEnabled: true,
+    conversation: { speechStarted() {}, speechFinished() {} },
     speechStatusElement: {}, lastSpeechAt: 0, sensorAutomationActive: false,
     speechButtonsElement: { querySelectorAll: () => [] },
     cancelNameVoice() { state.cancelled = true; }, stopLipSync() { state.lips = false; }, startLipSync() { state.lips = true; },

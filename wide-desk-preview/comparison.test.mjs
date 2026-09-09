@@ -30,6 +30,10 @@ test('conversation follows appointment yes/no and delivery without claiming an a
   assert.match(lines.chatReceived, /デモ/);
   assert.doesNotMatch(lines.chatReceived, /呼び出しました|送信しました/);
 });
+test('a visitor can answer the camera introduction with their name', () => {
+  for (const text of ['山本です', '鈴木と申します。', '名前はやまもとです']) assert.equal(respond(text).key, 'chatPurpose');
+  assert.equal(respond('明日の天気は？').key, 'chatUnknown');
+});
 test('small talk, employees, unknown questions, and reset use appropriate responses', () => {
   for (const [input, key] of [['ただいま', 'chatEmployee'], ['ありがとう', 'chatThanks'], ['どんな会社ですか', 'chatCompany'], ['あなたは誰ですか', 'chatIdentity'], ['明日の天気は？', 'chatUnknown'], ['最初から', 'chatHello']]) {
     assert.equal(respond(input, { step: 'appointment' }).key, key);

@@ -19,5 +19,6 @@ export function respond(input, previous = {}) {
     if (text.length >= 2 && !/[?？]$/.test(text)) return answer('chatReceived');
   }
   if (/担当|取次|取り次|会いた|会いに|打ち合わせ|打合せ|アポ|約束|予約|相談/.test(text)) return answer('chatAppointment', 'appointment');
+  if (/と申します|(?:名前は|私の名前|わたしの名前)|^[一-龯々]{1,8}です[。！!\s]*$/.test(text)) return answer('chatPurpose', 'purpose');
   return answer('chatUnknown');
 }

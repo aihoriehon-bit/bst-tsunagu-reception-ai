@@ -4,7 +4,7 @@ import { EXTRA_SPEECH } from "../wide-desk/additional-speech.js?v=20260909-conve
 import { createVisitorRecognition } from "./visitor-recognition.js?v=20260909-2";
 import { receptionPlan } from "./visitor-matching.mjs?v=20260909-2";
 import { nameLine, cancelNameVoice, speakDeviceName } from "./name-voice.js?v=20260909-2";
-import { createConversation, DIALOGUE_LINES } from "./conversation.js?v=20260909-2";
+import { createConversation, DIALOGUE_LINES } from "./automatic-conversation.js?v=20260909-3";
 
 const MODEL_URL = "../blender/tsunagu-reception-actions-20260826.glb?v=20260831-pc-gaze-1";
 const MODEL_FRONT_Y = -Math.PI / 2 + 0.03;
@@ -239,16 +239,12 @@ const visitorRecognition = createVisitorRecognition({
   onDelivery: () => triggerVisitorTest("calling"),
 });
 const conversation = createConversation({
-  available: () => Boolean(mixer) && !visitorRecognition.paused,
-  onBegin() {
-    testVisitorUntil = 0;
-    resetSensorCharacter();
-    visitorStatusElement.textContent = "会話中";
-  },
-  onEnd() {
-    lastSpeechAt = Date.now();
-    faceFirstSeenAt = Date.now();
-    returnToDeskAfterStartup();
+  available: () => Boolean(mixer) && sensorAttending && isSensorVisitorPresent() && !visitorRecognition.paused,
+  onEnableAudio() {
+    soundEnabled = true;
+    updateSoundToggle();
+    conversation.setAudible(true);
+    if (sensorAttending && !greetingPending && !conversation.active) beginSensorGreeting();
   },
   onInterrupt() { cancelSpeechSequence(false); sequenceId++; greetingPending = false; },
   onSpeak(key, onFinish, onFailure) { speakLine(key, null, { standForSpeech: true, onFinish, onFailure }); },
@@ -277,7 +273,8 @@ soundToggle.addEventListener("click", () => {
   sequenceId += 1;
   greetingPending = false;
   updateSoundToggle();
-  if (conversation.active) { conversation.stopMic(); return; }
+  conversation.setAudible(soundEnabled);
+  if (conversation.active) { conversation.speechFinished(); return; }
   if (soundEnabled) {
     if (sensorAttending && !currentReceptionPlan) beginSensorGreeting();
     else if (sensorAttending) {
@@ -398,6 +395,7 @@ async function speakLine(speechKey, button = null, { onFinish = null, onFailure 
   }
 
   cancelSpeechSequence(false);
+  conversation.speechStarted();
   speechBusy = true;
   const ownRequest = speechRequestId;
   sequenceId += 1;
@@ -451,6 +449,7 @@ async function speakLine(speechKey, button = null, { onFinish = null, onFailure 
     if (finished || ownRequest !== speechRequestId) return;
     finished = true;
     clearTimeout(deviceVoiceTimeout);
+    conversation.speechFinished();
     button?.classList.remove("is-speaking");
     if (currentSpeechAudio === audio) {
       currentSpeechAudio = null;
@@ -492,6 +491,7 @@ async function speakLine(speechKey, button = null, { onFinish = null, onFailure 
 function cancelSpeechSequence(resetStatus) {
   clearTimeout(deviceVoiceTimeout);
   cancelNameVoice();
+  conversation.speechFinished();
   speechRequestId += 1;
   speechBusy = false;
   lastSpeechAt = Date.now();
@@ -952,6 +952,7 @@ async function startCamera() {
 }
 
 function stopCamera({ resetCharacter = true } = {}) {
+  conversation.close();
   stopDetectionLoop();
   if (cameraStream) cameraStream.getTracks().forEach((track) => track.stop());
   cameraStream = null;
@@ -1043,8 +1044,11 @@ function startSensorBehaviorLoop() {
 }
 
 function updateSensorBehavior() {
-  if (!mixer || visitorRecognition.paused || conversation.active) return;
+  if (!mixer || visitorRecognition.paused) return;
+  if (document.hidden) { conversation.close(); return; }
   const now = Date.now();
+  conversation.setPresence(isSensorVisitorPresent(now));
+  conversation.setAudible(soundEnabled);
   const testVisitorPresent = testVisitorUntil > now;
   if (testVisitorPresent) {
     faceLastSeenAt = now;
@@ -1079,17 +1083,20 @@ function updateSensorBehavior() {
     beginSensorReturn();
     return;
   }
+  if (visitorPresent && sensorAttending && !currentReceptionPlan && !greetingPending && !speechBusy) { beginSensorGreeting(); return; }
+  if (visitorPresent && sensorAttending && currentReceptionPlan && !greetingPending && !speechBusy && !conversation.active && !document.hidden) conversation.beginReception();
   updateAutomaticSpeech(now);
 }
 
 function updateAutomaticSpeech(now) {
-  if (!soundEnabled || speechBusy || greetingPending || conversation.active || document.hidden) return;
+  if (!soundEnabled || speechBusy || greetingPending || document.hidden) return;
   // If model warm-up finished during the anonymous greeting, call the name afterwards.
   const lateIdentity = visitorRecognition.current();
   if (sensorAttending && !testVisitorUntil && !currentReceptionPlan?.identity && lateIdentity?.source === 'face' && now - greetingStartedAt < 20000) {
     beginSensorGreeting();
     return;
   }
+  if (conversation.active) return;
   if (!document.querySelector("#autoSpeech").checked) return;
   if (sensorAttending && sensorAutomationActive && isSensorVisitorPresent() && currentMotionKey === "standIdle" && now - lastSpeechAt >= 30000) {
     const keys = currentReceptionPlan?.idle || [];
@@ -1102,7 +1109,8 @@ function updateAutomaticSpeech(now) {
 }
 
 async function beginSensorGreeting() {
-  if (!mixer || conversation.active) return;
+  if (!mixer) return;
+  conversation.close();
   cancelSpeechSequence(false);
   const ownSequence = ++sequenceId;
   greetingPending = true;
@@ -1138,7 +1146,7 @@ async function beginSensorGreeting() {
 
 function playReceptionGreeting(index) {
   const key = currentReceptionPlan?.greeting[index];
-  if (!key) { greetingPending = false; return; }
+  if (!key) { greetingPending = false; conversation.beginReception(); return; }
   currentVisitorSpeechKey = key;
   const expectedSequence = sequenceId + 1;
   speakLine(key, null, {
@@ -1156,6 +1164,7 @@ function playReceptionGreeting(index) {
 }
 
 function beginSensorReturn() {
+  conversation.close();
   if (!mixer || !sensorAutomationActive) return;
   cancelSpeechSequence(false);
   sequenceId += 1;
@@ -1207,6 +1216,7 @@ function runSensorSitDown() {
 }
 
 function resetSensorCharacter() {
+  conversation.close();
   const shouldSitDown = sensorAutomationActive && mixer && posture > 0.02;
   sensorAttending = false;
   sensorAutomationActive = false;

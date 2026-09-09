@@ -21,3 +21,9 @@
 .identity-dialog input[type=file] { max-width: 100%; font-size: 14px; }
 @media (max-width: 600px) { .conversation { bottom: max(35px, env(safe-area-inset-bottom)); } #conversationBody { max-height: calc(100dvh - 100px); } .conversation-log { max-height: 24dvh; } }
 @media (max-height: 560px) { #conversationBody { max-height: calc(100dvh - 65px); } .conversation-log { max-height: 95px; } }
+.handsfree-conversation { max-width: min(440px, calc(100vw - 28px)); border: 1px solid #c8dadd; border-radius: 14px; padding: 10px 14px; background: #fffffff5; box-shadow: 0 5px 22px #163a452b; box-sizing: border-box; }
+.handsfree-summary { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.handsfree-summary .conversation-status { margin: 0; flex: 1; min-width: 140px; }
+.handsfree-summary button { font-size: 13px; padding: 6px 10px; min-height: 36px; }
+.handsfree-conversation summary { cursor: pointer; font-size: 13px; color: #456970; padding-top: 7px; }
+.handsfree-conversation #conversationBody { width: 100%; padding: 8px 0 0; border: 0; background: transparent; box-shadow: none; max-height: min(360px, 45dvh); }
