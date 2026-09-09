@@ -2,6 +2,7 @@ import { ROLES, validVector, matchFace, clothingSignature, matchClothing } from 
 import { previewName, cancelNameVoice } from './name-voice.js?v=20260909-7';
 import { readingFor, loadKanaBank, tokenizeReading } from './kana-name.mjs?v=20260909-5';
 import { nameApprovalToken, isNameApproved, createNameAudition, shouldCallName, hasNameReading } from './name-confirmation.mjs?v=20260909-7';
+import { detectFaces, FACE_DETECTION_OPTIONS, FACE_DESCRIPTOR_OPTIONS } from './face-detection.mjs?v=20260909-8';
 
 const STORAGE_KEY = 'tsunagu-preview-identities-v2';
 const API_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.15/dist/face-api.esm.js';
@@ -184,10 +185,10 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     const api = await ensureApi();
     const crop = snapshot();
     if (!crop) return null;
-    const options = new api.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.35 });
+    const options = new api.TinyFaceDetectorOptions(FACE_DESCRIPTOR_OPTIONS);
     let results = await api.detectAllFaces(crop, options).withFaceLandmarks().withFaceDescriptors();
     if (!results.length && singleFace()) {
-      results = await api.detectAllFaces(video, options).withFaceLandmarks().withFaceDescriptors();
+      results = await api.detectAllFaces(video, new api.TinyFaceDetectorOptions({ ...FACE_DESCRIPTOR_OPTIONS, inputSize: FACE_DETECTION_OPTIONS.inputSize })).withFaceLandmarks().withFaceDescriptors();
     }
     return results.length === 1 ? Array.from(results[0].descriptor) : null;
   }
@@ -290,6 +291,8 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
   if (db.people.length) loadKanaBank().catch(() => {});
   live.textContent = '顔・配達の登録から識別を設定できます';
   return {
+    async prepareDetection() { await ensureApi(); },
+    async detectFaces() { return detectFaces(await ensureApi(), video); },
     get paused() { return dialog.open; },
     updateFaces(next) {
       if (next.length !== 1) { identity = null; candidate = ''; hits = 0; }
