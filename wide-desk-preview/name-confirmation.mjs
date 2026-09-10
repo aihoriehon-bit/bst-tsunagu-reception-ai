@@ -1,8 +1,9 @@
 import { readingFor } from './kana-name.mjs?v=20260909-5';
+import { recordedName } from './name-library.mjs?v=20260910-1';
 
 // Change the revision whenever the bank or assembly changes: old approval must not
 // silently authorize a different pronunciation.
-export const NAME_AUDIO_REVISION = 'kana-bank3-assembly1';
+export const NAME_AUDIO_REVISION = 'whole-name-library1-kana-bank3';
 export function nameApprovalToken(person) {
   return JSON.stringify([NAME_AUDIO_REVISION, String(person?.name || '').trim(), readingFor(person)]);
 }
@@ -15,6 +16,7 @@ export function shouldCallName(person) {
   return Boolean(person?.name && person.nameCallingEnabled !== false);
 }
 export function hasNameReading(person) {
+  if (recordedName(person)) return true;
   const reading = readingFor(person);
   return reading.length > 0 && reading.length <= 40 && /^[ぁ-ゖー]+$/.test(reading);
 }

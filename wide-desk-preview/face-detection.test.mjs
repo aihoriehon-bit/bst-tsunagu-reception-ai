@@ -2,13 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
-import { CAMERA_CONSTRAINTS, FACE_DETECTION_OPTIONS, detectFaces, createDetectionLoop } from './face-detection.mjs';
+import { CAMERA_CONSTRAINTS, FACE_DETECTION_OPTIONS, detectFaces, createDetectionLoop, searchRegions, mergeDetections, faceQuality } from './face-detection.mjs';
 import { matchFace } from './visitor-matching.mjs';
 
 const settle = async () => { for (let i = 0; i < 6; i++) await Promise.resolve(); };
 test('camera requests higher resolution without mandatory hardware or microphone constraints', () => {
-  assert.equal(CAMERA_CONSTRAINTS.video.width.ideal, 1280);
-  assert.equal(CAMERA_CONSTRAINTS.video.height.ideal, 960);
+  assert.equal(CAMERA_CONSTRAINTS.video.width.ideal, 1920);
+  assert.equal(CAMERA_CONSTRAINTS.video.height.ideal, 1080);
   assert.equal(CAMERA_CONSTRAINTS.video.width.exact, undefined);
   assert.equal(CAMERA_CONSTRAINTS.audio, false);
   assert.equal(FACE_DETECTION_OPTIONS.inputSize, 608);
@@ -17,17 +17,39 @@ test('camera requests higher resolution without mandatory hardware or microphone
 test('small face boxes use original camera coordinates and multiple faces are preserved', async () => {
   const video = { readyState: 2, videoWidth: 1280, videoHeight: 960 };
   const boxes = [{ x: 900, y: 220, width: 48, height: 58 }, { x: 200, y: 350, width: 180, height: 200 }];
+  const canvases = { frame: { getContext: () => ({ drawImage() {} }) }, tile: { getContext: () => ({ drawImage() {} }) } };
+  let calls = 0;
   const api = {
     TinyFaceDetectorOptions: class { constructor(options) { Object.assign(this, options); } },
     async detectAllFaces(input, options) {
-      assert.equal(input, video); assert.equal(options.inputSize, 608);
-      return boxes.map(box => ({ box }));
+      assert.equal(input, calls ? canvases.tile : canvases.frame); assert.equal(options.inputSize, 608);
+      return calls++ ? [] : boxes.map(box => ({ box }));
     },
   };
-  const result = await detectFaces(api, video);
+  const result = await detectFaces(api, video, canvases);
+  assert.equal(calls, 5);
   assert.equal(result.length, 2);
   assert.deepEqual(result[0].boundingBox, { originX: 900, originY: 220, width: 48, height: 58 });
   assert.deepEqual(await detectFaces(api, { ...video, readyState: 0 }), []);
+});
+test('tile-only far faces are mapped back and duplicate views do not create extra people', async () => {
+  const video = { readyState: 2, videoWidth: 1920, videoHeight: 1080 };
+  let frameCopies = 0, tiles = 0, calls = 0;
+  const canvases = { frame: { getContext: () => ({ drawImage() { frameCopies++; } }) }, tile: { getContext: () => ({ drawImage() { tiles++; } }) } };
+  const api = { TinyFaceDetectorOptions: class {}, async detectAllFaces() {
+    calls++;
+    // Full image misses the small face; the top-right crop finds it.
+    return calls === 3 ? [{ score: .9, box: { x: 200, y: 100, width: 60, height: 70 } }] : [];
+  } };
+  const found = await detectFaces(api, video, canvases);
+  assert.equal(frameCopies, 1); assert.equal(tiles, 4);
+  assert.equal(found[0].boundingBox.originX, 968);
+  const shifted = { ...found[0], score: .8, boundingBox: { ...found[0].boundingBox, originX: 970 } };
+  const other = { ...found[0], boundingBox: { ...found[0].boundingBox, originX: 1100 } };
+  assert.equal(mergeDetections([...found, shifted, other]).length, 2);
+  assert.equal(faceQuality(found, 1920, 1080).usable, true);
+  assert.equal(faceQuality([{ boundingBox: { width: 30, height: 35 } }], 640, 480).usable, false);
+  assert.equal(searchRegions(640, 480).length, 5);
 });
 function fixture(detect) {
   const queued = new Map(), updates = [], errors = []; let id = 0, ready = true;

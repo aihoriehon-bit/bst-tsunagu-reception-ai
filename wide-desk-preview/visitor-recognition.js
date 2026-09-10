@@ -1,8 +1,9 @@
 import { ROLES, validVector, matchFace, clothingSignature, matchClothing } from './visitor-matching.mjs?v=20260909-2';
-import { previewName, cancelNameVoice } from './name-voice.js?v=20260909-7';
+import { previewName, cancelNameVoice } from './name-voice.js?v=20260910-1';
 import { readingFor, loadKanaBank, tokenizeReading } from './kana-name.mjs?v=20260909-5';
-import { nameApprovalToken, isNameApproved, createNameAudition, shouldCallName, hasNameReading } from './name-confirmation.mjs?v=20260909-7';
-import { detectFaces, FACE_DETECTION_OPTIONS, FACE_DESCRIPTOR_OPTIONS } from './face-detection.mjs?v=20260909-8';
+import { nameApprovalToken, isNameApproved, createNameAudition, shouldCallName, hasNameReading } from './name-confirmation.mjs?v=20260910-1';
+import { NAME_RECORDINGS, recordedName, nameVoiceDescription } from './name-library.mjs?v=20260910-1';
+import { detectFaces, faceQuality, FACE_DETECTION_OPTIONS, FACE_DESCRIPTOR_OPTIONS } from './face-detection.mjs?v=20260910-1';
 
 const STORAGE_KEY = 'tsunagu-preview-identities-v2';
 const API_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.15/dist/face-api.esm.js';
@@ -17,6 +18,8 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
   let candidate = '', hits = 0, identity = null, identityAt = 0, capturing = false, stopped = false;
   let modelError = false, retryAt = 0;
   const canvas = document.createElement('canvas');
+  const detectionCanvases = { frame: document.createElement('canvas'), tile: document.createElement('canvas') };
+  let detectionMs = 0, descriptorMissing = false, lastSampleFrame = 0;
   const live = document.createElement('span');
   live.className = 'recognition-status';
   live.setAttribute('aria-live', 'polite');
@@ -37,8 +40,10 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     <p>登録中は自動の挨拶を休止します。カメラに1人で、明るい場所で写ってください。</p>
     <video class="identity-preview" autoplay muted playsinline aria-label="登録用カメラ映像"></video>
     <label>お名前・会社名<input id="identityName" maxlength="40" autocomplete="off" placeholder="例：佐藤／ヤマト"></label>
-    <label>読みがな<input id="identityReading" maxlength="40" autocomplete="off" placeholder="例：えみた（「さん」は自動で付きます）"></label>
-    <p class="identity-note">顔で本人と照合できたら、社員・お客様・配達のどの区分でも「○○さん」と呼んでから挨拶します。漢字のお名前には読みがなを入力してください。春日部つむぎの140音をつなぐ試作のため、発音が気になる場合は試聴して読みがなを調整できます。</p>
+    <label>読みがな<input id="identityReading" list="recordedNameReadings" maxlength="40" autocomplete="off" placeholder="例：えみた（「さん」は自動で付きます）"></label>
+    <datalist id="recordedNameReadings"></datalist>
+    <p class="identity-note">顔で本人と照合できたら、社員・お客様・配達のどの区分でも「○○さん」と呼んでから挨拶します。${NAME_RECORDINGS.length}種類の読みを「さん」までまとめた春日部つむぎの音声として用意しています。別の読みがある漢字名やフルネームには、読みがなを入力してください。</p>
+    <p class="identity-note" data-voice-type>読みがなを入力すると、収録済みの音声があるか確認できます。</p>
     <div class="identity-actions"><button type="button" data-test-name>名前を試聴（任意）</button></div>
     <label class="identity-consent"><input id="identityCallName" type="checkbox" checked>顔認証で名前を呼ぶ</label>
     <p class="identity-note" data-name-state>名前呼びは標準でONです。試聴後の確認チェックは不要です。名前を呼びたくない場合だけチェックを外して保存してください。</p>
@@ -54,6 +59,10 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     <p class="identity-note">同じ端末・ブラウザの旧版にある顔登録を取り込みます。旧登録は「お客様」で取り込み、一覧で区分を変更できます。以前の制服は再登録してください。別端末や別ブラウザには同期されません。</p>`;
   document.body.append(dialog);
   const q = s => dialog.querySelector(s);
+  for (const entry of NAME_RECORDINGS) {
+    const option = document.createElement('option'); option.value = entry.reading; option.label = entry.names.join('・');
+    q('#recordedNameReadings').append(option);
+  }
   const message = text => { q('[data-message]').textContent = text; };
   const audition = createNameAudition(); let auditionId = 0;
   const formPerson = () => ({ name: q('#identityName').value.trim(), reading: q('#identityReading').value.trim() });
@@ -65,6 +74,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     q('[data-test-name]').disabled = capturing;
     q('[data-name-state]').textContent = '名前・読みがなを保存すると、顔認証後に名前を呼びます。試聴は任意です。';
     refreshApproval();
+    q('[data-voice-type]').textContent = nameVoiceDescription(formPerson());
   }
   function approvalForForm() {
     return audition.canApprove(formPerson()) ? nameApprovalToken(formPerson()) : '';
@@ -98,7 +108,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     try {
       const nameAudioApproval = approvalForForm();
       const person = formPerson(), nameCallingEnabled = q('#identityCallName').checked;
-      if (nameCallingEnabled) {
+      if (nameCallingEnabled && !recordedName(person)) {
         const { manifest } = await loadKanaBank();
         tokenizeReading(readingFor(person), manifest.entries);
       }
@@ -146,7 +156,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     db = next; storageError = false; reset();
   }
-  function reset() { epoch++; identity = null; identityAt = 0; candidate = ''; hits = 0; }
+  function reset() { epoch++; identity = null; identityAt = 0; candidate = ''; hits = 0; lastSampleFrame = 0; }
   function singleFace() { return faces.length === 1 && Date.now() - facesAt < 1200 && video.readyState >= 2 && video.videoWidth > 0; }
   function snapshot(uniform = false) {
     if (!singleFace()) return null;
@@ -184,13 +194,16 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
   async function descriptor() {
     const api = await ensureApi();
     const crop = snapshot();
+    descriptorMissing = !crop;
     if (!crop) return null;
     const options = new api.TinyFaceDetectorOptions(FACE_DESCRIPTOR_OPTIONS);
     let results = await api.detectAllFaces(crop, options).withFaceLandmarks().withFaceDescriptors();
     if (!results.length && singleFace()) {
       results = await api.detectAllFaces(video, new api.TinyFaceDetectorOptions({ ...FACE_DESCRIPTOR_OPTIONS, inputSize: FACE_DETECTION_OPTIONS.inputSize })).withFaceLandmarks().withFaceDescriptors();
     }
-    return results.length === 1 ? Array.from(results[0].descriptor) : null;
+    descriptorMissing = results.length !== 1;
+    modelError = false;
+    return !descriptorMissing ? Array.from(results[0].descriptor) : null;
   }
   async function register(uniform) {
     const name = q('#identityName').value.trim(), role = q('#identityRole').value;
@@ -199,7 +212,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     if (!singleFace()) { message('カメラを開始し、1人で顔を写してください。'); return; }
     setBusy(true); reset(); const own = epoch;
     try {
-      if (!uniform && q('#identityCallName').checked) {
+      if (!uniform && q('#identityCallName').checked && !recordedName(formPerson())) {
         const { manifest } = await loadKanaBank();
         tokenizeReading(readingFor({ name, reading: q('#identityReading').value.trim() }), manifest.entries);
       }
@@ -244,10 +257,19 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
           clearAudition(); q('#identityName').value = p.name; q('#identityReading').value = p.reading || ''; q('#identityRole').value = p.role;
           if (isNameApproved(p)) audition.completed(p);
           q('#identityCallName').checked = shouldCallName(p);
+          q('[data-voice-type]').textContent = nameVoiceDescription(p);
           refreshApproval(); q('#identityReading').focus();
           q('[data-name-state]').textContent = '名前・読みがなを保存すると、最初の挨拶で名前を呼びます。試聴は任意です。';
         });
         li.append(edit);
+        const distant = document.createElement('button'); distant.type = 'button'; distant.textContent = '離れた顔を追加';
+        distant.addEventListener('click', () => {
+          q('#identityName').value = p.name; q('#identityReading').value = p.reading || ''; q('#identityRole').value = p.role;
+          q('#identityCallName').checked = shouldCallName(p); q('#identityConsent').checked = false; clearAudition();
+          message('普段使う離れた位置に立ち、本人の了承をチェックして「顔を登録（3回撮影）」を押してください。同じ方の登録にサンプルを追加します（直近12枚まで）。');
+          q('#identityConsent').focus();
+        });
+        li.append(distant);
         const select = document.createElement('select'); select.setAttribute('aria-label', `${p.name}の区分`);
         for (const [value, label] of Object.entries(ROLES)) select.add(new Option(label, value));
         select.value = p.role;
@@ -267,8 +289,10 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
   }
   async function scan() {
     if (busy || capturing || stopped || dialog.open || document.hidden) return;
-    if (!singleFace()) { live.textContent = faces.length > 1 ? '複数人のため個人の識別を保留' : '顔・配達の登録から識別を設定できます'; return; }
+    if (!singleFace()) { live.textContent = faces.length > 1 ? '複数人のため個人の識別を保留' : faces.length ? '映像の更新待ち・照合を保留しています' : '顔・配達の登録から識別を設定できます'; return; }
     if (!db.people.length && !db.uniforms.length) { live.textContent = '未登録の来訪者'; return; }
+    if (lastSampleFrame === facesAt) return;
+    lastSampleFrame = facesAt;
     busy = true; const own = epoch;
     try {
       let result = null;
@@ -281,8 +305,12 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
       const next = result ? `${result.source}:${result.id}` : '';
       hits = next && next === candidate ? hits + 1 : next ? 1 : 0; candidate = next;
       identity = hits >= 3 ? result : null; identityAt = Date.now();
+      const quality = faceQuality(faces, video.videoWidth, video.videoHeight);
       live.textContent = identity ? identity.source === 'clothing' ? '配達の可能性（登録制服に類似）' : `${ROLES[identity.role]}：${identity.name}${!shouldCallName(identity) ? '・名前呼びOFF' : !hasNameReading(identity) ? '・読みがな未設定' : ''}`
-        : modelError ? '顔の識別を準備できません・通常受付中' : next ? '登録情報を照合中…' : '未登録・照合できない来訪者';
+        : modelError ? '顔の識別を準備できません・通常受付中' : next ? '登録情報を照合中…'
+          : !quality.usable ? '顔は検出済み・本人照合には小さすぎます'
+          : descriptorMissing ? '顔は検出済み・明るさと顔の向きを確認してください'
+          : '顔は検出済み・登録サンプルと一致しません';
     } finally { busy = false; }
   }
   const timer = setInterval(() => { scan().catch(() => { reset(); live.textContent = '識別できません・通常受付中'; }); }, 500);
@@ -292,11 +320,17 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
   live.textContent = '顔・配達の登録から識別を設定できます';
   return {
     async prepareDetection() { await ensureApi(); },
-    async detectFaces() { return detectFaces(await ensureApi(), video); },
+    async detectFaces() {
+      const api = await ensureApi(), start = performance.now();
+      const result = await detectFaces(api, video, detectionCanvases);
+      detectionMs = Math.round(performance.now() - start);
+      return result;
+    },
+    diagnostics() { return `${faceQuality(faces, video.videoWidth, video.videoHeight).text}／検出 ${detectionMs}ms`; },
     get paused() { return dialog.open; },
     updateFaces(next) {
       if (next.length !== 1) { identity = null; candidate = ''; hits = 0; }
-      faces = next; facesAt = Date.now();
+      faces = next; facesAt = next[0]?.capturedAt || Date.now();
     },
     current() { return !dialog.open && singleFace() && Date.now() - identityAt < 1800 ? identity : null; },
     async identify(timeoutMs = 2400) {

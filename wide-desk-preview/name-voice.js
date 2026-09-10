@@ -1,5 +1,6 @@
 import { kanaNameAudio, readingFor } from './kana-name.mjs?v=20260909-5';
-import { shouldCallName } from './name-confirmation.mjs?v=20260909-7';
+import { shouldCallName } from './name-confirmation.mjs?v=20260910-1';
+import { recordedName } from './name-library.mjs?v=20260910-1';
 // Existing uploaded WAVs stay stored, but reading alone now selects VOICEVOX audio.
 const database = () => new Promise((resolve, reject) => {
   let expired = false;
@@ -50,6 +51,7 @@ export async function nameLine(person, { audition = false } = {}) {
   if (usualReading[name] && readingFor(person) === usualReading[name]) {
     audio = './audio/' + ({ 佐藤: 'nameSato', 田中: 'nameTanaka', 福田: 'nameFukuda' })[name] + '.wav';
   }
+  audio ||= recordedName(person)?.audio;
   audio ||= await kanaNameAudio(person);
   return { text: callName(person.name) + '。', audio, group: 'named' };
 }

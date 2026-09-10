@@ -40,7 +40,7 @@ test('actual name generator calls unreviewed registered names and honors explici
     const automatic = await nameLine(p);
     await assert.rejects(nameLine({ ...p, nameCallingEnabled: false }), /OFF/);
     const trial = await nameLine(p, { audition: true });
-    assert.match(trial.audio, /^blob:/); assert.equal(trial.spokenText, undefined);
+    assert.match(trial.audio, /^\.\/audio\/names\//); assert.equal(trial.spokenText, undefined);
     assert.equal(automatic.audio, trial.audio);
     const approved = await nameLine({ ...p, nameAudioApproval: nameApprovalToken(p) });
     assert.equal(approved.audio, trial.audio);
