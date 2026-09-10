@@ -1,6 +1,6 @@
 import { kanaNameAudio, readingFor } from './kana-name.mjs?v=20260909-5';
-import { shouldCallName } from './name-confirmation.mjs?v=20260910-2';
-import { recordedName } from './name-library.mjs?v=20260910-2';
+import { shouldCallName } from './name-confirmation.mjs?v=20260910-bank10000-1';
+import { recordedName } from './name-library.mjs?v=20260910-bank10000-1';
 // Existing uploaded WAVs stay stored, but reading alone now selects VOICEVOX audio.
 const database = () => new Promise((resolve, reject) => {
   let expired = false;
@@ -41,7 +41,13 @@ export async function deleteNameAudio(id) {
   if (urls.has(id)) URL.revokeObjectURL(urls.get(id));
   urls.delete(id);
 }
-export const callName = value => String(value || '').trim().replace(/(?:さん|様|さま)[。\s]*$/, '') + 'さん';
+export const callName = value => {
+  const raw = String(value || '').trim().replace(/[。\s]*$/, '');
+  const complete = recordedName({ name: raw });
+  // Preserve complete kana names such as くさま and さん before adding さん.
+  const literal = raw.normalize('NFKC').replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
+  return (complete?.reading === literal || complete?.names.includes(raw) ? raw : raw.replace(/(?:さん|様|さま)$/, '')) + 'さん';
+};
 export async function nameLine(person, { audition = false } = {}) {
   if (!person?.name) return null;
   if (!audition && !shouldCallName(person)) throw new Error('この方の名前呼びはOFFです。');

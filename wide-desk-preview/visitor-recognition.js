@@ -1,8 +1,8 @@
 import { ROLES, validVector, matchFace, clothingSignature, matchClothing } from './visitor-matching.mjs?v=20260909-2';
-import { previewName, cancelNameVoice } from './name-voice.js?v=20260910-2';
+import { previewName, cancelNameVoice } from './name-voice.js?v=20260910-bank10000-1';
 import { readingFor, loadKanaBank, tokenizeReading } from './kana-name.mjs?v=20260909-5';
-import { nameApprovalToken, isNameApproved, createNameAudition, shouldCallName, hasNameReading } from './name-confirmation.mjs?v=20260910-2';
-import { NAME_RECORDINGS, recordedName, nameVoiceDescription } from './name-library.mjs?v=20260910-2';
+import { nameApprovalToken, isNameApproved, createNameAudition, shouldCallName, hasNameReading } from './name-confirmation.mjs?v=20260910-bank10000-1';
+import { NAME_RECORDINGS, recordedName, nameVoiceDescription, normalizeNameReading } from './name-library.mjs?v=20260910-bank10000-1';
 import { detectFaces, faceQuality, FACE_DETECTION_OPTIONS, FACE_DESCRIPTOR_OPTIONS } from './face-detection.mjs?v=20260910-1';
 
 const STORAGE_KEY = 'tsunagu-preview-identities-v2';
@@ -59,10 +59,21 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     <p class="identity-note">同じ端末・ブラウザの旧版にある顔登録を取り込みます。旧登録は「お客様」で取り込み、一覧で区分を変更できます。以前の制服は再登録してください。別端末や別ブラウザには同期されません。</p>`;
   document.body.append(dialog);
   const q = s => dialog.querySelector(s);
-  for (const entry of NAME_RECORDINGS) {
-    const option = document.createElement('option'); option.value = entry.reading; option.label = entry.names.join('・');
-    q('#recordedNameReadings').append(option);
+  // Bound DOM work for the large bank. Audio is still loaded only when selected.
+  function refreshReadingSuggestions() {
+    const prefix = normalizeNameReading(q('#identityReading').value);
+    const options = document.createDocumentFragment();
+    let count = 0;
+    for (const entry of NAME_RECORDINGS) {
+      if (!entry.reading.startsWith(prefix)) continue;
+      const option = document.createElement('option'); option.value = entry.reading;
+      option.label = entry.names.slice(0, 5).join('・'); options.append(option);
+      if (++count >= 80) break;
+    }
+    q('#recordedNameReadings').replaceChildren(options);
   }
+  q('#identityReading').addEventListener('input', refreshReadingSuggestions);
+  refreshReadingSuggestions();
   const message = text => { q('[data-message]').textContent = text; };
   const audition = createNameAudition(); let auditionId = 0;
   const formPerson = () => ({ name: q('#identityName').value.trim(), reading: q('#identityReading').value.trim() });

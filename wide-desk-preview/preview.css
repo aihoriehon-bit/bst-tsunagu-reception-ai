@@ -44,3 +44,5 @@
 .handsfree-conversation summary, .handsfree-conversation .conversation-note { font-size: .875rem; }
 @media (max-width: 600px) { .handsfree-conversation { padding: 11px 12px; } .turn-cue { padding-bottom: 8px; } }
 @media (max-height: 560px) { .handsfree-conversation { width: min(410px, calc(100vw - 28px)); max-height: 46dvh; } }
+/* Keep the compact credit's required source link usable. */
+.voice-credit-fixed a { pointer-events: auto; color: inherit; text-decoration: underline; }

@@ -1,11 +1,11 @@
 import { readingFor } from './kana-name.mjs?v=20260909-5';
-import { recordedName } from './name-library.mjs?v=20260910-2';
+import { recordedName } from './name-library.mjs?v=20260910-bank10000-1';
 
 // Change the revision whenever the bank or assembly changes: old approval must not
 // silently authorize a different pronunciation.
-export const NAME_AUDIO_REVISION = 'whole-name-library2-kana-bank3';
+export const NAME_AUDIO_REVISION = 'whole-name-mp3-10000-v1-kana-bank3';
 export function nameApprovalToken(person) {
-  return JSON.stringify([NAME_AUDIO_REVISION, String(person?.name || '').trim(), readingFor(person)]);
+  return JSON.stringify([NAME_AUDIO_REVISION, String(person?.name || '').trim(), recordedName(person)?.reading || readingFor(person)]);
 }
 export function isNameApproved(person) {
   return Boolean(person?.name && person?.nameAudioApproval === nameApprovalToken(person));
