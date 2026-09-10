@@ -54,7 +54,7 @@ test('both inputs update immediately, clear stale status, respect IME and suppor
 test('registration places the accessible result next to the fields and refreshes reopened forms', () => {
   const source = readFileSync(new URL('./visitor-recognition.js', import.meta.url), 'utf8');
   assert.match(source, /id="nameAvailability"[^>]+role="status"[^>]+aria-live="polite"[^>]+aria-atomic="true"/);
-  assert.equal((source.match(/aria-describedby="nameAvailability"/g) || []).length, 2);
+  assert.equal((source.match(/aria-describedby="nameAvailability"/g) || []).length, 4);
   assert.ok(source.indexOf('id="nameAvailability"') < source.indexOf('data-test-name'));
   assert.match(source, /render\(\); refreshVoiceType\(\)/);
   assert.match(source, /refreshVoiceType\(\); refreshReadingSuggestions\(\)/);

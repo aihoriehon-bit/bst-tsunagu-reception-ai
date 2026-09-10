@@ -82,7 +82,7 @@ test('large name suggestions stay bounded and match the entered reading', () => 
   const end = source.indexOf("q('#identityReading').addEventListener('input', refreshReadingSuggestions)", start);
   const field = { value: '' }; let options = [];
   const ctx = { NAME_RECORDINGS, normalizeNameReading: s => s,
-    q: selector => selector === '#identityReading' ? field : { replaceChildren: fragment => { options = fragment.items; } },
+    q: selector => ['#identityReading', '#identityGivenReading'].includes(selector) ? field : { replaceChildren: fragment => { options = fragment.items; } },
     document: { createDocumentFragment: () => ({ items: [], append(node) { this.items.push(node); } }), createElement: () => ({}) },
   };
   vm.createContext(ctx); vm.runInContext(source.slice(start, end), ctx);

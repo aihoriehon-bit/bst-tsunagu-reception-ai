@@ -5,6 +5,7 @@ import { nameApprovalToken, isNameApproved, createNameAudition, shouldCallName, 
 import vm from 'node:vm';
 import { ROLES, validVector } from './visitor-matching.mjs';
 import { nameLine, previewName, cancelNameVoice } from './name-voice.js';
+import { restoreRegistrationName } from './registration-name.mjs';
 
 test('optional audition history belongs to an exact name and reading', () => {
   const person = { name: '絵美太', reading: 'えみた' };
@@ -60,7 +61,7 @@ test('all face roles default to calling; missing kanji readings are distinguisha
 test('actual saved-data loader migrates old registrations and preserves explicit OFF on reload', () => {
   const source = readFileSync(new URL('./visitor-recognition.js', import.meta.url), 'utf8');
   const code = source.slice(source.indexOf('function sanitize('), source.indexOf('function save('));
-  const sanitize = vm.runInNewContext('(' + code + ')', { ROLES, validVector, crypto });
+  const sanitize = vm.runInNewContext('(' + code + ')', { ROLES, validVector, crypto, restoreRegistrationName });
   const people = ['employee', 'guest', 'delivery'].map(role => ({ id: role, name: 'えみた', role, descriptors: [Array(128).fill(.1)], nameAudioApproval: '' }));
   people.push({ ...people[0], id: 'off', nameCallingEnabled: false });
   const once = sanitize({ people }), twice = sanitize(JSON.parse(JSON.stringify(once)));

@@ -52,3 +52,7 @@
 .identity-dialog .name-availability[data-state="recorded"] { background: #effff5; border-color: #16804d; color: #125934; }
 .identity-dialog .name-availability[data-state="missing"] { background: #fff8e8; border-color: #ad690e; color: #744800; }
 .identity-dialog .name-availability[data-state="reading-needed"] { background: #eef6ff; border-color: #42749e; color: #244f75; }
+.identity-dialog .identity-name-grid.is-full { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.identity-dialog .identity-name-grid > div { min-width: 0; }
+.identity-dialog .identity-name-grid [hidden] { display: none; }
+@media (max-width: 600px) { .identity-dialog .identity-name-grid.is-full { grid-template-columns: minmax(0, 1fr); gap: 0; } }

@@ -1,9 +1,10 @@
 import { ROLES, validVector, matchFace, clothingSignature, matchClothing } from './visitor-matching.mjs?v=20260909-2';
-import { previewName, cancelNameVoice } from './name-voice.js?v=20260910-bank10000-1';
+import { previewName, cancelNameVoice } from './name-voice.js?v=20260911-fullname-1';
 import { readingFor, loadKanaBank, tokenizeReading } from './kana-name.mjs?v=20260909-5';
-import { nameApprovalToken, isNameApproved, createNameAudition, shouldCallName, hasNameReading } from './name-confirmation.mjs?v=20260910-bank10000-1';
+import { nameApprovalToken, isNameApproved, createNameAudition, shouldCallName, hasNameReading } from './name-confirmation.mjs?v=20260911-fullname-1';
 import { NAME_RECORDINGS, recordedName, normalizeNameReading } from './name-library.mjs?v=20260910-bank10000-1';
-import { bindNameAvailability } from './name-availability.mjs?v=20260911-availability-1';
+import { bindNameAvailability } from './name-availability.mjs?v=20260911-fullname-1';
+import { registrationName, restoreRegistrationName, validateRegistrationName } from './registration-name.mjs?v=20260911-fullname-1';
 import { detectFaces, faceQuality, FACE_DETECTION_OPTIONS, FACE_DESCRIPTOR_OPTIONS } from './face-detection.mjs?v=20260910-1';
 
 const STORAGE_KEY = 'tsunagu-preview-identities-v2';
@@ -40,18 +41,25 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     <p>本人の了承を得て登録してください。顔の特徴量・区分・名前と制服の色を、このブラウザ内だけに保存します。写真・映像は保存・送信しません。</p>
     <p>登録中は自動の挨拶を休止します。カメラに1人で、明るい場所で写ってください。</p>
     <video class="identity-preview" autoplay muted playsinline aria-label="登録用カメラ映像"></video>
-    <label>お名前・会社名<input id="identityName" maxlength="40" autocomplete="off" aria-describedby="nameAvailability" placeholder="例：佐藤／ヤマト"></label>
-    <label>読みがな<input id="identityReading" list="recordedNameReadings" maxlength="40" autocomplete="off" aria-describedby="nameAvailability" placeholder="例：えみた（「さん」は自動で付きます）"></label>
+    <label>名前の登録方法<select id="identityNameMode"><option value="surname">名字だけ</option><option value="given">名前だけ</option><option value="full">名字＋名前（フルネーム）</option><option value="legacy">以前の形式・会社名</option></select></label>
+    <p class="identity-note">呼んでほしい範囲を選んでください。「さん」は自動で付きます。フルネームは名字と名前を別々の欄に入力します。</p>
+    <div class="identity-name-grid">
+      <div><label><span data-first-name-label>名字</span><input id="identityName" maxlength="40" autocomplete="off" aria-describedby="nameAvailability" placeholder="例：福田"></label>
+      <label><span data-first-reading-label>名字の読みがな</span><input id="identityReading" list="recordedNameReadings" maxlength="40" autocomplete="off" aria-describedby="nameAvailability" placeholder="例：ふくだ"></label></div>
+      <div data-given-fields hidden><label>名前<input id="identityGivenName" maxlength="40" autocomplete="off" aria-describedby="nameAvailability" placeholder="例：たける"></label>
+      <label>名前の読みがな<input id="identityGivenReading" list="recordedGivenReadings" maxlength="40" autocomplete="off" aria-describedby="nameAvailability" placeholder="例：たける"></label></div>
+    </div>
     <datalist id="recordedNameReadings"></datalist>
+    <datalist id="recordedGivenReadings"></datalist>
     <div id="nameAvailability" class="name-availability" data-voice-type data-state="empty" role="status" aria-live="polite" aria-atomic="true"><strong data-availability-title>名字・名前の収録チェック</strong><p data-availability-detail>名前または読みがなを入力すると、自動で確認します。</p></div>
-    <p class="identity-note">顔で本人と照合できたら、社員・お客様・配達のどの区分でも「○○さん」と呼んでから挨拶します。${NAME_RECORDINGS.length}種類の読みを「さん」までまとめた春日部つむぎの音声として用意しています。別の読みがある漢字名やフルネームには、読みがなを入力してください。</p>
+    <p class="identity-note">顔で本人と照合できたら、社員・お客様・配達のどの区分でも、登録した名字・名前で呼んでから挨拶します。${NAME_RECORDINGS.length}種類の読みの春日部つむぎ音声を用意しています。漢字に複数の読み方がある場合は、読みがなを入力してください。名字のみ・名前のみの登録もできます。</p>
     <div class="identity-actions"><button type="button" data-test-name>名前を試聴（任意）</button></div>
     <label class="identity-consent"><input id="identityCallName" type="checkbox" checked>顔認証で名前を呼ぶ</label>
     <p class="identity-note" data-name-state>名前呼びは標準でONです。試聴後の確認チェックは不要です。名前を呼びたくない場合だけチェックを外して保存してください。</p>
     <label>区分<select id="identityRole"><option value="employee">社員</option><option value="guest">お客様</option><option value="delivery">配達</option></select></label>
     <label class="identity-consent"><input id="identityConsent" type="checkbox">本人から顔登録の了承を得ています</label>
     <div class="identity-actions"><button type="button" data-face>顔を登録（3回撮影）</button><button type="button" data-uniform>配達の制服を登録</button></div>
-    <div class="identity-actions"><button type="button" data-save-name>登録済みの名前音声設定を保存</button></div>
+    <div class="identity-actions"><button type="button" data-save-name>登録済みの名前音声設定を保存</button><button type="button" data-new-name>別の人を新規登録</button></div>
     <p class="identity-note">制服は胸からお腹まで写してください。色が似た服でも反応するため「配達の可能性」として扱います。判断できない場合はカメラ欄の「配達受付」を使えます。</p>
     <p class="identity-note">同じ名前でもう一度撮影すると、顔のサンプルを追加できます。普段使う距離・明るさで登録すると照合しやすくなります。この確認版の登録変更はトップページには反映されません。</p>
     <p data-message role="status"></p>
@@ -62,23 +70,55 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
   const q = s => dialog.querySelector(s);
   // Bound DOM work for the large bank. Audio is still loaded only when selected.
   function refreshReadingSuggestions() {
-    const prefix = normalizeNameReading(q('#identityReading').value);
-    const options = document.createDocumentFragment();
-    let count = 0;
-    for (const entry of NAME_RECORDINGS) {
-      if (!entry.reading.startsWith(prefix)) continue;
-      const option = document.createElement('option'); option.value = entry.reading;
-      option.label = entry.names.slice(0, 5).join('・'); options.append(option);
-      if (++count >= 80) break;
+    for (const [input, list] of [['#identityReading', '#recordedNameReadings'], ['#identityGivenReading', '#recordedGivenReadings']]) {
+      const prefix = normalizeNameReading(q(input).value);
+      const options = document.createDocumentFragment();
+      let count = 0;
+      for (const entry of NAME_RECORDINGS) {
+        if (!entry.reading.startsWith(prefix)) continue;
+        const option = document.createElement('option'); option.value = entry.reading;
+        option.label = entry.names.slice(0, 5).join('・'); options.append(option);
+        if (++count >= 80) break;
+      }
+      q(list).replaceChildren(options);
     }
-    q('#recordedNameReadings').replaceChildren(options);
   }
   q('#identityReading').addEventListener('input', refreshReadingSuggestions);
+  q('#identityGivenReading').addEventListener('input', refreshReadingSuggestions);
   refreshReadingSuggestions();
   const message = text => { q('[data-message]').textContent = text; };
   const audition = createNameAudition(); let auditionId = 0;
-  const formPerson = () => ({ name: q('#identityName').value.trim(), reading: q('#identityReading').value.trim() });
-  const refreshVoiceType = bindNameAvailability({ nameInput: q('#identityName'), readingInput: q('#identityReading'), panel: q('[data-voice-type]') });
+  let editingId = null;
+  const formPerson = () => registrationName(q('#identityNameMode').value, q('#identityName').value, q('#identityReading').value, q('#identityGivenName').value, q('#identityGivenReading').value);
+  const refreshVoiceType = bindNameAvailability({ nameInput: q('#identityName'), readingInput: q('#identityReading'), additionalInputs: [q('#identityGivenName'), q('#identityGivenReading'), q('#identityNameMode')], getPerson: formPerson, panel: q('[data-voice-type]') });
+  function refreshNameMode() {
+    const mode = q('#identityNameMode').value;
+    q('[data-given-fields]').hidden = mode !== 'full';
+    q('.identity-name-grid').classList.toggle('is-full', mode === 'full');
+    q('[data-first-name-label]').textContent = mode === 'given' ? '名前' : mode === 'legacy' ? 'お名前・会社名（以前の形式）' : '名字';
+    q('[data-first-reading-label]').textContent = mode === 'given' ? '名前の読みがな' : mode === 'legacy' ? '読みがな（全体）' : '名字の読みがな';
+    q('#identityName').placeholder = mode === 'given' ? '例：たける' : mode === 'legacy' ? '例：ヤマト／以前の登録名' : '例：福田';
+    q('#identityReading').placeholder = mode === 'given' ? '例：たける' : mode === 'legacy' ? '例：やまと' : '例：ふくだ';
+    clearAudition(); refreshReadingSuggestions();
+  }
+  function editPerson(p) {
+    const saved = restoreRegistrationName(p);
+    editingId = p.id;
+    q('#identityNameMode').value = saved.nameMode;
+    q('#identityName').value = saved.nameParts?.[0].name ?? saved.name;
+    q('#identityReading').value = saved.nameParts?.[0].reading ?? saved.reading;
+    q('#identityGivenName').value = saved.nameParts?.[1]?.name || '';
+    q('#identityGivenReading').value = saved.nameParts?.[1]?.reading || '';
+    q('#identityRole').value = p.role; q('#identityCallName').checked = shouldCallName(p);
+    refreshNameMode();
+  }
+  q('#identityNameMode').addEventListener('change', refreshNameMode);
+  q('[data-new-name]').addEventListener('click', () => {
+    editingId = null;
+    for (const id of ['#identityName', '#identityReading', '#identityGivenName', '#identityGivenReading']) q(id).value = '';
+    q('#identityNameMode').value = 'surname'; q('#identityConsent').checked = false; q('#identityCallName').checked = true;
+    refreshNameMode(); message('新しい方の名字・名前を入力してください。'); q('#identityName').focus();
+  });
   function refreshApproval() {
     q('#identityCallName').disabled = capturing;
   }
@@ -93,8 +133,10 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     return audition.canApprove(formPerson()) ? nameApprovalToken(formPerson()) : '';
   }
   q('#identityReading').addEventListener('input', clearAudition);
+  q('#identityGivenName').addEventListener('input', clearAudition);
+  q('#identityGivenReading').addEventListener('input', clearAudition);
   q('#identityName').addEventListener('input', () => {
-    const p = db.people.find(p => p.name === q('#identityName').value.trim());
+    const p = db.people.find(p => editingId ? p.id === editingId : p.name === formPerson().name);
     q('#identityCallName').checked = p ? shouldCallName(p) : true;
     clearAudition();
   });
@@ -115,24 +157,27 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
   q('[data-face]').addEventListener('click', () => register(false));
   q('[data-uniform]').addEventListener('click', () => register(true));
   q('[data-save-name]').addEventListener('click', async () => {
-    const p = db.people.find(p => p.name === q('#identityName').value.trim());
-    if (!p) { message('一覧の「読みがな」を押すか、先に顔を登録してください。'); return; }
+    const p = db.people.find(p => editingId ? p.id === editingId : p.name === formPerson().name);
+    if (!p) { message('一覧の「名前・読みがな」を押すか、先に顔を登録してください。'); return; }
     setBusy(true);
     try {
       const nameAudioApproval = approvalForForm();
       const person = formPerson(), nameCallingEnabled = q('#identityCallName').checked;
+      validateRegistrationName(person);
+      if (db.people.some(x => x.id !== p.id && x.name === person.name)) throw new Error('同じ名前の別の登録があります。一覧を確認してください。');
       if (nameCallingEnabled && !recordedName(person)) {
         const { manifest } = await loadKanaBank();
         tokenizeReading(readingFor(person), manifest.entries);
       }
       if (!dialog.open) return;
-      save({ ...db, people: db.people.map(x => x.id === p.id ? { ...x, reading: person.reading, nameAudioApproval, nameCallingEnabled } : x) });
+      save({ ...db, people: db.people.map(x => x.id === p.id ? { ...x, ...person, nameParts: person.nameParts, nameAudioApproval, nameCallingEnabled } : x) });
+      editingId = p.id;
       render(); message(nameCallingEnabled ? '名前呼びONで保存しました。顔認証したら名前を呼んでから挨拶します。' : '名前呼びOFFで保存しました。名前を呼ばずに挨拶します。');
     } catch (error) { message(error.message || '保存できませんでした。'); }
     finally { setBusy(false); }
   });
   q('[data-test-name]').addEventListener('click', async () => {
-    const name = q('#identityName').value.trim();
+    const name = formPerson().name;
     if (!name) { message('お名前を入力してください。'); return; }
     clearAudition(); const own = auditionId, person = formPerson();
     q('[data-test-name]').disabled = true;
@@ -160,8 +205,8 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
 
   function sanitize(value) {
     const read = (items, key, n) => (Array.isArray(items) ? items : []).filter(p => p && typeof p.name === 'string' && p.name.trim() && Array.isArray(p[key]))
-      .map(p => ({ id: typeof p.id === 'string' ? p.id : crypto.randomUUID(), name: p.name.trim().slice(0, 40),
-        role: ROLES[p.role] ? p.role : 'guest', reading: typeof p.reading === 'string' ? p.reading.slice(0, 60) : '', nameCallingEnabled: p.nameCallingEnabled !== false, nameAudioApproval: typeof p.nameAudioApproval === 'string' ? p.nameAudioApproval.slice(0, 400) : '', [key]: p[key].filter(v => validVector(v, n)).slice(-12) }))
+      .map(p => ({ id: typeof p.id === 'string' ? p.id : crypto.randomUUID(), ...restoreRegistrationName(p),
+        role: ROLES[p.role] ? p.role : 'guest', nameCallingEnabled: p.nameCallingEnabled !== false, nameAudioApproval: typeof p.nameAudioApproval === 'string' ? p.nameAudioApproval.slice(0, 400) : '', [key]: p[key].filter(v => validVector(v, n)).slice(-12) }))
       .filter(p => p[key].length).slice(0, 100);
     return { people: read(value?.people, 'descriptors', 128), uniforms: read(value?.uniforms, 'signatures', 19) };
   }
@@ -219,7 +264,8 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     return !descriptorMissing ? Array.from(results[0].descriptor) : null;
   }
   async function register(uniform) {
-    const name = q('#identityName').value.trim(), role = q('#identityRole').value;
+    const person = formPerson(), name = person.name, role = q('#identityRole').value;
+    try { validateRegistrationName(person); } catch (error) { message(error.message); return; }
     if (!name) { message('お名前・会社名を入力してください。'); return; }
     if (!uniform && !q('#identityConsent').checked) { message('本人の了承を確認してチェックを入れてください。'); return; }
     if (!singleFace()) { message('カメラを開始し、1人で顔を写してください。'); return; }
@@ -227,7 +273,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     try {
       if (!uniform && q('#identityCallName').checked && !recordedName(formPerson())) {
         const { manifest } = await loadKanaBank();
-        tokenizeReading(readingFor({ name, reading: q('#identityReading').value.trim() }), manifest.entries);
+        tokenizeReading(readingFor(person), manifest.entries);
       }
       // Wait for the current inference to release its shared snapshot canvas.
       while (busy) { await delay(100); if (own !== epoch) return; }
@@ -250,11 +296,13 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
         captured.push(v);
       }
       const key = uniform ? 'uniforms' : 'people', vectors = uniform ? 'signatures' : 'descriptors';
-      const previous = db[key].find(p => p.name === name);
+      const previous = db[key].find(p => !uniform && editingId ? p.id === editingId : p.name === name);
+      if (db[key].some(p => p.name === name && p.id !== previous?.id)) throw new Error('同じ名前の別の登録があります。一覧を確認してください。');
       if (!previous && db[key].length >= 100) throw new Error('登録は100件までです。不要な登録を削除してください。');
-      const entry = { id: previous?.id || crypto.randomUUID(), name, role: uniform ? 'delivery' : role, reading: q('#identityReading').value.trim(), nameCallingEnabled: !uniform && q('#identityCallName').checked, nameAudioApproval: uniform ? '' : approvalForForm(),
+      const entry = { id: previous?.id || crypto.randomUUID(), ...person, role: uniform ? 'delivery' : role, nameCallingEnabled: !uniform && q('#identityCallName').checked, nameAudioApproval: uniform ? '' : approvalForForm(),
         [vectors]: [...(previous?.[vectors] || []), ...captured].slice(-12) };
       const next = { ...db, [key]: [...db[key].filter(p => p.id !== entry.id), entry] };
+      if (!uniform) editingId = entry.id;
       save(next); render(); message(`${name}を${uniform ? '配達の制服' : ROLES[role]}として登録しました。${uniform ? '制服だけでは個人名は呼びません。' : entry.nameCallingEnabled ? '顔認証したら名前を呼んでから挨拶します。' : '名前呼びはOFFです。'}画面を閉じると照合を再開します。`);
     } catch (error) { if (dialog.open) message(error.name === 'QuotaExceededError' || error.name === 'SecurityError' ? 'このブラウザに保存できませんでした。保存設定をご確認ください。' : error.message || '登録できませんでした。もう一度お試しください。'); }
     finally { setBusy(false); }
@@ -265,19 +313,20 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
       const li = document.createElement('li'), label = document.createElement('span');
       label.textContent = `${key === 'people' ? '顔' : '制服'}：${p.name}${key === 'people' ? !shouldCallName(p) ? '（名前呼びOFF）' : hasNameReading(p) ? '（名前呼びON）' : '（読みがなを入力してください）' : ''}`; li.append(label);
       if (key === 'people') {
-        const edit = document.createElement('button'); edit.type = 'button'; edit.textContent = '読みがな';
+        const edit = document.createElement('button'); edit.type = 'button'; edit.textContent = '名前・読みがな';
         edit.addEventListener('click', () => {
-          clearAudition(); q('#identityName').value = p.name; q('#identityReading').value = p.reading || ''; q('#identityRole').value = p.role;
+          editPerson(p);
           if (isNameApproved(p)) audition.completed(p);
           q('#identityCallName').checked = shouldCallName(p);
           refreshVoiceType(); refreshReadingSuggestions();
           refreshApproval(); q('#identityReading').focus();
           q('[data-name-state]').textContent = '名前・読みがなを保存すると、最初の挨拶で名前を呼びます。試聴は任意です。';
+          message(`${p.name}の名前設定を編集中です。旧形式のフルネームを変更する場合は「名字＋名前」を選び、名字と名前を別々に入力して保存してください。顔の撮り直しは不要です。`);
         });
         li.append(edit);
         const distant = document.createElement('button'); distant.type = 'button'; distant.textContent = '離れた顔を追加';
         distant.addEventListener('click', () => {
-          q('#identityName').value = p.name; q('#identityReading').value = p.reading || ''; q('#identityRole').value = p.role;
+          editPerson(p);
           q('#identityCallName').checked = shouldCallName(p); q('#identityConsent').checked = false; clearAudition();
           message('普段使う離れた位置に立ち、本人の了承をチェックして「顔を登録（3回撮影）」を押してください。同じ方の登録にサンプルを追加します（直近12枚まで）。');
           q('#identityConsent').focus();
