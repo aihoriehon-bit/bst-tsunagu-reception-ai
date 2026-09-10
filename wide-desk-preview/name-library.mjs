@@ -1,4 +1,4 @@
-import { NAME_RECORDINGS } from './name-library-data.mjs?v=20260910-1';
+import { NAME_RECORDINGS } from './name-library-data.mjs?v=20260910-2';
 import { normalizeReading } from './kana-name.mjs?v=20260909-5';
 
 export { NAME_RECORDINGS };

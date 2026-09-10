@@ -27,6 +27,20 @@ test('explicit readings control pronunciation; ambiguous kanji and full names ar
   assert.match(nameVoiceDescription({ name: '鈴木' }), /収録済み/);
   assert.match(nameVoiceDescription({ name: '未収録' }), /未収録/);
 });
+test('requested Hirai and Makio readings select complete recordings for all visitor roles', async () => {
+  for (const reading of ['ひらい', 'まきお']) {
+    const entry = recordedName({ reading });
+    assert.ok(entry, reading);
+    assert.equal(NAME_RECORDINGS.filter(x => x.reading === reading).length, 1);
+    for (const role of ['employee', 'guest', 'delivery']) {
+      const line = await nameLine({ name: reading, reading, role });
+      assert.equal(line.audio, entry.audio);
+      assert.equal(line.text, reading + 'さん。');
+    }
+  }
+  assert.equal(recordedName({ name: '平井' }).reading, 'ひらい');
+  assert.equal(recordedName({ name: 'まきお' }).reading, 'まきお');
+});
 test('whole-name audio is selected without building kana for every visitor role', async () => {
   for (const role of ['employee', 'guest', 'delivery']) {
     const line = await nameLine({ name: '絵美太', reading: 'えみた', role });

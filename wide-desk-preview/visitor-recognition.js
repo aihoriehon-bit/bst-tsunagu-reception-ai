@@ -1,8 +1,8 @@
 import { ROLES, validVector, matchFace, clothingSignature, matchClothing } from './visitor-matching.mjs?v=20260909-2';
-import { previewName, cancelNameVoice } from './name-voice.js?v=20260910-1';
+import { previewName, cancelNameVoice } from './name-voice.js?v=20260910-2';
 import { readingFor, loadKanaBank, tokenizeReading } from './kana-name.mjs?v=20260909-5';
-import { nameApprovalToken, isNameApproved, createNameAudition, shouldCallName, hasNameReading } from './name-confirmation.mjs?v=20260910-1';
-import { NAME_RECORDINGS, recordedName, nameVoiceDescription } from './name-library.mjs?v=20260910-1';
+import { nameApprovalToken, isNameApproved, createNameAudition, shouldCallName, hasNameReading } from './name-confirmation.mjs?v=20260910-2';
+import { NAME_RECORDINGS, recordedName, nameVoiceDescription } from './name-library.mjs?v=20260910-2';
 import { detectFaces, faceQuality, FACE_DETECTION_OPTIONS, FACE_DESCRIPTOR_OPTIONS } from './face-detection.mjs?v=20260910-1';
 
 const STORAGE_KEY = 'tsunagu-preview-identities-v2';

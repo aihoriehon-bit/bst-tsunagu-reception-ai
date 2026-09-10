@@ -1,6 +1,6 @@
 import { kanaNameAudio, readingFor } from './kana-name.mjs?v=20260909-5';
-import { shouldCallName } from './name-confirmation.mjs?v=20260910-1';
-import { recordedName } from './name-library.mjs?v=20260910-1';
+import { shouldCallName } from './name-confirmation.mjs?v=20260910-2';
+import { recordedName } from './name-library.mjs?v=20260910-2';
 // Existing uploaded WAVs stay stored, but reading alone now selects VOICEVOX audio.
 const database = () => new Promise((resolve, reject) => {
   let expired = false;

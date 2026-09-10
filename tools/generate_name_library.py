@@ -75,7 +75,7 @@ def main():
             metadata.write_text(json.dumps(record, ensure_ascii=False, indent=2) + '\n')
         records.append({**record, 'names': sorted(names)})
         print(i + 1, len(entries), reading, record['kana'], flush=True)
-    manifest = {'revision': '20260910-1', 'credit': 'VOICEVOX:春日部つむぎ', 'entries': records}
+    manifest = {'revision': '20260910-2', 'credit': 'VOICEVOX:春日部つむぎ', 'entries': records}
     (OUT / 'catalog.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
     # Static import: name selection and form availability need no network round trip.
     compact = [{k: r[k] for k in ('reading', 'audio', 'names')} for r in records]

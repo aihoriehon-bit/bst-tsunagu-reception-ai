@@ -1,9 +1,9 @@
 import { readingFor } from './kana-name.mjs?v=20260909-5';
-import { recordedName } from './name-library.mjs?v=20260910-1';
+import { recordedName } from './name-library.mjs?v=20260910-2';
 
 // Change the revision whenever the bank or assembly changes: old approval must not
 // silently authorize a different pronunciation.
-export const NAME_AUDIO_REVISION = 'whole-name-library1-kana-bank3';
+export const NAME_AUDIO_REVISION = 'whole-name-library2-kana-bank3';
 export function nameApprovalToken(person) {
   return JSON.stringify([NAME_AUDIO_REVISION, String(person?.name || '').trim(), readingFor(person)]);
 }

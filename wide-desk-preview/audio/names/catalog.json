@@ -1,5 +1,5 @@
 {
-  "revision": "20260910-1",
+  "revision": "20260910-2",
   "credit": "VOICEVOX:春日部つむぎ",
   "entries": [
     {
@@ -5140,6 +5140,21 @@
       "names": [
         "けんた",
         "健太"
+      ]
+    },
+    {
+      "reading": "まきお",
+      "audio": "./audio/names/n-307e-304d-304a.wav",
+      "kana": "マキ'オサン",
+      "moras": "マキオサン",
+      "seconds": 1.0026666666666666,
+      "peak": 10658,
+      "speaker": "VOICEVOX:春日部つむぎ",
+      "style": 8,
+      "method": "whole-kanji-v2",
+      "text": "まきおさん。",
+      "names": [
+        "まきお"
       ]
     }
   ]
