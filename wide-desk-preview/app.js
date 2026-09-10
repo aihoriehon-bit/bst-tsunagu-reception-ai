@@ -11,6 +11,9 @@ const MODEL_URL = "../blender/tsunagu-reception-actions-20260826.glb?v=20260831-
 const MODEL_FRONT_Y = -Math.PI / 2 + 0.03;
 const SEATED_Y = -0.3;
 const SEATED_Z = -0.08;
+// World-space cutoff inside the overlap of the desktop and front panel.
+// Keep it fixed while the seated character moves/turns, including crossfades.
+const DESK_BODY_CUTOFF_Y = 0.64;
 const FACE_CONFIRM_MS = 600;
 const FACE_LOST_MS = 5000;
 const TEST_VISITOR_MS = 24000; // 立ち上がり＋挨拶＋受付案内を最後まで確認できる長さ。
@@ -136,6 +139,7 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.12;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.localClippingEnabled = true;
 sceneElement.appendChild(renderer.domElement);
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x8ba09c, 2.5));
@@ -690,6 +694,9 @@ function normalizeModel(model) {
 }
 
 function improveMaterials(model) {
+  // This upper-body-only view must never expose legs below/through the desk.
+  // Apply only to the character, not the desk, chair, background or face layer.
+  const deskBodyClip = new THREE.Plane(new THREE.Vector3(0, 1, 0), -DESK_BODY_CUTOFF_Y);
   model.traverse((node) => {
     if (!node.isMesh) return;
     node.frustumCulled = false;
@@ -699,6 +706,8 @@ function improveMaterials(model) {
     materials.forEach((material) => {
       if (!material) return;
       material.side = THREE.FrontSide;
+      material.clippingPlanes = [deskBodyClip];
+      material.clipShadows = true;
       if ("roughness" in material) material.roughness = Math.min(material.roughness ?? 0.8, 0.86);
       if ("metalness" in material) material.metalness = Math.min(material.metalness ?? 0, 0.2);
       material.needsUpdate = true;
