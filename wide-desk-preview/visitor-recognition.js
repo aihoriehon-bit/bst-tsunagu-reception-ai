@@ -2,7 +2,8 @@ import { ROLES, validVector, matchFace, clothingSignature, matchClothing } from 
 import { previewName, cancelNameVoice } from './name-voice.js?v=20260910-bank10000-1';
 import { readingFor, loadKanaBank, tokenizeReading } from './kana-name.mjs?v=20260909-5';
 import { nameApprovalToken, isNameApproved, createNameAudition, shouldCallName, hasNameReading } from './name-confirmation.mjs?v=20260910-bank10000-1';
-import { NAME_RECORDINGS, recordedName, nameVoiceDescription, normalizeNameReading } from './name-library.mjs?v=20260910-bank10000-1';
+import { NAME_RECORDINGS, recordedName, normalizeNameReading } from './name-library.mjs?v=20260910-bank10000-1';
+import { bindNameAvailability } from './name-availability.mjs?v=20260911-availability-1';
 import { detectFaces, faceQuality, FACE_DETECTION_OPTIONS, FACE_DESCRIPTOR_OPTIONS } from './face-detection.mjs?v=20260910-1';
 
 const STORAGE_KEY = 'tsunagu-preview-identities-v2';
@@ -39,11 +40,11 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     <p>本人の了承を得て登録してください。顔の特徴量・区分・名前と制服の色を、このブラウザ内だけに保存します。写真・映像は保存・送信しません。</p>
     <p>登録中は自動の挨拶を休止します。カメラに1人で、明るい場所で写ってください。</p>
     <video class="identity-preview" autoplay muted playsinline aria-label="登録用カメラ映像"></video>
-    <label>お名前・会社名<input id="identityName" maxlength="40" autocomplete="off" placeholder="例：佐藤／ヤマト"></label>
-    <label>読みがな<input id="identityReading" list="recordedNameReadings" maxlength="40" autocomplete="off" placeholder="例：えみた（「さん」は自動で付きます）"></label>
+    <label>お名前・会社名<input id="identityName" maxlength="40" autocomplete="off" aria-describedby="nameAvailability" placeholder="例：佐藤／ヤマト"></label>
+    <label>読みがな<input id="identityReading" list="recordedNameReadings" maxlength="40" autocomplete="off" aria-describedby="nameAvailability" placeholder="例：えみた（「さん」は自動で付きます）"></label>
     <datalist id="recordedNameReadings"></datalist>
+    <div id="nameAvailability" class="name-availability" data-voice-type data-state="empty" role="status" aria-live="polite" aria-atomic="true"><strong data-availability-title>名字・名前の収録チェック</strong><p data-availability-detail>名前または読みがなを入力すると、自動で確認します。</p></div>
     <p class="identity-note">顔で本人と照合できたら、社員・お客様・配達のどの区分でも「○○さん」と呼んでから挨拶します。${NAME_RECORDINGS.length}種類の読みを「さん」までまとめた春日部つむぎの音声として用意しています。別の読みがある漢字名やフルネームには、読みがなを入力してください。</p>
-    <p class="identity-note" data-voice-type>読みがなを入力すると、収録済みの音声があるか確認できます。</p>
     <div class="identity-actions"><button type="button" data-test-name>名前を試聴（任意）</button></div>
     <label class="identity-consent"><input id="identityCallName" type="checkbox" checked>顔認証で名前を呼ぶ</label>
     <p class="identity-note" data-name-state>名前呼びは標準でONです。試聴後の確認チェックは不要です。名前を呼びたくない場合だけチェックを外して保存してください。</p>
@@ -77,6 +78,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
   const message = text => { q('[data-message]').textContent = text; };
   const audition = createNameAudition(); let auditionId = 0;
   const formPerson = () => ({ name: q('#identityName').value.trim(), reading: q('#identityReading').value.trim() });
+  const refreshVoiceType = bindNameAvailability({ nameInput: q('#identityName'), readingInput: q('#identityReading'), panel: q('[data-voice-type]') });
   function refreshApproval() {
     q('#identityCallName').disabled = capturing;
   }
@@ -85,7 +87,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     q('[data-test-name]').disabled = capturing;
     q('[data-name-state]').textContent = '名前・読みがなを保存すると、顔認証後に名前を呼びます。試聴は任意です。';
     refreshApproval();
-    q('[data-voice-type]').textContent = nameVoiceDescription(formPerson());
+    refreshVoiceType();
   }
   function approvalForForm() {
     return audition.canApprove(formPerson()) ? nameApprovalToken(formPerson()) : '';
@@ -102,7 +104,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     refreshApproval();
   };
   open.addEventListener('click', () => {
-    reset(); dialog.showModal(); onRegistrationChange(true); render();
+    reset(); dialog.showModal(); onRegistrationChange(true); render(); refreshVoiceType();
     loadKanaBank().catch(() => {});
     q('video').srcObject = video.srcObject;
     q('video').play().catch(() => {});
@@ -268,7 +270,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
           clearAudition(); q('#identityName').value = p.name; q('#identityReading').value = p.reading || ''; q('#identityRole').value = p.role;
           if (isNameApproved(p)) audition.completed(p);
           q('#identityCallName').checked = shouldCallName(p);
-          q('[data-voice-type]').textContent = nameVoiceDescription(p);
+          refreshVoiceType(); refreshReadingSuggestions();
           refreshApproval(); q('#identityReading').focus();
           q('[data-name-state]').textContent = '名前・読みがなを保存すると、最初の挨拶で名前を呼びます。試聴は任意です。';
         });

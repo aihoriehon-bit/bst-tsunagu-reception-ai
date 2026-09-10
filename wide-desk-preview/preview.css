@@ -46,3 +46,9 @@
 @media (max-height: 560px) { .handsfree-conversation { width: min(410px, calc(100vw - 28px)); max-height: 46dvh; } }
 /* Keep the compact credit's required source link usable. */
 .voice-credit-fixed a { pointer-events: auto; color: inherit; text-decoration: underline; }
+.identity-dialog .name-availability { margin: 12px 0; padding: 14px 16px; border: 2px solid #687f86; border-radius: 12px; background: #f2f6f7; color: #294b55; overflow-wrap: anywhere; }
+.name-availability strong { display: block; font-size: 1.125rem; line-height: 1.5; }
+.identity-dialog .name-availability p { margin: 5px 0 0; font-size: 1rem; line-height: 1.6; color: inherit; }
+.identity-dialog .name-availability[data-state="recorded"] { background: #effff5; border-color: #16804d; color: #125934; }
+.identity-dialog .name-availability[data-state="missing"] { background: #fff8e8; border-color: #ad690e; color: #744800; }
+.identity-dialog .name-availability[data-state="reading-needed"] { background: #eef6ff; border-color: #42749e; color: #244f75; }
