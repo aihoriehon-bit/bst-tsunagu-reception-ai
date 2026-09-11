@@ -7,7 +7,7 @@ test('main entry uses the identical release with a base for models, speech and C
   const root = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const preview = readFileSync(new URL('./index.html', import.meta.url), 'utf8');
   assert.equal(root.replace('    <base href="./wide-desk-preview/" />\n', '').replace('つなぐちゃん 受付AI', 'つなぐちゃん 受付動作プレビュー'), preview);
-  assert.match(root, /src="\.\/app.js\?v=20260911-devicevoice-1"/);
+  assert.match(root, /src="\.\/app.js\?v=20260911-yamada-taro-1"/);
 });
 test('previous main registrations merge only when explicitly imported, preserving newer names and OFF', () => {
   const source = readFileSync(new URL('./visitor-recognition.js', import.meta.url), 'utf8');

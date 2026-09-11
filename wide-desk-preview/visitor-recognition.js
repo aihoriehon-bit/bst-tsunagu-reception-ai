@@ -44,10 +44,10 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     <label>名前の登録方法<select id="identityNameMode"><option value="surname">名字だけ</option><option value="given">名前だけ</option><option value="full">名字＋名前（フルネーム）</option><option value="legacy">以前の形式・会社名</option></select></label>
     <p class="identity-note">呼んでほしい範囲を選んでください。「さん」は自動で付きます。フルネームは名字と名前を別々の欄に入力します。</p>
     <div class="identity-name-grid">
-      <div><label><span data-first-name-label>名字</span><input id="identityName" maxlength="40" autocomplete="off" aria-describedby="nameAvailability" placeholder="例：福田"></label>
-      <label><span data-first-reading-label>名字の読みがな</span><input id="identityReading" list="recordedNameReadings" maxlength="40" autocomplete="off" aria-describedby="nameAvailability" placeholder="例：ふくだ"></label></div>
-      <div data-given-fields hidden><label>名前<input id="identityGivenName" maxlength="40" autocomplete="off" aria-describedby="nameAvailability" placeholder="例：たける"></label>
-      <label>名前の読みがな<input id="identityGivenReading" list="recordedGivenReadings" maxlength="40" autocomplete="off" aria-describedby="nameAvailability" placeholder="例：たける"></label></div>
+      <div><label><span data-first-name-label>名字</span><input id="identityName" maxlength="40" autocomplete="off" aria-describedby="nameAvailability" placeholder="例：山田"></label>
+      <label><span data-first-reading-label>名字の読みがな</span><input id="identityReading" list="recordedNameReadings" maxlength="40" autocomplete="off" aria-describedby="nameAvailability" placeholder="例：やまだ"></label></div>
+      <div data-given-fields hidden><label>名前<input id="identityGivenName" maxlength="40" autocomplete="off" aria-describedby="nameAvailability" placeholder="例：太郎"></label>
+      <label>名前の読みがな<input id="identityGivenReading" list="recordedGivenReadings" maxlength="40" autocomplete="off" aria-describedby="nameAvailability" placeholder="例：たろう"></label></div>
     </div>
     <datalist id="recordedNameReadings"></datalist>
     <datalist id="recordedGivenReadings"></datalist>
@@ -97,8 +97,8 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     q('.identity-name-grid').classList.toggle('is-full', mode === 'full');
     q('[data-first-name-label]').textContent = mode === 'given' ? '名前' : mode === 'legacy' ? 'お名前・会社名（以前の形式）' : '名字';
     q('[data-first-reading-label]').textContent = mode === 'given' ? '名前の読みがな' : mode === 'legacy' ? '読みがな（全体）' : '名字の読みがな';
-    q('#identityName').placeholder = mode === 'given' ? '例：たける' : mode === 'legacy' ? '例：ヤマト／以前の登録名' : '例：福田';
-    q('#identityReading').placeholder = mode === 'given' ? '例：たける' : mode === 'legacy' ? '例：やまと' : '例：ふくだ';
+    q('#identityName').placeholder = mode === 'given' ? '例：太郎' : mode === 'legacy' ? '例：ヤマト／以前の登録名' : '例：山田';
+    q('#identityReading').placeholder = mode === 'given' ? '例：たろう' : mode === 'legacy' ? '例：やまと' : '例：やまだ';
     clearAudition(); refreshReadingSuggestions();
   }
   function editPerson(p) {

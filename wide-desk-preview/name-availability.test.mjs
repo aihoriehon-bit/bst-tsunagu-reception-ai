@@ -59,5 +59,9 @@ test('registration places the accessible result next to the fields and refreshes
   assert.ok(source.indexOf('id="nameAvailability"') < source.indexOf('data-test-name'));
   assert.match(source, /render\(\); refreshVoiceType\(\)/);
   assert.match(source, /refreshVoiceType\(\); refreshReadingSuggestions\(\)/);
+  assert.match(source, /placeholder="例：山田"/);
+  assert.match(source, /placeholder="例：やまだ"/);
+  assert.match(source, /placeholder="例：太郎"/);
+  assert.match(source, /placeholder="例：たろう"/);
   assert.doesNotMatch(source, /q\('\[data-voice-type\]'\)\.textContent/);
 });
