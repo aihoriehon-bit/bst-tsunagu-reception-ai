@@ -31,6 +31,7 @@ test('partial full names, ambiguous readings, unavailable parts and OFF are repo
   assert.throws(() => validateRegistrationName(registrationName('full', 'あ'.repeat(30), '', 'い'.repeat(30))), /40文字/);
   const missing = nameAvailability(registrationName('full', 'おおふさ', '', 'たける'));
   assert.equal(missing.state, 'missing'); assert.match(missing.detail, /名字：未収録.*名前：収録済み/);
+  assert.match(missing.detail, /以前のAI音声/); assert.doesNotMatch(missing.detail, /1音ずつ|単音/);
   const unclear = registrationName('full', '山崎', '', 'たける');
   assert.equal(nameAvailability(unclear).state, 'reading-needed'); assert.equal(hasNameReading(unclear), false);
   const firstOnly = registrationName('surname', '福田', 'ふくだ', 'hidden value', 'hidden reading');
@@ -109,4 +110,10 @@ test('actual greeting nameLine uses one joined clip for employee/guest/delivery,
     }
     assert.equal(requests, 2); assert.equal(decodes, 2);
   } finally { globalThis.fetch = oldFetch; globalThis.AudioContext = oldContext; }
+});
+test('an unrecorded single or full name is read as one phrase by the previous AI voice', async () => {
+  const single = await nameLine(registrationName('surname', '大房', 'おおふさ'));
+  assert.equal(single.audio, undefined); assert.equal(single.text, '大房さん。'); assert.equal(single.spokenText, 'おおふささん');
+  const full = await nameLine(registrationName('full', '大房', 'おおふさ', 'たける', 'たける'));
+  assert.equal(full.audio, undefined); assert.equal(full.text, '大房 たけるさん。'); assert.equal(full.spokenText, 'おおふさたけるさん');
 });

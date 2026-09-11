@@ -1,6 +1,6 @@
-import { kanaNameAudio, readingFor } from './kana-name.mjs?v=20260909-5';
-import { shouldCallName } from './name-confirmation.mjs?v=20260911-fullname-1';
-import { recordedName } from './name-library.mjs?v=20260910-bank10000-1';
+import { readingFor } from './kana-name.mjs?v=20260909-5';
+import { shouldCallName } from './name-confirmation.mjs?v=20260911-devicevoice-1';
+import { recordedName } from './name-library.mjs?v=20260911-devicevoice-1';
 import { structuredParts, validateRegistrationName } from './registration-name.mjs?v=20260911-fullname-1';
 import { fullNameAudio } from './full-name-audio.mjs?v=20260911-fullname-1';
 // Existing uploaded WAVs stay stored, but reading alone now selects VOICEVOX audio.
@@ -57,8 +57,9 @@ export async function nameLine(person, { audition = false } = {}) {
   if (parts) validateRegistrationName(person);
   if (parts?.length === 2) {
     const [first, last] = parts.map(recordedName);
-    const audio = await fullNameAudio(first, last) || await kanaNameAudio(person);
-    return { text: person.name + 'さん。', audio, group: 'named' };
+    const audio = await fullNameAudio(first, last);
+    if (audio) return { text: person.name + 'さん。', audio, group: 'named' };
+    return { text: person.name + 'さん。', spokenText: callName(readingFor(person)), group: 'named' };
   }
   let audio;
   const name = person.name.normalize('NFKC').replace(/\s/g, '').replace(/(?:さん|様|さま)$/, '');
@@ -67,8 +68,9 @@ export async function nameLine(person, { audition = false } = {}) {
     audio = './audio/' + ({ 佐藤: 'nameSato', 田中: 'nameTanaka', 福田: 'nameFukuda' })[name] + '.wav';
   }
   audio ||= recordedName(person)?.audio;
-  audio ||= await kanaNameAudio(person);
-  return { text: callName(person.name) + '。', audio, group: 'named' };
+  return audio
+    ? { text: callName(person.name) + '。', audio, group: 'named' }
+    : { text: callName(person.name) + '。', spokenText: callName(readingFor(person)), group: 'named' };
 }
 let utterance = null, previewAudio = null, cancelPreview = null, previewRequest = 0;
 export function cancelNameVoice() {

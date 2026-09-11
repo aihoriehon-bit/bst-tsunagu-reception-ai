@@ -10,7 +10,8 @@ test('requested names show the true recording status without registration', () =
   const missing = nameAvailability({ name: 'おおふさ' });
   assert.equal(missing.state, 'missing');
   assert.match(missing.detail, /おおふささん/);
-  assert.match(missing.detail, /1音ずつ/);
+  assert.match(missing.detail, /以前のAI音声/);
+  assert.doesNotMatch(missing.detail, /1音ずつ|単音/);
   assert.match(nameAvailability({ name: 'たけき' }).detail, /たけきさん/);
 });
 test('empty, ambiguous kanji, full names, invalid and explicit readings are distinct', () => {

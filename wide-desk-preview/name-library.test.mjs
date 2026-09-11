@@ -42,6 +42,8 @@ test('explicit readings control pronunciation; ambiguous kanji and full names ar
   assert.match(nameVoiceDescription({ name: '鈴木', reading: 'すずき' }), /収録済み/);
   assert.match(nameVoiceDescription({ name: '鈴木' }), /読みがなを入力/);
   assert.match(nameVoiceDescription({ name: '未収録' }), /未収録/);
+  assert.match(nameVoiceDescription({ name: '大房', reading: 'おおふさ' }), /以前のAI音声/);
+  assert.doesNotMatch(nameVoiceDescription({ name: '大房', reading: 'おおふさ' }), /1音ずつ|１音ずつ|単音/);
 });
 test('requested Hirai and Makio readings select complete recordings for all visitor roles', async () => {
   for (const reading of ['ひらい', 'まきお']) {

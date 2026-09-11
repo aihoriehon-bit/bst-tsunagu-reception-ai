@@ -1,9 +1,8 @@
 import { ROLES, validVector, matchFace, clothingSignature, matchClothing } from './visitor-matching.mjs?v=20260909-2';
-import { previewName, cancelNameVoice } from './name-voice.js?v=20260911-fullname-1';
-import { readingFor, loadKanaBank, tokenizeReading } from './kana-name.mjs?v=20260909-5';
-import { nameApprovalToken, isNameApproved, createNameAudition, shouldCallName, hasNameReading } from './name-confirmation.mjs?v=20260911-fullname-1';
-import { NAME_RECORDINGS, recordedName, normalizeNameReading } from './name-library.mjs?v=20260910-bank10000-1';
-import { bindNameAvailability } from './name-availability.mjs?v=20260911-fullname-1';
+import { previewName, cancelNameVoice } from './name-voice.js?v=20260911-devicevoice-1';
+import { nameApprovalToken, isNameApproved, createNameAudition, shouldCallName, hasNameReading } from './name-confirmation.mjs?v=20260911-devicevoice-1';
+import { NAME_RECORDINGS, normalizeNameReading } from './name-library.mjs?v=20260911-devicevoice-1';
+import { bindNameAvailability } from './name-availability.mjs?v=20260911-devicevoice-1';
 import { registrationName, restoreRegistrationName, validateRegistrationName } from './registration-name.mjs?v=20260911-fullname-1';
 import { detectFaces, faceQuality, FACE_DETECTION_OPTIONS, FACE_DESCRIPTOR_OPTIONS } from './face-detection.mjs?v=20260910-1';
 
@@ -53,7 +52,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     <datalist id="recordedNameReadings"></datalist>
     <datalist id="recordedGivenReadings"></datalist>
     <div id="nameAvailability" class="name-availability" data-voice-type data-state="empty" role="status" aria-live="polite" aria-atomic="true"><strong data-availability-title>名字・名前の収録チェック</strong><p data-availability-detail>名前または読みがなを入力すると、自動で確認します。</p></div>
-    <p class="identity-note">顔で本人と照合できたら、社員・お客様・配達のどの区分でも、登録した名字・名前で呼んでから挨拶します。${NAME_RECORDINGS.length}種類の読みの春日部つむぎ音声を用意しています。漢字に複数の読み方がある場合は、読みがなを入力してください。名字のみ・名前のみの登録もできます。</p>
+    <p class="identity-note">顔で本人と照合できたら、社員・お客様・配達のどの区分でも、登録した名字・名前で呼んでから挨拶します。名字5,000種類・名前5,000種類分の春日部つむぎ音声を用意しています。未収録の場合は、入力した読みがなを以前のAI音声で名前全体として読み上げます。漢字に複数の読み方がある場合は、読みがなを入力してください。名字のみ・名前のみの登録もできます。</p>
     <div class="identity-actions"><button type="button" data-test-name>名前を試聴（任意）</button></div>
     <label class="identity-consent"><input id="identityCallName" type="checkbox" checked>顔認証で名前を呼ぶ</label>
     <p class="identity-note" data-name-state>名前呼びは標準でONです。試聴後の確認チェックは不要です。名前を呼びたくない場合だけチェックを外して保存してください。</p>
@@ -148,7 +147,6 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
   };
   open.addEventListener('click', () => {
     reset(); dialog.showModal(); onRegistrationChange(true); render(); refreshVoiceType();
-    loadKanaBank().catch(() => {});
     q('video').srcObject = video.srcObject;
     q('video').play().catch(() => {});
     message(storageError ? '保存データを読み込めませんでした。登録内容を確認してください。' : '顔を正面から写して登録してください。');
@@ -166,10 +164,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
       const person = formPerson(), nameCallingEnabled = q('#identityCallName').checked;
       validateRegistrationName(person);
       if (db.people.some(x => x.id !== p.id && x.name === person.name)) throw new Error('同じ名前の別の登録があります。一覧を確認してください。');
-      if (nameCallingEnabled && !recordedName(person)) {
-        const { manifest } = await loadKanaBank();
-        tokenizeReading(readingFor(person), manifest.entries);
-      }
+      if (nameCallingEnabled && !hasNameReading(person)) throw new Error('名前を呼ぶには、ひらがなで読みがなを入力してください。');
       if (!dialog.open) return;
       save({ ...db, people: db.people.map(x => x.id === p.id ? { ...x, ...person, nameParts: person.nameParts, nameAudioApproval, nameCallingEnabled } : x) });
       editingId = p.id;
@@ -277,10 +272,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     if (!singleFace()) { message('カメラを開始し、1人で顔を写してください。'); return; }
     setBusy(true); reset(); const own = epoch;
     try {
-      if (!uniform && q('#identityCallName').checked && !recordedName(formPerson())) {
-        const { manifest } = await loadKanaBank();
-        tokenizeReading(readingFor(person), manifest.entries);
-      }
+      if (!uniform && q('#identityCallName').checked && !hasNameReading(person)) throw new Error('名前を呼ぶには、ひらがなで読みがなを入力してください。');
       // Wait for the current inference to release its shared snapshot canvas.
       while (busy) { await delay(100); if (own !== epoch) return; }
       message('登録の準備中…初回は識別モデルを読み込みます。');
@@ -384,7 +376,6 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
   const timer = setInterval(() => { scan().catch(() => { reset(); live.textContent = '識別できません・通常受付中'; }); }, 500);
   // Load before the first visitor arrives, rather than spending their greeting window downloading models.
   if (db.people.length) ensureApi().catch(() => {});
-  if (db.people.length) loadKanaBank().catch(() => {});
   live.textContent = '顔・配達の登録から識別を設定できます';
   return {
     async prepareDetection() { await ensureApi(); },

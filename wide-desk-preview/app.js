@@ -1,11 +1,11 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { EXTRA_SPEECH } from "../wide-desk/additional-speech.js?v=20260909-conversation-1";
-import { createVisitorRecognition } from "./visitor-recognition.js?v=20260911-release-1";
+import { createVisitorRecognition } from "./visitor-recognition.js?v=20260911-devicevoice-1";
 import { createPersonDetector, createBodyConfirmation } from "./person-presence.mjs?v=20260911-distance-1";
 import { CAMERA_CONSTRAINTS, createDetectionLoop } from "./face-detection.mjs?v=20260910-1";
 import { receptionPlan } from "./visitor-matching.mjs?v=20260909-2";
-import { nameLine, cancelNameVoice, speakDeviceName } from "./name-voice.js?v=20260911-fullname-1";
+import { nameLine, cancelNameVoice, speakDeviceName } from "./name-voice.js?v=20260911-devicevoice-1";
 import { createConversation, DIALOGUE_LINES } from "./automatic-conversation.js?v=20260911-distance-1";
 
 const MODEL_URL = "../blender/tsunagu-reception-actions-20260826.glb?v=20260831-pc-gaze-1";
