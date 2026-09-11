@@ -22,6 +22,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
   const canvas = document.createElement('canvas');
   const detectionCanvases = { frame: document.createElement('canvas'), tile: document.createElement('canvas') };
   let detectionMs = 0, descriptorMissing = false, lastSampleFrame = 0;
+  let peopleCount = 0;
   const live = document.createElement('span');
   live.className = 'recognition-status';
   live.setAttribute('aria-live', 'polite');
@@ -215,7 +216,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     db = next; storageError = false; reset();
   }
   function reset() { epoch++; identity = null; identityAt = 0; candidate = ''; hits = 0; lastSampleFrame = 0; }
-  function singleFace() { return faces.length === 1 && Date.now() - facesAt < 1200 && video.readyState >= 2 && video.videoWidth > 0; }
+  function singleFace() { return peopleCount <= 1 && faceQuality(faces, video.videoWidth, video.videoHeight).usable && Date.now() - facesAt < 1200 && video.readyState >= 2 && video.videoWidth > 0; }
   function snapshot(uniform = false) {
     if (!singleFace()) return null;
     const b = faces[0].boundingBox;
@@ -351,7 +352,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
   }
   async function scan() {
     if (busy || capturing || stopped || dialog.open || document.hidden) return;
-    if (!singleFace()) { live.textContent = faces.length > 1 ? '複数人のため個人の識別を保留' : faces.length ? '映像の更新待ち・照合を保留しています' : '顔・配達の登録から識別を設定できます'; return; }
+    if (!singleFace()) { identity = null; candidate = ''; hits = 0; live.textContent = faces.length > 1 || peopleCount > 1 ? '複数人のため個人の識別を保留' : faces.length ? '顔を十分確認できたら名前を呼びます' : peopleCount ? '来訪を検知・顔を確認できるまで名前は呼びません' : '顔・配達の登録から識別を設定できます'; return; }
     if (!db.people.length && !db.uniforms.length) { live.textContent = '未登録の来訪者'; return; }
     if (lastSampleFrame === facesAt) return;
     lastSampleFrame = facesAt;
@@ -390,8 +391,13 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     },
     diagnostics() { return `${faceQuality(faces, video.videoWidth, video.videoHeight).text}／検出 ${detectionMs}ms`; },
     get paused() { return dialog.open; },
+    updatePeople(count) {
+      peopleCount = count;
+      if (count > 1) { identity = null; candidate = ''; hits = 0; }
+    },
+    canIdentify() { return singleFace(); },
     updateFaces(next) {
-      if (next.length !== 1) { identity = null; candidate = ''; hits = 0; }
+      if (!faceQuality(next, video.videoWidth, video.videoHeight).usable) { identity = null; candidate = ''; hits = 0; }
       faces = next; facesAt = next[0]?.capturedAt || Date.now();
     },
     current() { return !dialog.open && singleFace() && Date.now() - identityAt < 1800 ? identity : null; },
@@ -406,7 +412,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
       }
       return null;
     },
-    reset() { faces = []; facesAt = 0; reset(); },
+    reset() { faces = []; facesAt = 0; peopleCount = 0; reset(); },
     destroy() { stopped = true; clearInterval(timer); reset(); },
   };
 }

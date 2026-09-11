@@ -1,11 +1,12 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { EXTRA_SPEECH } from "../wide-desk/additional-speech.js?v=20260909-conversation-1";
-import { createVisitorRecognition } from "./visitor-recognition.js?v=20260911-fullname-1";
+import { createVisitorRecognition } from "./visitor-recognition.js?v=20260911-distance-1";
+import { createPersonDetector, createBodyConfirmation } from "./person-presence.mjs?v=20260911-distance-1";
 import { CAMERA_CONSTRAINTS, createDetectionLoop } from "./face-detection.mjs?v=20260910-1";
 import { receptionPlan } from "./visitor-matching.mjs?v=20260909-2";
 import { nameLine, cancelNameVoice, speakDeviceName } from "./name-voice.js?v=20260911-fullname-1";
-import { createConversation, DIALOGUE_LINES } from "./automatic-conversation.js?v=20260909-6";
+import { createConversation, DIALOGUE_LINES } from "./automatic-conversation.js?v=20260911-distance-1";
 
 const MODEL_URL = "../blender/tsunagu-reception-actions-20260826.glb?v=20260831-pc-gaze-1";
 const MODEL_FRONT_Y = -Math.PI / 2 + 0.03;
@@ -204,6 +205,8 @@ let speechRequestId = 0;
 let speakingMouthTimer = null;
 let cameraStream = null;
 let cameraDetectionLoop = null;
+const personDetector = createPersonDetector();
+const bodyConfirmation = createBodyConfirmation();
 let sensorBehaviorTimer = null;
 let faceVisible = false;
 let faceFirstSeenAt = 0;
@@ -970,6 +973,7 @@ function stopCamera({ resetCharacter = true } = {}) {
   cameraPreviewElement.srcObject = null;
   faceVisible = false;
   visitorRecognition.reset();
+  bodyConfirmation.reset();
   testVisitorUntil = 0;
   cameraStatusElement.textContent = "カメラ停止中";
   cameraToggleElement.textContent = "カメラ開始";
@@ -982,12 +986,19 @@ function stopCamera({ resetCharacter = true } = {}) {
 function startDetectionLoop() {
   stopDetectionLoop();
   cameraDetectionLoop ??= createDetectionLoop({
-    ready: () => Boolean(cameraStream && cameraPreviewElement.readyState >= 2 && cameraPreviewElement.videoWidth),
-    detect: () => visitorRecognition.detectFaces(),
-    update: faces => {
+    ready: () => Boolean(cameraStream && !document.hidden && cameraPreviewElement.readyState >= 2 && cameraPreviewElement.videoWidth),
+    detect: async () => {
+      void personDetector.prepare();
+      let faces = [], faceError = false;
+      try { faces = await visitorRecognition.detectFaces(); } catch { faceError = true; }
+      return { faces, people: personDetector.detect(cameraPreviewElement), faceError };
+    },
+    update: ({ faces = [], people = 0, faceError = false } = {}) => {
+      visitorRecognition.updatePeople(people);
       visitorRecognition.updateFaces(faces);
-      updateFacePresence(faces.length);
-      cameraStatusElement.textContent = `カメラ動作中（拡大検出）${visitorRecognition.diagnostics()}`;
+      const confirmedPeople = bodyConfirmation.update(people);
+      updateFacePresence(Math.max(faces.length, confirmedPeople), faces.length === 0 && confirmedPeople > 0);
+      cameraStatusElement.textContent = `カメラ動作中（${personDetector.status}）${faceError ? '／顔検出を再確認中' : visitorRecognition.diagnostics()}`;
     },
     onError: error => {
       console.warn("Face detection error", error);
@@ -1001,7 +1012,7 @@ function stopDetectionLoop() {
   cameraDetectionLoop?.stop();
 }
 
-function updateFacePresence(faceCount) {
+function updateFacePresence(faceCount, bodyOnly = false) {
   const now = Date.now();
   const visible = faceCount > 0;
   if (visible) {
@@ -1016,7 +1027,7 @@ function updateFacePresence(faceCount) {
     : visible
     ? faceCount > 1
       ? `${faceCount}名 いらっしゃいます`
-      : currentReceptionPlan?.role === "employee" ? "社員の方に対応中" : currentReceptionPlan?.role === "delivery" ? "配達の受付中" : "来訪者を検知しました"
+      : bodyOnly ? "来訪を検知・顔を確認できたら名前を呼びます" : currentReceptionPlan?.role === "employee" ? "社員の方に対応中" : currentReceptionPlan?.role === "delivery" ? "配達の受付中" : "来訪者を検知しました"
     : sensorAttending
       ? "来客を確認中…"
       : "来客なし";
@@ -1074,10 +1085,10 @@ function updateSensorBehavior() {
 
 function updateAutomaticSpeech(now) {
   if (!soundEnabled || speechBusy || greetingPending || document.hidden) return;
-  // If model warm-up finished during the anonymous greeting, call the name afterwards.
+  // A distant arrival can be identified later in the same visit, not just its first 20 seconds.
   const lateIdentity = visitorRecognition.current();
-  if (sensorAttending && !testVisitorUntil && !currentReceptionPlan?.identity && lateIdentity?.source === 'face' && now - greetingStartedAt < 20000) {
-    beginSensorGreeting();
+  if (sensorAttending && !testVisitorUntil && currentReceptionPlan && !currentReceptionPlan.identity && lateIdentity?.source === 'face' && conversation.canAnnounceName !== false) {
+    announceRecognizedName(lateIdentity);
     return;
   }
   if (conversation.active) return;
@@ -1089,6 +1100,23 @@ function updateAutomaticSpeech(now) {
   } else if (!sensorAttending && !sensorAutomationActive && !isSensorVisitorPresent() && currentMotionKey === "deskWork" && now - lastSpeechAt >= 60000) {
     const keys = ["workMemo", "workPrepare", "workSchedule"];
     speakLine(keys[workLineIndex++ % keys.length], null, { keepPose: true });
+  }
+}
+
+async function announceRecognizedName(person) {
+  const ownSequence = sequenceId, previousPlan = currentReceptionPlan;
+  greetingPending = true;
+  try {
+    let line = null;
+    try { line = await nameLine(person); } catch (error) { speechStatusElement.textContent = error.message; }
+    if (sequenceId !== ownSequence || !sensorAttending || !isSensorVisitorPresent() || visitorRecognition.paused || document.hidden || visitorRecognition.current()?.id !== person.id || conversation.canAnnounceName === false) return;
+    currentReceptionPlan = receptionPlan(person, timeSpeechKey());
+    if (line && soundEnabled) {
+      SPEECH_LINES.registeredName = line;
+      speakLine('registeredName', null, { onFinish() { greetingPending = false; }, onFailure() { greetingPending = false; } });
+    }
+  } finally {
+    if (sequenceId === ownSequence || currentReceptionPlan === previousPlan) greetingPending = false;
   }
 }
 
@@ -1107,7 +1135,7 @@ async function beginSensorGreeting() {
   currentVisitorSpeechKey = null;
   visitorStatusElement.textContent = "来訪者を確認中…";
   // Stand while identifying; choose the entire conversation before the first word.
-  const identityPromise = isTest ? Promise.resolve(null) : visitorRecognition.identify(6500).catch(() => null);
+  const identityPromise = isTest || visitorRecognition.canIdentify?.() === false ? Promise.resolve(null) : visitorRecognition.identify(6500).catch(() => null);
   let standing = Promise.resolve(true);
   if (posture < 0.98) {
     playMotion("standUp");
@@ -1128,6 +1156,10 @@ async function beginSensorGreeting() {
       }
     }
     if (sequenceId !== ownSequence || !sensorAttending || !isSensorVisitorPresent() || visitorRecognition.paused || conversation.active) return;
+    if (identity.id && visitorRecognition.current()?.id !== identity.id) {
+      currentReceptionPlan = receptionPlan(null, timeSpeechKey());
+      line = null;
+    }
     SPEECH_LINES.registeredName = line;
   }
   pendingTestSpeechKey = null;

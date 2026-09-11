@@ -120,6 +120,33 @@ test('late recognition calls a registered name after the anonymous greeting', as
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(f.spoken.at(-1), 'registeredName');
 });
+test('body-only arrivals do not wait for face identification, then name once even after 20 seconds', async () => {
+  const f = fixture();
+  f.state.visitorRecognition.canIdentify = () => false;
+  f.state.visitorRecognition.identify = () => { throw Error('must not wait for a tiny face'); };
+  await f.state.beginSensorGreeting(); f.state.finish(); f.state.finish();
+  f.state.greetingStartedAt = Date.now() - 40000;
+  const identity = { id: 'a', name: '山本', source: 'face', role: 'employee' };
+  f.state.visitorRecognition.current = () => identity;
+  f.state.updateAutomaticSpeech(Date.now()); await new Promise(r => setImmediate(r));
+  assert.deepEqual(f.spoken, ['welcome', 'greetingDayArrival', 'registeredName']);
+  assert.equal(f.state.currentReceptionPlan.role, 'employee');
+  f.state.finish(); f.state.updateAutomaticSpeech(Date.now());
+  assert.equal(f.spoken.length, 3);
+});
+test('late name waits while the visitor is speaking and discards a replaced face during audio preparation', async () => {
+  const f = fixture(); await f.state.beginSensorGreeting(); f.state.finish(); f.state.finish();
+  const identity = { id: 'a', name: '山本', source: 'face', role: 'guest' };
+  f.state.visitorRecognition.current = () => identity;
+  f.state.conversation.canAnnounceName = false;
+  f.state.updateAutomaticSpeech(Date.now()); assert.equal(f.spoken.length, 2);
+  f.state.conversation.canAnnounceName = true;
+  let complete; f.state.nameLine = () => new Promise(r => { complete = r; });
+  f.state.updateAutomaticSpeech(Date.now());
+  f.state.visitorRecognition.current = () => ({ ...identity, id: 'b' });
+  complete({ text: '山本さん。', audio: './fake.wav' }); await new Promise(r => setImmediate(r));
+  assert.equal(f.spoken.length, 2); assert.equal(f.state.greetingPending, false);
+});
 test('ordinary visitor test replaces an active employee demo', async () => {
   const f = fixture(null, 'employeeSato'); await f.state.beginSensorGreeting(); f.state.finish();
   f.state.triggerVisitorTest();

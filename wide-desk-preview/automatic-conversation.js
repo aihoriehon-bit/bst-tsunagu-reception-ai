@@ -1,5 +1,5 @@
 import { respond } from './dialogue.mjs?v=20260909-3';
-import { createHandsfree } from './handsfree.mjs?v=20260909-6';
+import { createHandsfree } from './handsfree.mjs?v=20260911-distance-1';
 import { conversationCue } from './conversation-cue.mjs?v=20260909-6';
 const texts = await fetch(new URL('./dialogue-lines.json?v=20260909-2', import.meta.url)).then(r => {
   if (!r.ok) throw new Error('会話の台本を読み込めません');
@@ -14,6 +14,8 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
   const PREF = 'tsunagu-preview-handsfree-enabled';
   let enabled = false, active = false, present = false, speaking = false, audible = true, state = {}, epoch = 0, micStatus = 'waiting';
   let issue = '';
+  let voiceActivityAt = 0;
+  let visitorSpeaking = false;
   try { enabled = localStorage.getItem(PREF) === 'true'; } catch { /* optional preference */ }
   const panel = document.createElement('section'); panel.className = 'conversation handsfree-conversation';
   panel.setAttribute('aria-label', '音声会話');
@@ -41,7 +43,7 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
     while (log.children.length > 30) log.firstChild.remove();
     log.scrollTop = log.scrollHeight;
   }
-  const listener = createHandsfree({ Recognition, onText: submit, onStatus(code) {
+  const listener = createHandsfree({ Recognition, onText: submit, onVoiceActivity(value) { visitorSpeaking = value; voiceActivityAt = Date.now(); }, onStatus(code) {
     micStatus = code;
     renderCue();
     if (['permission', 'network', 'unavailable'].includes(code)) {
@@ -60,6 +62,7 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
   function submit(text) {
     text = String(text).trim().slice(0, 300);
     if (!text || !active || !present || !available() || document.hidden) return;
+    voiceActivityAt = Date.now();
     issue = ''; speaking = true; sync(); onInterrupt(); input.value = ''; append('あなた', text);
     const result = respond(text, state); state = result.state;
     const own = ++epoch; append('つなぐ', texts[result.key]);
@@ -99,6 +102,7 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
   sync();
   return {
     get active() { return active; },
+    get canAnnounceName() { return !speaking && !visitorSpeaking && micStatus !== 'processing' && !input.value.trim() && Date.now() - voiceActivityAt > 4000; },
     close,
     beginReception() { if (!active) { state = {}; log.replaceChildren(); } active = true; speaking = false; sync(); },
     setPresence(value) { if (present !== value) { present = value; sync(); } },

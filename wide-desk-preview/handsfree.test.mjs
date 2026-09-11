@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHandsfree } from './handsfree.mjs';
 
-function fixture() {
+function fixture(onVoiceActivity) {
   const sessions = [], texts = [], statuses = [], jobs = new Map(); let id = 0;
   class Recognition {
     constructor() { sessions.push(this); }
@@ -11,7 +11,7 @@ function fixture() {
     result(text) { this.onresult?.({ resultIndex: 0, results: [Object.assign([{ transcript: text }], { isFinal: true })] }); }
   }
   let listener;
-  listener = createHandsfree({ Recognition, onText(text) { texts.push(text); listener.update({ speaking: true }); }, onStatus: s => statuses.push(s),
+  listener = createHandsfree({ Recognition, onVoiceActivity, onText(text) { texts.push(text); listener.update({ speaking: true }); }, onStatus: s => statuses.push(s),
     schedule(fn, ms) { jobs.set(++id, { fn, ms }); return id; }, unschedule(id) { jobs.delete(id); } });
   const tick = ms => { const found = [...jobs].find(([, job]) => job.ms === ms); if (!found) return false; jobs.delete(found[0]); found[1].fn(); return true; };
   return { listener, sessions, texts, statuses, jobs, tick };
@@ -23,6 +23,15 @@ test('permission and completed greeting gate listening; replies resume automatic
   f.sessions[0].result('担当者に会いたいです'); assert.deepEqual(f.texts, ['担当者に会いたいです']);
   assert.equal(f.sessions[0].aborted, true); assert.equal(f.jobs.size, 0);
   f.listener.update({ speaking: false }); f.tick(650); assert.equal(f.sessions.length, 2);
+});
+test('visitor speech activity stays active until speech ends and old sessions cannot change it', () => {
+  const events = [], f = fixture(value => events.push(value));
+  f.listener.update({ enabled: true, active: true, present: true }); f.tick(650);
+  const old = f.sessions[0]; old.onspeechstart(); old.onspeechstart();
+  assert.deepEqual(events, [true]);
+  old.onspeechend(); assert.deepEqual(events, [true, false]);
+  old.onspeechstart(); f.listener.update({ speaking: true });
+  old.onspeechstart(); assert.deepEqual(events, [true, false, true, false]);
 });
 test('playback invalidates late recognition results to avoid hearing its own voice', () => {
   const f = fixture(); f.listener.update({ enabled: true, active: true, present: true }); f.tick(650);

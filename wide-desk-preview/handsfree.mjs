@@ -1,9 +1,12 @@
 // Invalidate every recognition session before playback to discard echo/late results.
-export function createHandsfree({ Recognition, onText, onStatus, schedule = setTimeout, unschedule = clearTimeout }) {
+export function createHandsfree({ Recognition, onText, onStatus, onVoiceActivity = () => {}, schedule = setTimeout, unschedule = clearTimeout }) {
   let enabled = false, active = false, present = false, audible = true, visible = true, speaking = false;
   let current = null, restart = null, watchdog = null, token = 0, failures = 0, blocked = false;
+  let voiceActive = false;
+  const voiceActivity = value => { if (voiceActive !== value) { voiceActive = value; onVoiceActivity(value); } };
   const eligible = () => Recognition && enabled && active && present && audible && visible && !speaking && !blocked;
   function stop() {
+    voiceActivity(false);
     token++; unschedule(restart); unschedule(watchdog); restart = watchdog = null;
     const old = current; current = null;
     try { old?.abort(); } catch { /* already stopped */ }
@@ -20,7 +23,8 @@ export function createHandsfree({ Recognition, onText, onStatus, schedule = setT
     r.lang = 'ja-JP'; r.continuous = false; r.interimResults = false; r.maxAlternatives = 1;
     const valid = () => own === token && current === r && eligible();
     r.onstart = () => { if (valid()) { started = true; onStatus('listening'); } };
-    r.onspeechend = () => { if (valid()) onStatus('processing'); };
+    r.onspeechstart = () => { if (valid()) voiceActivity(true); };
+    r.onspeechend = () => { if (valid()) { voiceActivity(false); onStatus('processing'); } };
     r.onaudioend = () => { if (valid()) onStatus('processing'); };
     r.onresult = event => {
       if (!valid()) return;
@@ -39,6 +43,7 @@ export function createHandsfree({ Recognition, onText, onStatus, schedule = setT
     };
     r.onend = () => {
       if (own !== token || current !== r) return;
+      voiceActivity(false);
       current = null; unschedule(watchdog); watchdog = null;
       if (!started && !error && ++failures >= 3) { blocked = true; onStatus('permission'); return; }
       if (eligible()) { onStatus('waiting'); queue(error && error !== 'no-speech' ? 2000 : 650); }
