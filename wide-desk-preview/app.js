@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { EXTRA_SPEECH } from "../wide-desk/additional-speech.js?v=20260909-conversation-1";
-import { createVisitorRecognition } from "./visitor-recognition.js?v=20260911-distance-1";
+import { createVisitorRecognition } from "./visitor-recognition.js?v=20260911-release-1";
 import { createPersonDetector, createBodyConfirmation } from "./person-presence.mjs?v=20260911-distance-1";
 import { CAMERA_CONSTRAINTS, createDetectionLoop } from "./face-detection.mjs?v=20260910-1";
 import { receptionPlan } from "./visitor-matching.mjs?v=20260909-2";

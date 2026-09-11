@@ -62,11 +62,11 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     <div class="identity-actions"><button type="button" data-face>顔を登録（3回撮影）</button><button type="button" data-uniform>配達の制服を登録</button></div>
     <div class="identity-actions"><button type="button" data-save-name>登録済みの名前音声設定を保存</button><button type="button" data-new-name>別の人を新規登録</button></div>
     <p class="identity-note">制服は胸からお腹まで写してください。色が似た服でも反応するため「配達の可能性」として扱います。判断できない場合はカメラ欄の「配達受付」を使えます。</p>
-    <p class="identity-note">同じ名前でもう一度撮影すると、顔のサンプルを追加できます。普段使う距離・明るさで登録すると照合しやすくなります。この確認版の登録変更はトップページには反映されません。</p>
+    <p class="identity-note">同じ名前でもう一度撮影すると、顔のサンプルを追加できます。普段使う距離・明るさで登録すると照合しやすくなります。トップページと確認用ページは同じ最新版です。同じ端末・ブラウザでは登録情報を共有します。</p>
     <p data-message role="status"></p>
     <h3>登録一覧</h3><ul data-list></ul>
     <button type="button" data-import>以前の顔登録を取り込む</button>
-    <p class="identity-note">同じ端末・ブラウザの旧版にある顔登録を取り込みます。旧登録は「お客様」で取り込み、一覧で区分を変更できます。以前の制服は再登録してください。別端末や別ブラウザには同期されません。</p>`;
+    <p class="identity-note">以前のトップページの登録が一覧にない場合は、上のボタンで取り込めます。社員・お客様・配達の区分と制服登録を保持し、現在の同名・同IDの登録は上書きしません。さらに古い顔登録は「お客様」で取り込みます。別端末や別ブラウザには同期されません。</p>`;
   document.body.append(dialog);
   const q = s => dialog.querySelector(s);
   // Bound DOM work for the large bank. Audio is still loaded only when selected.
@@ -196,11 +196,16 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     try {
       const old = JSON.parse(localStorage.getItem('tsunagu-face-db-v3') || '[]');
       if (!Array.isArray(old)) throw new Error();
-      const imported = sanitize({ people: old.map(p => ({ ...p, id: crypto.randomUUID(), role: 'guest' })) }).people;
-      const additions = imported.filter(p => !db.people.some(x => x.name === p.name));
-      if (!additions.length) { message('取り込める旧登録がありません。同じ公開サイト・ブラウザでご確認ください。'); return; }
-      const next = { ...db, people: [...db.people, ...additions].slice(0, 100) };
-      save(next); render(); message(`${additions.length}名を取り込みました。一覧で社員・お客様・配達の区分を確認してください。`);
+      const previous = sanitize(JSON.parse(localStorage.getItem('tsunagu-desk-identities-v1') || '{}'));
+      const ancient = sanitize({ people: old.map(p => ({ ...p, id: crypto.randomUUID(), role: 'guest' })) });
+      const next = { people: [...db.people], uniforms: [...db.uniforms] };
+      let added = 0;
+      for (const key of ['people', 'uniforms']) for (const person of [...previous[key], ...ancient[key]]) {
+        if (next[key].length >= 100 || next[key].some(p => p.id === person.id || p.name === person.name)) continue;
+        next[key].push(person); added++;
+      }
+      if (!added) { message('取り込める旧登録がありません。同じ公開サイト・ブラウザでご確認ください。'); return; }
+      save(next); render(); message(`${added}件を取り込みました。一覧で区分と読みがなを確認してください。`);
     } catch { message('旧登録を読み込めないか、保存できませんでした。ブラウザの保存設定をご確認ください。'); }
   });
 
