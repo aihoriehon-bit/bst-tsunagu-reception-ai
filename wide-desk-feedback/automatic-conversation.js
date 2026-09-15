@@ -1,10 +1,11 @@
 import { respond, initialReceptionState, recognizeLateGuest, recognizeLateEmployee } from './dialogue.mjs?v=20260915-delivery-addressee-1';
 import { createHandsfree } from './handsfree.mjs?v=20260911-distance-1';
 import { conversationCue } from './conversation-cue.mjs?v=20260909-6';
-import { createReceptionCard } from './reception-card.mjs?v=20260915-turn-cue-1';
+import { createReceptionCard } from './reception-card.mjs?v=20260915-recipient-kana-1';
 import { attachPanelLayout } from './panel-layout.mjs?v=20260915-panel-size-1';
 import { createTurnIndicator } from './turn-indicator.mjs?v=20260915-turn-bottom-1';
 import { createMicLevel } from './mic-level.mjs?v=20260915-turn-cue-1';
+import { recipientReading } from './recipient-reading.mjs?v=20260915-recipient-kana-1';
 const texts = await fetch(new URL('./dialogue-lines.json?v=20260915-delivery-addressee-1', import.meta.url)).then(r => {
   if (!r.ok) throw new Error('会話の台本を読み込めません');
   return r.json();
@@ -13,7 +14,7 @@ export const DIALOGUE_LINES = Object.fromEntries(Object.entries(texts).map(([key
   text, audio: `../wide-desk-feedback/audio/${key}.wav`, group: 'attend',
 }]));
 
-export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRestart, available }) {
+export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRestart, available, registeredNames = () => [] }) {
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const PREF = 'tsunagu-feedback-handsfree-enabled';
   let enabled = false, active = false, present = false, speaking = false, audible = true, state = {}, epoch = 0, micStatus = 'waiting';
@@ -21,7 +22,10 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
   let voiceActivityAt = 0;
   let visitorSpeaking = false;
   let completed = false;
-  const confirmation = createReceptionCard({ onAnswer: submit, onRestart: restartReception });
+  const confirmation = createReceptionCard({ onAnswer: submit, onRestart: restartReception, onRecipientReading(reading) {
+    state = { ...state, recipientReading: reading, recipientReadingFor: state.recipient };
+    renderSummary();
+  } });
   const turnIndicator = createTurnIndicator();
   const micLevel = createMicLevel({ onLevel: turnIndicator.setLevel, onReady: turnIndicator.setMeterReady });
   try { enabled = localStorage.getItem(PREF) === 'true'; } catch { /* optional preference */ }
@@ -49,11 +53,15 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
   restartButton.addEventListener('click', restartReception);
   const q = s => panel.querySelector(s), log = q('.conversation-log'), status = q('.conversation-status'), input = q('input');
   function renderReception() {
-    if (!completed) confirmation.show(state);
-    const labels = { employee: '社員の方へのご挨拶が終わりました。お取次ぎが必要なときはお声がけください。', delivery: 'お荷物の宛先をお答えください（例：山田太郎さん）', recipient: 'お取次ぎ先をお答えください（例：山田太郎さん／誰でもいい）', visitorName: 'あなたのお名前をお答えください', purpose: 'ご用件をお答えください', confirm: '内容は合っていますか？「はい」または「訂正」', correction: '「自分の名前」「担当者」「用件」とお答えください', done: '受付完了（確認用デモ）', cancelled: '今回の受付を取り消しました', finished: 'ご用件がありましたらお声がけください' };
+    if (!completed) confirmation.show(state, recipientReading(state, registeredNames()));
+    const labels = { employee: '社員の方へのご挨拶が終わりました。お取次ぎが必要なときはお声がけください。', delivery: 'お荷物の宛先をお答えください（例：やまだたろうさん）', recipient: 'お取次ぎ先をお答えください（例：やまだたろうさん／誰でもいい）', visitorName: 'あなたのお名前をお答えください', purpose: 'ご用件をお答えください', confirm: '内容は合っていますか？「はい」または「訂正」', correction: '「自分の名前」「担当者」「用件」とお答えください', done: '受付完了（確認用デモ）', cancelled: '今回の受付を取り消しました', finished: 'ご用件がありましたらお声がけください' };
     const prompt = q('[data-question]'); prompt.textContent = labels[state.step] || ''; prompt.hidden = !prompt.textContent;
+    renderSummary();
+  }
+  function renderSummary() {
     const summary = q('[data-reception-summary]'); summary.replaceChildren();
-    for (const [label, value] of [['お取次ぎ先', state.recipient], ['お名前', state.visitor], ['ご用件', state.purpose]]) {
+    const recipient = state.recipient ? recipientReading(state, registeredNames()).text || '読みがなを確認してください' : '';
+    for (const [label, value] of [['お取次ぎ先', recipient], ['お名前', state.visitor], ['ご用件', state.purpose]]) {
       if (!value) continue;
       const row = document.createElement('p'); row.textContent = `${label}：${value}`; summary.append(row);
     }
@@ -110,6 +118,10 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
   function submit(text) {
     text = String(text).trim().slice(0, 300);
     if (!text || !active || !present || completed || !available() || document.hidden) return;
+    if (state.step === 'confirm' && confirmation.canConfirm === false && /^(はい|ええ|うん|そうです|お願いします|大丈夫|間違いありません|合っています|確認しました)/.test(text)) {
+      document.querySelector('.recipient-reading-label input')?.focus();
+      return;
+    }
     voiceActivityAt = Date.now();
     issue = ''; speaking = true; sync(); onInterrupt(); input.value = ''; append('あなた', text);
     const result = respond(text, state);

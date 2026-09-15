@@ -579,6 +579,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
   if (db.people.length) ensureApi().catch(() => {});
   live.textContent = '顔・配達の登録から識別を設定できます';
   return {
+    registeredNames() { return db.people.map(({ name, reading, role, nameParts }) => ({ name, reading, role, nameParts })); },
     async prepareDetection() { await ensureApi(); },
     async detectFaces() {
       const api = await ensureApi(), start = performance.now();

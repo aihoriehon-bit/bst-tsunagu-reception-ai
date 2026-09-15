@@ -1,10 +1,12 @@
-export function createReceptionCard({ onAnswer = () => {}, onRestart = () => {} } = {}) {
+import { recipientReading, toRecipientKana } from './recipient-reading.mjs?v=20260915-recipient-kana-1';
+
+export function createReceptionCard({ onAnswer = () => {}, onRestart = () => {}, onRecipientReading = () => {} } = {}) {
   const panel = document.createElement('section');
   panel.className = 'reception-card'; panel.hidden = true;
   panel.setAttribute('role', 'region'); panel.setAttribute('aria-label', '受付内容の確認'); panel.setAttribute('aria-live', 'polite');
   panel.setAttribute('aria-atomic', 'true');
   document.body.append(panel);
-  let fadeTimer, hideTimer, mode = '';
+  let fadeTimer, hideTimer, mode = '', enabled = false, readingValid = true;
   function clear() {
     clearTimeout(fadeTimer); clearTimeout(hideTimer);
     mode = ''; panel.hidden = true; panel.classList.remove('is-fading'); panel.replaceChildren();
@@ -16,19 +18,42 @@ export function createReceptionCard({ onAnswer = () => {}, onRestart = () => {} 
   }
   return {
     get cueHost() { return mode === 'confirm' ? panel : null; },
-    show(state) {
+    get canConfirm() { return mode === 'confirm' && readingValid; },
+    show(state, recipient = recipientReading(state)) {
       if (state.step !== 'confirm') { if (mode !== 'complete') clear(); return; }
       clear(); mode = 'confirm'; panel.hidden = false; panel.dataset.mode = mode;
       panel.append(text('p', '受付内容の確認', 'reception-card-kicker'), text('h2', 'こちらの内容でよろしいですか？'));
       const list = document.createElement('dl');
-      for (const [label, value] of [[state.role === 'delivery' ? 'お荷物の宛先' : 'お呼びする担当者', state.recipient], [state.role === 'delivery' ? '配達の方のお名前' : 'お客様のお名前', state.visitor], ['ご用件', state.purpose]]) {
+      readingValid = !state.recipient || Boolean(recipient.text);
+      let recipientValue;
+      for (const [label, value] of [[state.role === 'delivery' ? 'お荷物の宛先' : 'お呼びする担当者', state.recipient ? recipient.text || '読みがなを入力してください' : ''], [state.role === 'delivery' ? '配達の方のお名前' : 'お客様のお名前', state.visitor], ['ご用件', state.purpose]]) {
         if (!value) continue;
-        const row = document.createElement('div'); row.append(text('dt', label), text('dd', value)); list.append(row);
+        const row = document.createElement('div'), description = text('dd', value); row.append(text('dt', label), description); list.append(row);
+        if (!recipientValue) recipientValue = description;
       }
       panel.append(list, text('p', '', 'reception-card-answer'));
+      if (state.recipient && recipient.kind !== 'department') {
+        const label = text('label', '担当者の読みがな（修正できます）', 'recipient-reading-label');
+        const input = document.createElement('input'); input.type = 'text'; input.maxLength = 80;
+        input.value = recipient.text; input.placeholder = '例：やまだたろうさん'; input.autocomplete = 'off';
+        input.setAttribute('aria-invalid', String(!readingValid));
+        const note = text('p', recipient.kind === 'predicted' ? '予測した読みです。話した名前と合っているか確認してください。' : recipient.kind === 'unknown' ? '読みを確定できません。ひらがなで入力してください。' : '漢字の表記ではなく、読みがなで確認します。', 'recipient-reading-note');
+        const update = event => {
+          if (event.isComposing) return;
+          const reading = toRecipientKana(input.value);
+          readingValid = /^[ぁ-ゖー]+$/.test(reading) && reading.length <= 80;
+          input.setAttribute('aria-invalid', String(!readingValid));
+          recipientValue.textContent = readingValid ? reading : '読みがなを入力してください';
+          note.textContent = readingValid ? '入力した読みがなで確認します。' : 'ひらがな、またはカタカナで入力してください。';
+          panel.querySelector('[data-answer="はい"]').disabled = !enabled || !readingValid;
+          onRecipientReading(readingValid ? reading : '');
+        };
+        input.addEventListener('input', update); input.addEventListener('compositionend', update);
+        label.append(input); panel.append(label, note);
+      }
       const actions = document.createElement('div'); actions.className = 'reception-card-actions';
       for (const answer of ['はい', '訂正']) {
-        const button = text('button', answer); button.type = 'button'; button.disabled = true;
+        const button = text('button', answer); button.type = 'button'; button.disabled = true; button.dataset.answer = answer;
         button.addEventListener('click', () => {
           if (mode !== 'confirm' || button.disabled) return;
           actions.querySelectorAll('button').forEach(b => { b.disabled = true; });
@@ -38,9 +63,10 @@ export function createReceptionCard({ onAnswer = () => {}, onRestart = () => {} 
       }
       panel.append(actions);
     },
-    setEnabled(enabled) {
+    setEnabled(value) {
       if (mode !== 'confirm') return;
-      panel.querySelectorAll('.reception-card-actions button').forEach(b => { b.disabled = !enabled; });
+      enabled = value;
+      panel.querySelectorAll('.reception-card-actions button').forEach(b => { b.disabled = !enabled || b.dataset.answer === 'はい' && !readingValid; });
     },
     setRestartEnabled(enabled) {
       const restart = panel.querySelector('[data-restart]');

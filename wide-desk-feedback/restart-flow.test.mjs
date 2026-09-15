@@ -42,9 +42,9 @@ test('restart uses the real camera greeting and never reopens the microphone on 
 });
 test('confirmation disabling never disables the completion restart button',()=>{
   const card=readFileSync(new URL('./reception-card.mjs',import.meta.url),'utf8');
-  const body=card.slice(card.indexOf('    setEnabled(enabled) {')+'    setEnabled(enabled) {'.length,card.indexOf('    setRestartEnabled'));
+  const body=card.slice(card.indexOf('    setEnabled(value) {')+'    setEnabled(value) {'.length,card.indexOf('    setRestartEnabled'));
   let touched=0;
-  const c={mode:'complete',enabled:false,panel:{querySelectorAll(){touched++;return []}}};
+  const c={mode:'complete',value:false,enabled:false,panel:{querySelectorAll(){touched++;return []}}};
   vm.runInNewContext('(function(){'+body.slice(0,body.lastIndexOf('},'))+'})()',c);
   assert.equal(touched,0);
   c.mode='confirm';vm.runInNewContext('(function(){'+body.slice(0,body.lastIndexOf('},'))+'})()',c);assert.equal(touched,1);

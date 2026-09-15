@@ -157,6 +157,20 @@
 .reception-card-check { margin: 0 0 8px; color: #16804d; font-size: 48px; }
 .reception-card-thanks { font-size: 20px; }
 .reception-card-note { font-size: 14px; line-height: 1.6; color: #537278; }
+.recipient-reading-label { display: block; margin-top: 14px; font-size: 14px; font-weight: 700; }
+.recipient-reading-label input { display: block; width: 100%; box-sizing: border-box; margin-top: 6px; padding: 10px 12px; border: 1px solid #6ba7ae; border-radius: 10px; font: inherit; font-size: 20px; background: #fff; color: #194952; }
+.recipient-reading-label input[aria-invalid=true] { border: 2px solid #ae742d; }
+.recipient-reading-note { margin: 6px 0 0; font-size: 13px; line-height: 1.5; color: #526d72; }
+@media (max-height: 800px) {
+  .reception-card:has(.recipient-reading-label) { padding: 18px 22px; }
+  .reception-card:has(.recipient-reading-label) .turn-indicator { margin-bottom: 10px; padding: 8px 12px; }
+  .reception-card:has(.recipient-reading-label) .turn-indicator p,
+  .reception-card:has(.recipient-reading-label) .turn-meter-caption { display: none; }
+  .reception-card:has(.recipient-reading-label) h2 { margin-bottom: 10px; }
+  .reception-card:has(.recipient-reading-label) dl div { padding: 8px 0; }
+  .reception-card:has(.recipient-reading-label) dd { font-size: 28px; }
+  .reception-card:has(.recipient-reading-label) .reception-card-answer { margin-top: 10px; font-size: 16px; }
+}
 @media (prefers-reduced-motion: reduce) { .reception-card { transition: none; } }
 .handsfree-conversation.adjustable-conversation { display: flex; flex-direction: column; padding: 0; max-width: calc(100vw - 28px); max-height: calc(100dvh - 70px); overflow: hidden; }
 .conversation-panel-toolbar { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; padding: 6px; background: #e8f2f3; border-bottom: 1px solid #c3d8dc; }
