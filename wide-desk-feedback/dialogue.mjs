@@ -65,10 +65,15 @@ export function respond(input, previous = {}) {
     state.role = 'employee';
     return answer('chatEmployee', state.employeeRequest || state.recipient ? state.step : 'employee');
   }
-  const directRecipient = text.match(/^(.{1,40}?(?:さん|様|さま|担当))(?:を|に)?(?:お願いします|お願いできますか|呼んでください|呼んでもらえますか|呼んでいただけますか|会いたいです|に会いたいです)[。!！\s]*$/);
+  const requestText = text.replace(/よんで/g, '呼んで');
+  const callEnding = '呼んで(?:ください|くれる(?:かな)?|くれますか|もらえる(?:かな)?|もらえますか|もらえませんか|いただけますか|ほしい(?:です)?)?';
+  const requestEnd = '[?？。!！、,\\s]*$';
+  const directRecipient = requestText.match(new RegExp('^(.{1,40}?(?:さん|様|さま|担当))(?:を|に)?(?:お願いします|お願いできますか|' + callEnding + '|会いたいです|に会いたいです)' + requestEnd));
+  const callRequest = new RegExp(callEnding + requestEnd).test(requestText) ||
+    /(?:取次|取り次|お取り次ぎ).*(?:お願い(?:します)?|ください)[?？。!！、,\s]*$/.test(text);
   if (state.role === 'employee' && !state.employeeRequest && !state.recipient) {
     const request = !/呼ばなくて|呼ばないで|取次ぎ不要|取り次ぎ不要/.test(text) &&
-      (directRecipient || /呼んで(?:ください|もら|いただ)|(?:取次|取り次|お取り次ぎ).*(?:お願い|ください)/.test(text));
+      (directRecipient || callRequest);
     if (request) {
       state.employeeRequest = true;
       if (directRecipient) { state.recipient = directRecipient[1]; return next(); }
@@ -117,8 +122,9 @@ export function respond(input, previous = {}) {
   }
   if (state.step === 'recipient' || anyone.test(text)) {
     if (anyone.test(text) || /^(わかりません|分かりません|特にない|不明)/.test(text)) state.recipient = '総務担当者';
+    else if (callRequest && !directRecipient) return answer('chatRecipient', 'recipient');
     else if (/^(はい|いいえ)[。!！\s]*$/.test(text) || /[?？]$/.test(text)) return answer('chatRecipient', 'recipient');
-    else state.recipient = clean(text.replace(/^(担当者は|宛先は)/, '').replace(/(に会いたいです|に会いたい|に会いに来ました|をお願いします|お願いします|です)[。!！\s]*$/, ''));
+    else state.recipient = directRecipient ? directRecipient[1] : clean(text.replace(/^(担当者は|宛先は)/, '').replace(/(に会いたいです|に会いたい|に会いに来ました|をお願いします|お願いします|です)[。!！\s]*$/, ''));
     return next(state.recipient === '総務担当者');
   }
   if (directRecipient) { state.recipient = directRecipient[1]; return next(); }

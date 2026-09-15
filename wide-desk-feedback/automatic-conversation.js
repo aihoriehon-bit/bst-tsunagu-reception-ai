@@ -1,9 +1,9 @@
-import { respond, initialReceptionState, recognizeLateGuest, recognizeLateEmployee } from './dialogue.mjs?v=20260915-employee-1';
+import { respond, initialReceptionState, recognizeLateGuest, recognizeLateEmployee } from './dialogue.mjs?v=20260915-short-call-1';
 import { createHandsfree } from './handsfree.mjs?v=20260911-distance-1';
 import { conversationCue } from './conversation-cue.mjs?v=20260909-6';
 import { createReceptionCard } from './reception-card.mjs?v=20260915-confirm-buttons-1';
 import { attachPanelLayout } from './panel-layout.mjs?v=20260915-panel-size-1';
-const texts = await fetch(new URL('./dialogue-lines.json?v=20260915-employee-1', import.meta.url)).then(r => {
+const texts = await fetch(new URL('./dialogue-lines.json?v=20260915-short-call-1', import.meta.url)).then(r => {
   if (!r.ok) throw new Error('会話の台本を読み込めません');
   return r.json();
 });

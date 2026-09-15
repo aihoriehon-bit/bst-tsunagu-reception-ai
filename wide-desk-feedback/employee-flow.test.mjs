@@ -30,6 +30,22 @@ test('staff may explicitly request a named or unspecified colleague',()=>{
   assert.equal(recipient.state.recipient,'平井さん');assert.equal(recipient.key,'chatPurpose');
   assert.equal(respond('誰でもいいので呼んでください',state).state.recipient,'総務担当者');
 });
+test('short spoken call requests work without kudasai, including repeats and named targets',()=>{
+  const state=initialReceptionState('employee',employee);
+  for(const text of ['担当者を呼んで','担当者呼んで','担当者をよんで','担当者を呼んで。','担当者を呼んでくれる？','担当者を呼んでほしい','呼んでもらえませんか']) {
+    const r=respond(text,state);
+    assert.equal(r.key,'chatRecipient',text); assert.equal(r.state.employeeRequest,true);
+    const repeat=respond(text,r.state); assert.equal(repeat.key,'chatRecipient'); assert.equal(repeat.state.recipient,undefined);
+    const named=respond('平井さんを呼んで',r.state);
+    assert.equal(named.state.recipient,'平井さん'); assert.equal(named.key,'chatPurpose');
+  }
+  for(const text of ['平井さんを呼んで','平井さん呼んで','平井さんをよんで','平井さんを呼んでくれる？']) {
+    assert.equal(respond(text,state).state.recipient,'平井さん',text);
+  }
+  for(const text of ['担当者を呼ばないで','平井さんを呼ばなくていいです','担当者は呼んでないです','担当者を呼んでほしいわけではないです','平井さん','打ち合わせです']) {
+    const r=respond(text,state); assert.equal(r.state.employeeRequest,undefined,text); assert.equal(r.state.recipient,undefined);
+  }
+});
 test('late staff recognition replaces anonymous questions but retains explicit ongoing requests',()=>{
   for(const step of [undefined,'recipient','visitorName','purpose']) {
     const r=recognizeLateEmployee({step},employee);
