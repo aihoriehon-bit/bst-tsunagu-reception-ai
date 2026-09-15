@@ -29,7 +29,11 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
   } });
   const turnIndicator = createTurnIndicator();
   const recognitionInput = supportsPreparedInput() ? createRecognitionInput() : null;
-  const micLevel = createMicLevel({ onLevel: turnIndicator.setLevel, onReady: turnIndicator.setMeterReady, borrowStream: () => recognitionInput?.stream });
+  const micLevel = createMicLevel({ onLevel(value) {
+    turnIndicator.setLevel(value);
+    // Catch the start of a real utterance before the remote speech-start event.
+    if (!speaking && micStatus === 'listening' && value > .12) voiceActivityAt = Date.now();
+  }, onReady: turnIndicator.setMeterReady, borrowStream: () => recognitionInput?.stream });
   try { enabled = localStorage.getItem(PREF) === 'true'; } catch { /* optional preference */ }
   const panel = document.createElement('section'); panel.className = 'conversation handsfree-conversation';
   panel.setAttribute('aria-label', '音声会話');
@@ -99,6 +103,9 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
     log.scrollTop = log.scrollHeight;
   }
   const listener = createHandsfree({ Recognition, input: recognitionInput, onText: submit, onVoiceActivity(value) { visitorSpeaking = value; voiceActivityAt = Date.now(); turnIndicator.setVoiceActivity(value); }, onStatus(code) {
+    // This is a NEW listening turn, not the previous visitor's pending answer.
+    // Do not carry its four-second greeting suppression past the AI reply.
+    if (code === 'listening') { visitorSpeaking = false; voiceActivityAt = 0; }
     micStatus = code;
     renderCue();
     if (['permission', 'network', 'unavailable'].includes(code)) {
@@ -184,7 +191,7 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
   sync();
   return {
     get active() { return active; },
-    get canAnnounceName() { return !completed && !speaking && !visitorSpeaking && micStatus !== 'processing' && !input.value.trim() && Date.now() - voiceActivityAt > 4000; },
+    get canAnnounceName() { return !completed && !speaking && !visitorSpeaking && micStatus !== 'processing' && !input.value.trim() && Date.now() - voiceActivityAt > 800; },
     close,
     recognizeVisitor(identity) {
       if (!active || !present || completed || document.hidden) return null;

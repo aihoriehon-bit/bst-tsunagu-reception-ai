@@ -245,6 +245,30 @@ test('late name waits while the visitor is speaking and discards a replaced face
   complete({ text: '山本さん。', audio: './fake.wav' }); await new Promise(r => setImmediate(r));
   assert.equal(f.spoken.length, 2); assert.equal(f.state.greetingPending, false);
 });
+test('a face held during the visitor turn is greeted by role once the turn becomes idle', async () => {
+  for (const role of ['employee', 'guest', 'delivery']) {
+    const f = fixture(); await f.state.beginSensorGreeting(); f.state.finish(); f.state.finish();
+    f.state.visitorRecognition.current = () => ({ id: 'known', name: '山田太郎', source: 'face', role });
+    f.state.conversation.canAnnounceName = false;
+    f.state.updateAutomaticSpeech(Date.now()); assert.equal(f.spoken.length, 2);
+    f.state.conversation.canAnnounceName = true;
+    f.state.updateAutomaticSpeech(Date.now()); await new Promise(r => setImmediate(r));
+    assert.equal(f.spoken.at(-1), 'registeredName');
+    f.state.finish(); assert.equal(f.spoken.at(-1), { employee: 'chatRecognizedEmployee', guest: 'chatGuestRecipient', delivery: 'chatRecognizedDelivery' }[role]);
+    f.state.finish(); f.state.updateAutomaticSpeech(Date.now());
+    assert.equal(f.spoken.length, 4); assert.equal(f.state.conversation.active, true);
+  }
+});
+test('late recognition still acknowledges the role when calling the name is disabled or unavailable', async () => {
+  for (const role of ['employee', 'guest', 'delivery']) {
+    const f = fixture(); await f.state.beginSensorGreeting(); f.state.finish(); f.state.finish();
+    f.state.visitorRecognition.current = () => ({ id: 'known', name: '山田太郎', source: 'face', role, nameCallingEnabled: false });
+    f.state.nameLine = async () => null;
+    f.state.updateAutomaticSpeech(Date.now()); await new Promise(r => setImmediate(r));
+    assert.equal(f.spoken.at(-1), { employee: 'chatRecognizedEmployee', guest: 'chatGuestRecipient', delivery: 'chatRecognizedDelivery' }[role]);
+    f.state.finish(); f.state.updateAutomaticSpeech(Date.now()); assert.equal(f.spoken.length, 3);
+  }
+});
 test('ordinary visitor test replaces an active employee demo', async () => {
   const f = fixture(null, 'employeeSato'); await f.state.beginSensorGreeting(); f.state.finish();
   f.state.triggerVisitorTest();

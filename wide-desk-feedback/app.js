@@ -6,7 +6,7 @@ import { createPersonDetector, createBodyConfirmation } from "./person-presence.
 import { CAMERA_CONSTRAINTS, createDetectionLoop } from "./face-detection.mjs?v=20260915-auto-region-1";
 import { receptionPlan } from "./visitor-matching.mjs?v=20260915-group-names-1";
 import { nameLine, cancelNameVoice, speakDeviceName } from "./name-voice.js?v=20260911-devicevoice-1";
-import { createConversation, DIALOGUE_LINES } from "./automatic-conversation.js?v=20260915-short-call-1";
+import { createConversation, DIALOGUE_LINES } from "./automatic-conversation.js?v=20260915-late-greeting-1";
 
 const MODEL_URL = "../blender/tsunagu-reception-actions-20260826.glb?v=20260831-pc-gaze-1";
 const MODEL_FRONT_Y = -Math.PI / 2 + 0.03;
@@ -1131,14 +1131,12 @@ async function announceRecognizedName(person) {
     const namedIds = [...(currentReceptionPlan?.namedIds || []), person.id || person.name];
     if (!currentReceptionPlan.identity) currentReceptionPlan = receptionPlan(person, timeSpeechKey());
     currentReceptionPlan.namedIds = namedIds;
-    if (line && soundEnabled) {
-      SPEECH_LINES.registeredName = line;
+    if (soundEnabled) {
       let followUp = person.role === 'employee' ? 'chatRecognizedEmployee'
         : person.role === 'delivery' ? 'chatRecognizedDelivery' : 'chatRecognizedGuest';
-      const nameSequence = sequenceId + 1;
+      const nameSequence = sequenceId + (line ? 1 : 0);
       playbackStarted = true;
-      speakLine('registeredName', null, {
-        onFinish() {
+      const greet = () => {
           if (sequenceId !== nameSequence) return;
           if (!soundEnabled || !sensorAttending || !isSensorVisitorPresent() || visitorRecognition.paused || document.hidden || !recognizedPersonPresent(person)) {
             greetingPending = false; return;
@@ -1149,9 +1147,15 @@ async function announceRecognizedName(person) {
           const followUpSequence = sequenceId + 1;
           const finish = () => { if (sequenceId === followUpSequence) greetingPending = false; };
           speakLine(followUp, null, { onFinish: finish, onFailure: finish });
-        },
+      };
+      // Name calling OFF/missing audio must not suppress the role greeting.
+      if (!line) greet();
+      else {
+        SPEECH_LINES.registeredName = line;
+        speakLine('registeredName', null, { onFinish: greet,
         onFailure() { if (sequenceId === nameSequence) greetingPending = false; },
-      });
+        });
+      }
     } else if (!previousPlan.identity && person.role === 'employee') {
       conversation.recognizeVisitor(person);
     }
