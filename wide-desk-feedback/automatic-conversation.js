@@ -3,7 +3,7 @@ import { createHandsfree } from './handsfree.mjs?v=20260911-distance-1';
 import { conversationCue } from './conversation-cue.mjs?v=20260909-6';
 import { createReceptionCard } from './reception-card.mjs?v=20260915-turn-cue-1';
 import { attachPanelLayout } from './panel-layout.mjs?v=20260915-panel-size-1';
-import { createTurnIndicator } from './turn-indicator.mjs?v=20260915-turn-cue-1';
+import { createTurnIndicator } from './turn-indicator.mjs?v=20260915-turn-bottom-1';
 import { createMicLevel } from './mic-level.mjs?v=20260915-turn-cue-1';
 const texts = await fetch(new URL('./dialogue-lines.json?v=20260915-delivery-addressee-1', import.meta.url)).then(r => {
   if (!r.ok) throw new Error('会話の台本を読み込めません');

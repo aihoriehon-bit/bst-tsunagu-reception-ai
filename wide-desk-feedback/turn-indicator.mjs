@@ -9,6 +9,23 @@ export function createTurnIndicator() {
     <span class="turn-meter-caption" aria-hidden="true"></span>`;
   document.body.append(el);
   let mode = '', meterReady = false, voiceActive = false, amplitude = 0;
+  let observedPanel;
+  // Anchor below the character, but clear the adjustable conversation controls.
+  function positionNearBottom() {
+    if (el.hidden || el.classList.contains('is-in-card')) return;
+    const panel = document.querySelector('.handsfree-conversation');
+    if (panel && panel !== observedPanel) { observer?.observe(panel); observedPanel = panel; }
+    const box = el.getBoundingClientRect(), controls = panel?.getBoundingClientRect();
+    let bottom = 32;
+    if (controls && controls.height && box.left < controls.right && box.right > controls.left) {
+      bottom = Math.max(bottom, window.innerHeight - controls.top + 16);
+    }
+    bottom = Math.min(bottom, Math.max(16, window.innerHeight - box.height - 16));
+    el.style.setProperty('--turn-bottom', `${bottom}px`);
+  }
+  const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(positionNearBottom) : null;
+  observer?.observe(el);
+  window.addEventListener('resize', positionNearBottom);
   const title = el.querySelector('strong'), detail = el.querySelector('p'), label = el.querySelector('.turn-indicator-label');
   function paint() {
     const level = mode === 'listening' ? (meterReady ? amplitude : (voiceActive ? .35 : 0)) : 0;
@@ -37,6 +54,7 @@ export function createTurnIndicator() {
       if (detail.textContent !== explanation) detail.textContent = explanation;
       if (label.textContent !== cue.label) label.textContent = cue.label;
       paint();
+      positionNearBottom();
     },
     setLevel(value) { amplitude = value; paint(); },
     setMeterReady(value) { meterReady = value; paint(); },

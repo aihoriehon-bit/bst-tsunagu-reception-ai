@@ -38,3 +38,22 @@ test('confirmation embeds the same indicator into the central card rather than o
   const host = {};
   assert.equal(cue({ confirmation: { setSpeaking() {}, cueHost: host } }).view.host, host);
 });
+
+test('bottom placement avoids adjustable controls and leaves confirmation-card layout alone', () => {
+  const indicator = readFileSync(new URL('./turn-indicator.mjs', import.meta.url), 'utf8');
+  const fn = indicator.slice(indicator.indexOf('  function positionNearBottom()'), indicator.indexOf('  const observer ='));
+  function position({ card = false, hidden = false, left = 705, right = 1215, controlsTop = 510, height = 720 } = {}) {
+    let offset;
+    const panel = { getBoundingClientRect: () => ({ left: 14, right: 474, top: controlsTop, height: 180 }) };
+    vm.runInNewContext(fn + ';positionNearBottom()', {
+      el: { hidden, classList: { contains: () => card }, getBoundingClientRect: () => ({ left, right, height: 154 }), style: { setProperty(k, value) { offset = value; } } },
+      document: { querySelector: () => panel }, window: { innerHeight: height }, observedPanel: panel, observer: null,
+    });
+    return offset;
+  }
+  assert.equal(position(), '32px');
+  assert.equal(position({ left: 385, right: 895 }), '226px');
+  assert.equal(position({ left: 16, right: 374, controlsTop: 626, height: 844 }), '234px');
+  assert.equal(position({ card: true }), undefined);
+  assert.equal(position({ hidden: true }), undefined);
+});
