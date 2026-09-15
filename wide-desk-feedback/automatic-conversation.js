@@ -1,8 +1,10 @@
 import { respond, initialReceptionState, recognizeLateGuest, recognizeLateEmployee } from './dialogue.mjs?v=20260915-delivery-addressee-1';
 import { createHandsfree } from './handsfree.mjs?v=20260911-distance-1';
 import { conversationCue } from './conversation-cue.mjs?v=20260909-6';
-import { createReceptionCard } from './reception-card.mjs?v=20260915-delivery-addressee-1';
+import { createReceptionCard } from './reception-card.mjs?v=20260915-turn-cue-1';
 import { attachPanelLayout } from './panel-layout.mjs?v=20260915-panel-size-1';
+import { createTurnIndicator } from './turn-indicator.mjs?v=20260915-turn-cue-1';
+import { createMicLevel } from './mic-level.mjs?v=20260915-turn-cue-1';
 const texts = await fetch(new URL('./dialogue-lines.json?v=20260915-delivery-addressee-1', import.meta.url)).then(r => {
   if (!r.ok) throw new Error('会話の台本を読み込めません');
   return r.json();
@@ -20,6 +22,8 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
   let visitorSpeaking = false;
   let completed = false;
   const confirmation = createReceptionCard({ onAnswer: submit, onRestart: restartReception });
+  const turnIndicator = createTurnIndicator();
+  const micLevel = createMicLevel({ onLevel: turnIndicator.setLevel, onReady: turnIndicator.setMeterReady });
   try { enabled = localStorage.getItem(PREF) === 'true'; } catch { /* optional preference */ }
   const panel = document.createElement('section'); panel.className = 'conversation handsfree-conversation';
   panel.setAttribute('aria-label', '音声会話');
@@ -59,10 +63,18 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
   function renderCue() {
     confirmation.setSpeaking(speaking);
     if (completed) {
+      turnIndicator.hide(); micLevel.setListening(false);
+      q('.turn-cue').hidden = false;
+      q('.turn-cue').setAttribute('aria-live', 'polite');
       panel.dataset.turn = 'waiting'; q('.turn-label').textContent = 'デモ終了';
       status.textContent = '受付デモが終了しました'; q('.turn-detail').textContent = issue || '「もう一度受付を試す」ボタンで、挨拶から再開できます。'; return;
     }
     const cue = conversationCue({ speaking, enabled, supported: Boolean(Recognition), audible, active, present, visible: !document.hidden, micStatus, issue });
+    const visible = !document.hidden && (active && present || speaking);
+    turnIndicator.show(cue, { visible, host: confirmation.cueHost });
+    micLevel.setListening(visible && cue.mode === 'listening');
+    q('.turn-cue').hidden = visible;
+    q('.turn-cue').setAttribute('aria-live', visible ? 'off' : 'polite');
     panel.dataset.turn = cue.mode;
     // Avoid repeated live-region announcements when the cue has not changed.
     if (status.textContent === cue.title && q('.turn-detail').textContent === cue.detail) return;
@@ -75,7 +87,7 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
     while (log.children.length > 30) log.firstChild.remove();
     log.scrollTop = log.scrollHeight;
   }
-  const listener = createHandsfree({ Recognition, onText: submit, onVoiceActivity(value) { visitorSpeaking = value; voiceActivityAt = Date.now(); }, onStatus(code) {
+  const listener = createHandsfree({ Recognition, onText: submit, onVoiceActivity(value) { visitorSpeaking = value; voiceActivityAt = Date.now(); turnIndicator.setVoiceActivity(value); }, onStatus(code) {
     micStatus = code;
     renderCue();
     if (['permission', 'network', 'unavailable'].includes(code)) {
@@ -139,6 +151,7 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true }, video: false });
       stream.getTracks().forEach(track => track.stop());
+      micLevel.permissionGranted();
       enabled = true; issue = ''; micStatus = 'preparing';
       try { localStorage.setItem(PREF, 'true'); } catch { /* This session still works. */ }
       listener.retry(); onEnableAudio(); sync();

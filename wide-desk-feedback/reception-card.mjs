@@ -15,6 +15,7 @@ export function createReceptionCard({ onAnswer = () => {}, onRestart = () => {} 
     return el;
   }
   return {
+    get cueHost() { return mode === 'confirm' ? panel : null; },
     show(state) {
       if (state.step !== 'confirm') { if (mode !== 'complete') clear(); return; }
       clear(); mode = 'confirm'; panel.hidden = false; panel.dataset.mode = mode;
