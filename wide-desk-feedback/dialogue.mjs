@@ -67,9 +67,9 @@ export function respond(input, previous = {}) {
     state.role = 'employee';
     return answer('chatEmployee', state.employeeRequest || state.recipient ? state.step : 'employee');
   }
-  const requestText = text.replace(/よんで/g, '呼んで');
-  const callEnding = '呼んで(?:ください|くれる(?:かな)?|くれますか|もらえる(?:かな)?|もらえますか|もらえませんか|いただけますか|ほしい(?:です)?)?';
-  const requestEnd = '[?？。!！、,\\s]*$';
+  const requestText = text.replace(/よんで/g, '呼んで').replace(/欲しい/g, 'ほしい');
+  const callEnding = '呼んで(?:ください|くれる(?:かな)?|くれますか|もらえる(?:かな)?|もらえますか|もらえませんか|もらいたい(?:です)?|もらって(?:も)?いい(?:ですか)?|いただけますか|ほしい(?:です|んです|んだ|のです)?)?';
+  const requestEnd = '(?:けど|が)?[?？。!！、,\\s]*$';
   const directRecipient = requestText.match(new RegExp('^(.{1,40}?(?:さん|様|さま|担当))(?:を|に)?(?:お願いします|お願いできますか|' + callEnding + '|会いたいです|に会いたいです)' + requestEnd));
   const callRequest = new RegExp(callEnding + requestEnd).test(requestText) ||
     /(?:取次|取り次|お取り次ぎ).*(?:お願い(?:します)?|ください)[?？。!！、,\s]*$/.test(text);
@@ -109,6 +109,15 @@ export function respond(input, previous = {}) {
   if (/あなた.*(誰|名前)|君.*誰|自己紹介|つなぐ.*(何|誰)|何ができ/.test(text)) return answer('chatIdentity');
   if (/もう一度|もう一回|聞こえな|聞き取れ|なんですか|何ですか|準備でき|お待たせ/.test(text)) return answer(prompt());
   if (/^(こんにちは|おはよう(?:ございます)?|こんばんは|はじめまして)[!！。\s]*$/.test(text)) return answer(prompt());
+  // A short call request is an intent in every intake step, not the visitor's
+  // name or purpose. Preserve collected details and ask only what is missing.
+  if (callRequest && !['done', 'cancelled', 'finished'].includes(state.step)) {
+    if (directRecipient) state.recipient = directRecipient[1];
+    else if (anyone.test(text)) state.recipient = '総務担当者';
+    if (state.role === 'delivery') return state.recipient ? answer('chatDeliveryConfirm', 'confirm') : answer('chatDelivery', 'delivery');
+    if (!state.role) state.role = 'guest';
+    return next(state.recipient === '総務担当者');
+  }
   // Normal staff arrivals/utterances must not fall into the visitor intake.
   if (state.role === 'employee' && !state.employeeRequest && !state.recipient) {
     return answer(/^(?:お疲れ|おつかれ)/.test(text) ? 'chatRecognizedEmployee' : 'chatNoPurpose', 'employee');

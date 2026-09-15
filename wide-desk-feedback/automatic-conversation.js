@@ -1,4 +1,4 @@
-import { respond, initialReceptionState, recognizeLateGuest, recognizeLateEmployee } from './dialogue.mjs?v=20260915-delivery-addressee-1';
+import { respond, initialReceptionState, recognizeLateGuest, recognizeLateEmployee } from './dialogue.mjs?v=20260915-short-call-1';
 import { createHandsfree } from './handsfree.mjs?v=20260915-prepared-input-1';
 import { conversationCue } from './conversation-cue.mjs?v=20260909-6';
 import { createReceptionCard } from './reception-card.mjs?v=20260915-recipient-kana-1';
