@@ -20,7 +20,7 @@ export function createReceptionCard({ onAnswer = () => {}, onRestart = () => {} 
       clear(); mode = 'confirm'; panel.hidden = false; panel.dataset.mode = mode;
       panel.append(text('p', '受付内容の確認', 'reception-card-kicker'), text('h2', 'こちらの内容でよろしいですか？'));
       const list = document.createElement('dl');
-      for (const [label, value] of [['お呼びする担当者', state.recipient], ['お客様のお名前', state.visitor], ['ご用件', state.purpose]]) {
+      for (const [label, value] of [[state.role === 'delivery' ? 'お荷物の宛先' : 'お呼びする担当者', state.recipient], [state.role === 'delivery' ? '配達の方のお名前' : 'お客様のお名前', state.visitor], ['ご用件', state.purpose]]) {
         if (!value) continue;
         const row = document.createElement('div'); row.append(text('dt', label), text('dd', value)); list.append(row);
       }

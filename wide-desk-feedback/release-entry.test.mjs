@@ -7,8 +7,8 @@ test('comparison and approved main entry both use the latest feedback runtime', 
   const root = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const preview = readFileSync(new URL('../wide-desk-preview/index.html', import.meta.url), 'utf8');
   assert.match(preview, /src="\.\.\/wide-desk-feedback\/app.js/);
-  assert.match(root, /src="\.\.\/wide-desk-feedback\/app.js\?v=20260915-restart-1"/);
-  assert.match(root, /href="\.\.\/wide-desk-feedback\/preview.css\?v=20260915-restart-1"/);
+  assert.match(root, /src="\.\.\/wide-desk-feedback\/app.js\?v=20260915-delivery-addressee-1"/);
+  assert.match(root, /href="\.\.\/wide-desk-feedback\/preview.css\?v=20260915-delivery-addressee-1"/);
 });
 test('previous main registrations merge only when explicitly imported, preserving newer names and OFF', () => {
   const source = readFileSync(new URL('./visitor-recognition.js', import.meta.url), 'utf8');

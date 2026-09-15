@@ -22,7 +22,7 @@ test('unknown guests and general affairs also collect a purpose without repeatin
   const recipient=respond('平井さん',early.state);
   assert.equal(respond('山田太郎です',recipient.state).key,'chatConfirm');
 });
-test('delivery starts with a handover guide, not a recipient question', () => {
+test('delivery starts with an addressee question without asking for the courier name or purpose', () => {
   const start=initialReceptionState('delivery',null);
   assert.equal(start.step,'delivery');
   const again=respond('もう一度お願いします',start);
