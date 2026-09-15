@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 import { receptionPlan } from './visitor-matching.mjs';
 import { nameLine as realNameLine } from './name-voice.js';
+import { initialReceptionState, recognizeLateGuest, respond } from './dialogue.mjs';
 
 const source = readFileSync(new URL('./app.js', import.meta.url), 'utf8');
 // Execute the actual orchestration with deterministic camera, motion and audio adapters.
@@ -17,7 +18,7 @@ function fixture(identity = null, demo = null) {
     sensorAttending: true, attendLineIndex: 0, workLineIndex: 0, currentReceptionPlan: null,
     currentVisitorSpeechKey: null, pendingTestSpeechKey: demo, testVisitorUntil: demo ? Date.now() + 24000 : 0,
     soundEnabled: true, speechBusy: false, posture: 0, currentMotionKey: 'deskWork', lastSpeechAt: 0,
-    greetingStartedAt: 0, conversation: { active: false, close() { this.active = false; }, beginReception() { this.active = true; }, setPresence(value) { this.present = value; }, setAudible() {} }, SPEECH_LINES: {},
+    greetingStartedAt: 0, conversation: { active: false, state: {}, close() { this.active = false; this.state = {}; }, beginReception(role, identity) { this.active = true; this.state = initialReceptionState(role, identity); }, recognizeGuest(person) { const result = recognizeLateGuest(this.state, person); if (result) this.state = result.state; return result?.key; }, setPresence(value) { this.present = value; }, setAudible() {} }, SPEECH_LINES: {},
     nameLine: async person => ({ text: person.name + 'さん。', spokenText: person.name + 'さん' }),
     faceFirstSeenAt: 0, faceLastSeenAt: 0, TEST_VISITOR_MS: 24000,
     faceVisible: false, FACE_CONFIRM_MS: 600, FACE_LOST_MS: 5000,
@@ -177,7 +178,7 @@ test('late recognition joins a role-appropriate greeting once without restarting
     f.state.updateAutomaticSpeech(Date.now()); await new Promise(r => setImmediate(r));
     assert.equal(f.state.greetingPending, true);
     f.state.finish();
-    assert.equal(f.spoken.at(-1), { guest: 'chatRecognizedGuest', employee: 'chatRecognizedEmployee', delivery: 'chatRecognizedDelivery' }[role]);
+    assert.equal(f.spoken.at(-1), { guest: 'chatGuestRecipient', employee: 'chatRecognizedEmployee', delivery: 'chatRecognizedDelivery' }[role]);
     assert.equal(f.state.greetingPending, true);
     f.state.finish(); f.state.updateAutomaticSpeech(Date.now());
     assert.equal(f.state.greetingPending, false);
@@ -186,6 +187,34 @@ test('late recognition joins a role-appropriate greeting once without restarting
   }
 });
 
+test('late guest prompt advances the actual next response and preserves an answered recipient', async () => {
+  for (const recipient of [null, '平井さん']) {
+    const f = fixture(); await f.state.beginSensorGreeting(); f.state.finish(); f.state.finish();
+    f.state.conversation.state = { role: 'guest', purpose: '打ち合わせ', ...(recipient ? {recipient, step:'visitorName'} : {}) };
+    f.state.visitorRecognition.current = () => ({id:'a',name:'山田太郎',role:'guest',source:'face'});
+    f.state.updateAutomaticSpeech(Date.now()); await new Promise(r => setImmediate(r));
+    // Do not change the question before the name has actually finished playing.
+    assert.equal(f.state.conversation.state.visitor, undefined);
+    f.state.finish();
+    assert.equal(f.spoken.at(-1), recipient ? 'chatRecognizedGuest' : 'chatGuestRecipient');
+    if (!recipient) {
+      const result = respond('平井さん', f.state.conversation.state);
+      assert.equal(result.state.visitor, '山田太郎');
+      assert.equal(result.state.recipient, '平井さん');
+      assert.equal(result.state.purpose, '打ち合わせ');
+      assert.equal(result.key, 'chatConfirm');
+    } else assert.equal(f.state.conversation.state.step, 'visitorName');
+  }
+});
+test('a late guest companion does not replace or restart the primary reception', async () => {
+  const a={id:'a',name:'山田太郎',role:'guest',source:'face'}, b={id:'b',name:'平井',role:'guest',source:'face'};
+  const f=fixture(a); await f.state.beginSensorGreeting(); f.state.finish(); f.state.finish();
+  const before=f.state.conversation.state;
+  f.state.visitorRecognition.currentAll=()=>[a,b];
+  f.state.updateAutomaticSpeech(Date.now()); await new Promise(r=>setImmediate(r)); f.state.finish();
+  assert.equal(f.spoken.at(-1), 'chatRecognizedGuest');
+  assert.equal(f.state.conversation.state, before);
+});
 test('late greeting stops safely for departure, a different face, interruption or audio failure', async () => {
   for (const scenario of ['departed', 'faceChanged', 'interrupted', 'nameFailed', 'followUpFailed', 'muted']) {
     const f = fixture(); await f.state.beginSensorGreeting(); f.state.finish(); f.state.finish();

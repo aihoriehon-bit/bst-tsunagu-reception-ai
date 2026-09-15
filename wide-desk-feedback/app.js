@@ -6,7 +6,7 @@ import { createPersonDetector, createBodyConfirmation } from "./person-presence.
 import { CAMERA_CONSTRAINTS, createDetectionLoop } from "./face-detection.mjs?v=20260915-auto-region-1";
 import { receptionPlan } from "./visitor-matching.mjs?v=20260915-group-names-1";
 import { nameLine, cancelNameVoice, speakDeviceName } from "./name-voice.js?v=20260911-devicevoice-1";
-import { createConversation, DIALOGUE_LINES } from "./automatic-conversation.js?v=20260915-panel-size-1";
+import { createConversation, DIALOGUE_LINES } from "./automatic-conversation.js?v=20260915-late-recipient-1";
 
 const MODEL_URL = "../blender/tsunagu-reception-actions-20260826.glb?v=20260831-pc-gaze-1";
 const MODEL_FRONT_Y = -Math.PI / 2 + 0.03;
@@ -1126,7 +1126,7 @@ async function announceRecognizedName(person) {
     currentReceptionPlan.namedIds = namedIds;
     if (line && soundEnabled) {
       SPEECH_LINES.registeredName = line;
-      const followUp = person.role === 'employee' ? 'chatRecognizedEmployee'
+      let followUp = person.role === 'employee' ? 'chatRecognizedEmployee'
         : person.role === 'delivery' ? 'chatRecognizedDelivery' : 'chatRecognizedGuest';
       const nameSequence = sequenceId + 1;
       playbackStarted = true;
@@ -1136,7 +1136,9 @@ async function announceRecognizedName(person) {
           if (!soundEnabled || !sensorAttending || !isSensorVisitorPresent() || visitorRecognition.paused || document.hidden || !recognizedPersonPresent(person)) {
             greetingPending = false; return;
           }
-          // Acknowledge the person without restarting or re-questioning the ongoing reception.
+          // Only the first identified visitor may advance the reception. A later
+          // companion receives an acknowledgment without changing the current answers.
+          if (!previousPlan.identity) followUp = conversation.recognizeGuest(person) || followUp;
           const followUpSequence = sequenceId + 1;
           const finish = () => { if (sequenceId === followUpSequence) greetingPending = false; };
           speakLine(followUp, null, { onFinish: finish, onFailure: finish });

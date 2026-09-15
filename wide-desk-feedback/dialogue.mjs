@@ -5,6 +5,16 @@ export function initialReceptionState(role, identity) {
   }
   return role === 'delivery' ? { role, purpose: '荷物のお届け', step: 'recipient' } : { role };
 }
+// Late face recognition may fill a missing name, but never replace an answer
+// or restart a completed/correcting reception.
+export function recognizeLateGuest(previous, identity) {
+  if (identity?.source !== 'face' || identity.role !== 'guest' || !identity.name ||
+      ['employee', 'delivery'].includes(previous.role) || previous.recipient ||
+      ['confirm', 'correction', 'done', 'cancelled', 'finished'].includes(previous.step)) return null;
+  return { key: 'chatGuestRecipient', state: {
+    ...previous, role: 'guest', visitor: previous.visitor || identity.name, step: 'recipient',
+  } };
+}
 export function respond(input, previous = {}) {
   const text = String(input).normalize('NFKC').trim().slice(0, 300);
   const state = { ...previous };

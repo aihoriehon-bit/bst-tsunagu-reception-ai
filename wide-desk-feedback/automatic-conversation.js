@@ -1,4 +1,4 @@
-import { respond, initialReceptionState } from './dialogue.mjs?v=20260915-purpose-1';
+import { respond, initialReceptionState, recognizeLateGuest } from './dialogue.mjs?v=20260915-late-recipient-1';
 import { createHandsfree } from './handsfree.mjs?v=20260911-distance-1';
 import { conversationCue } from './conversation-cue.mjs?v=20260909-6';
 import { createReceptionCard } from './reception-card.mjs?v=20260915-confirm-buttons-1';
@@ -134,6 +134,14 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
     get active() { return active; },
     get canAnnounceName() { return !completed && !speaking && !visitorSpeaking && micStatus !== 'processing' && !input.value.trim() && Date.now() - voiceActivityAt > 4000; },
     close,
+    recognizeGuest(identity) {
+      if (!active || !present || completed || document.hidden) return null;
+      const result = recognizeLateGuest(state, identity);
+      if (!result) return null;
+      state = result.state; renderReception();
+      append('つなぐ', texts[result.key]);
+      return result.key;
+    },
     beginReception(role, identity) { if (!active) { state = initialReceptionState(role, identity); log.replaceChildren(); renderReception(); } active = true; speaking = false; sync(); },
     setPresence(value) { if (present !== value) { present = value; sync(); } },
     setAudible(value) { audible = value; issue = ''; sync(); },
