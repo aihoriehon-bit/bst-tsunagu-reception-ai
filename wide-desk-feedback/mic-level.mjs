@@ -12,29 +12,31 @@ export function createMicLevel({ onLevel, onReady = () => {},
   AudioContext = globalThis.AudioContext || globalThis.webkitAudioContext,
   requestFrame = globalThis.requestAnimationFrame?.bind(globalThis),
   cancelFrame = globalThis.cancelAnimationFrame?.bind(globalThis),
+  borrowStream = () => null,
 } = {}) {
   let listening = false, token = 0, stream, context, source, frame;
-  let explicitlyGranted = false, failed = false, ready = false;
+  let explicitlyGranted = false, failed = false, ready = false, borrowed = false;
   const setReady = value => { if (ready !== value) { ready = value; onReady(value); } };
   const release = value => value?.getTracks().forEach(track => track.stop());
   function stop() {
     token++; cancelFrame?.(frame); frame = undefined;
     source?.disconnect(); source = undefined;
-    release(stream); stream = undefined;
+    if (!borrowed) release(stream); stream = undefined; borrowed = false;
     context?.close().catch(() => {}); context = undefined;
     setReady(false); onLevel(0);
   }
   async function start(own) {
-    let acquired;
+    let acquired, isBorrowed = false;
     try {
       // A visual enhancement must never cause a new permission prompt.
-      let permitted = explicitlyGranted;
-      try { permitted = (await permissions.query({ name: 'microphone' })).state === 'granted'; }
+      acquired = borrowStream(); isBorrowed = Boolean(acquired);
+      let permitted = explicitlyGranted || isBorrowed;
+      try { if (!isBorrowed) permitted = (await permissions.query({ name: 'microphone' })).state === 'granted'; }
       catch { /* Safari may not expose microphone permission queries. */ }
       if (!permitted || !listening || own !== token) return;
-      acquired = await mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true }, video: false });
-      if (!listening || own !== token) { release(acquired); return; }
-      stream = acquired;
+      if (!acquired) acquired = await mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true }, video: false });
+      if (!listening || own !== token) { if (!isBorrowed) release(acquired); return; }
+      stream = acquired; borrowed = isBorrowed;
       context = new AudioContext();
       const analyser = context.createAnalyser(); analyser.fftSize = 1024;
       source = context.createMediaStreamSource(stream); source.connect(analyser);
@@ -58,7 +60,7 @@ export function createMicLevel({ onLevel, onReady = () => {},
       };
       tick();
     } catch {
-      release(acquired);
+      if (!isBorrowed) release(acquired);
       if (own === token) { failed = true; stop(); }
       // Speech recognition remains usable even without the visual meter.
     }

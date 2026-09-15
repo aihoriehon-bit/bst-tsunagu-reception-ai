@@ -1,11 +1,12 @@
 import { respond, initialReceptionState, recognizeLateGuest, recognizeLateEmployee } from './dialogue.mjs?v=20260915-delivery-addressee-1';
-import { createHandsfree } from './handsfree.mjs?v=20260915-fast-listen-1';
+import { createHandsfree } from './handsfree.mjs?v=20260915-prepared-input-1';
 import { conversationCue } from './conversation-cue.mjs?v=20260909-6';
 import { createReceptionCard } from './reception-card.mjs?v=20260915-recipient-kana-1';
 import { attachPanelLayout } from './panel-layout.mjs?v=20260915-panel-size-1';
 import { createTurnIndicator } from './turn-indicator.mjs?v=20260915-turn-bottom-1';
-import { createMicLevel } from './mic-level.mjs?v=20260915-turn-cue-1';
+import { createMicLevel } from './mic-level.mjs?v=20260915-prepared-input-1';
 import { recipientReading } from './recipient-reading.mjs?v=20260915-recipient-kana-1';
+import { supportsPreparedInput, createRecognitionInput } from './recognition-input.mjs?v=20260915-prepared-input-1';
 const texts = await fetch(new URL('./dialogue-lines.json?v=20260915-delivery-addressee-1', import.meta.url)).then(r => {
   if (!r.ok) throw new Error('会話の台本を読み込めません');
   return r.json();
@@ -27,7 +28,8 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
     renderSummary();
   } });
   const turnIndicator = createTurnIndicator();
-  const micLevel = createMicLevel({ onLevel: turnIndicator.setLevel, onReady: turnIndicator.setMeterReady });
+  const recognitionInput = supportsPreparedInput() ? createRecognitionInput() : null;
+  const micLevel = createMicLevel({ onLevel: turnIndicator.setLevel, onReady: turnIndicator.setMeterReady, borrowStream: () => recognitionInput?.stream });
   try { enabled = localStorage.getItem(PREF) === 'true'; } catch { /* optional preference */ }
   const panel = document.createElement('section'); panel.className = 'conversation handsfree-conversation';
   panel.setAttribute('aria-label', '音声会話');
@@ -35,6 +37,7 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
     <p class="reception-question" data-question hidden></p>
     <div class="reception-summary" data-reception-summary hidden aria-live="polite"></div>
     <p class="conversation-note">確認用デモ：実際の電話・通知は行いません。</p>
+    ${recognitionInput ? '<p class="conversation-note">対応環境では、会話中のマイク接続を維持します。AIの発話中は音声認識へ無音を渡します。利用できない場合は通常の切り替え方式になります。</p>' : ''}
     <div class="handsfree-summary"><button type="button" data-enable>マイクを許可</button><button type="button" data-disable hidden>音声会話を停止</button></div>
     <p class="conversation-note" data-setup>初回にマイクを許可すると、カメラの挨拶後にそのまま話せます。音声入力はブラウザの認識サービスへ送信される場合があります。</p>
     <details><summary>会話内容・文字入力</summary><div id="conversationBody">
@@ -95,7 +98,7 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
     while (log.children.length > 30) log.firstChild.remove();
     log.scrollTop = log.scrollHeight;
   }
-  const listener = createHandsfree({ Recognition, onText: submit, onVoiceActivity(value) { visitorSpeaking = value; voiceActivityAt = Date.now(); turnIndicator.setVoiceActivity(value); }, onStatus(code) {
+  const listener = createHandsfree({ Recognition, input: recognitionInput, onText: submit, onVoiceActivity(value) { visitorSpeaking = value; voiceActivityAt = Date.now(); turnIndicator.setVoiceActivity(value); }, onStatus(code) {
     micStatus = code;
     renderCue();
     if (['permission', 'network', 'unavailable'].includes(code)) {

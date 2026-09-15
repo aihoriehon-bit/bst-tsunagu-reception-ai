@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createMicLevel, microphoneLevel } from './mic-level.mjs';
 
 const settle = () => new Promise(resolve => setImmediate(resolve));
-function fixture({ permission = 'granted', pending = false, reject = false } = {}) {
+function fixture({ permission = 'granted', pending = false, reject = false, borrowed = false } = {}) {
   let sample = 0, requests = 0, stopped = 0, closed = 0, disconnected = 0, ready = false, level = 0, resolve;
   const callbacks = new Map(); let nextFrame = 0;
   const track = { readyState: 'live', stop() { stopped++; this.readyState = 'ended'; } };
@@ -17,6 +17,7 @@ function fixture({ permission = 'granted', pending = false, reject = false } = {
     close() { closed++; return Promise.resolve(); }
   }
   const meter = createMicLevel({
+    borrowStream: () => borrowed ? stream : null,
     onReady(value) { ready = value; }, onLevel(value) { level = value; },
     permissions: { async query() { return { state: permission }; } },
     mediaDevices: { getUserMedia() { requests++; if (reject) return Promise.reject(Error('unavailable')); return pending ? new Promise(r => { resolve = r; }) : Promise.resolve(stream); } },
@@ -67,4 +68,11 @@ test('device disconnection clears light and releases analysis', async () => {
   const f = fixture(); await f.start(); f.tick(.08);
   f.track.readyState = 'ended'; f.tick(.08);
   assert.equal(f.state.level, 0); assert.equal(f.state.ready, false); assert.equal(f.state.frames, 0);
+});
+test('meter reuses prepared input without opening a second mic or stopping its borrowed tracks', async () => {
+  const f = fixture({ borrowed: true }); await f.start(); f.tick(.08);
+  assert.equal(f.state.requests, 0); assert.equal(f.state.ready, true); assert.ok(f.state.level > 0);
+  f.meter.setListening(false); assert.equal(f.state.stopped, 0); assert.equal(f.state.closed, 1);
+  assert.equal(f.track.readyState, 'live');
+  await f.start(); f.meter.stop(); assert.equal(f.state.stopped, 0); assert.equal(f.state.requests, 0);
 });
