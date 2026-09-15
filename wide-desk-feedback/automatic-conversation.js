@@ -2,6 +2,7 @@ import { respond, initialReceptionState } from './dialogue.mjs?v=20260915-purpos
 import { createHandsfree } from './handsfree.mjs?v=20260911-distance-1';
 import { conversationCue } from './conversation-cue.mjs?v=20260909-6';
 import { createReceptionCard } from './reception-card.mjs?v=20260915-confirm-buttons-1';
+import { attachPanelLayout } from './panel-layout.mjs?v=20260915-panel-size-1';
 const texts = await fetch(new URL('./dialogue-lines.json?v=20260915-purpose-1', import.meta.url)).then(r => {
   if (!r.ok) throw new Error('会話の台本を読み込めません');
   return r.json();
@@ -34,6 +35,7 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
       <form><label class="sr-only" for="conversationInput">つなぐへのメッセージ</label><input id="conversationInput" maxlength="300" placeholder="挨拶のあと、ご用件を入力" autocomplete="off"><button type="submit">送信</button></form>
     </div></details>`;
   document.body.append(panel);
+  attachPanelLayout(panel);
   const q = s => panel.querySelector(s), log = q('.conversation-log'), status = q('.conversation-status'), input = q('input');
   function renderReception() {
     if (!completed) confirmation.show(state);
