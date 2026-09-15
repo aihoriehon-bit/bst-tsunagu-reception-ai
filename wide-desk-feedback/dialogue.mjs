@@ -3,7 +3,7 @@ export function initialReceptionState(role, identity) {
   if (role === 'guest' && identity?.source === 'face' && identity.role === 'guest') {
     return { role, visitor: identity.name, step: 'recipient' };
   }
-  return role === 'delivery' ? { role, purpose: '荷物のお届け', step: 'recipient' } : { role };
+  return role === 'delivery' ? { role, purpose: '荷物のお届け', step: 'delivery' } : { role };
 }
 // Late face recognition may fill a missing name, but never replace an answer
 // or restart a completed/correcting reception.
@@ -14,6 +14,11 @@ export function recognizeLateGuest(previous, identity) {
   return { key: 'chatGuestRecipient', state: {
     ...previous, role: 'guest', visitor: previous.visitor || identity.name, step: 'recipient',
   } };
+}
+export function isDeliveryArrival(text) {
+  // A mention of parcels/company names alone is not a delivery arrival.
+  if (/届かない|届いていない|紛失|再配達|では(?:あり)?ません|じゃ(?:あり)?ません|ではなく|じゃなく|について|の相談/.test(text)) return false;
+  return /(?:荷物|お荷物|小包|郵便物|宅配便|書類).*(?:届け|とどけ|配達|配送|持って|もって)|(?:配達|配送|宅配)(?:に来|で来|です|でございます|に伺|しました)|(?:荷物|お届け物|お届けもの|おとどけもの)(?:です|でございます)|^(?:ヤマト|佐川|日本郵便)(?:運輸|急便)?(?:です|でございます)[。！!\s]*$/.test(text);
 }
 export function respond(input, previous = {}) {
   const text = String(input).normalize('NFKC').trim().slice(0, 300);
@@ -29,7 +34,7 @@ export function respond(input, previous = {}) {
   const no = /^(いいえ|違い|ちがい|違う|ちがう|いいや|訂正|修正)/;
   const yes = /^(はい|ええ|うん|そうです|お願いします|大丈夫|間違いありません|合っています|確認しました)/;
   const anyone = /誰でも|だれでも|どなたでも|どなたか|誰か.*(お願い|呼ん|対応)|指定.*(ない|なし)|担当.*(わか[らり]|分か[らり]|知ら|不明)|総務|お任せ|おまかせ/;
-  const prompt = () => ({recipient:'chatRecipient',visitorName:'chatVisitorName',purpose:'chatPurpose',confirm:'chatConfirm',correction:'chatCorrection'})[state.step] || 'chatHello';
+  const prompt = () => ({recipient:'chatRecipient',visitorName:'chatVisitorName',purpose:'chatPurpose',confirm:'chatConfirm',correction:'chatCorrection',delivery:'chatDelivery'})[state.step] || 'chatHello';
   if (!text) return answer('chatUnknown');
   if (/^(リセット|最初から|やり直し|受付を開始)/.test(text)) return { key: 'chatHello', state: {} };
   if (/キャンセル|取り消し|取り消して|受付.*やめ/.test(text)) return { key:'chatCancel', state:{step:'cancelled'} };
@@ -39,6 +44,13 @@ export function respond(input, previous = {}) {
   if (/トイレ|お手洗い|駐車場|営業時間|定休日|何時まで|何階|場所.*(どこ|教え)/.test(text)) return answer('chatFacility');
   if (/使い方|どうすれば|何て言えば|何を話せば|ヘルプ/.test(text)) return answer('chatHelp');
   if (/さようなら|さよなら|失礼します|帰ります|またね|バイバイ/.test(text)) return answer('chatBye', 'done');
+  // Detect a delivery before interpreting the reply as a person's name or
+  // purpose, including when the visitor corrects the original visit category.
+  if (!['done', 'cancelled', 'finished'].includes(state.step) && isDeliveryArrival(text)) {
+    delete state.recipient;
+    state.role = 'delivery'; state.purpose = '荷物のお届け';
+    return answer('chatDelivery', 'delivery');
+  }
   if (/訂正|修正|間違え|名前.*違/.test(text)) {
     if (/用件|用事|目的/.test(text)) { delete state.purpose; return answer('chatPurpose','purpose'); }
     if (/担当|相手|宛先/.test(text)) { delete state.recipient; return answer('chatRecipient','recipient'); }
@@ -61,6 +73,7 @@ export function respond(input, previous = {}) {
   if (/あなた.*(誰|名前)|君.*誰|自己紹介|つなぐ.*(何|誰)|何ができ/.test(text)) return answer('chatIdentity');
   if (/もう一度|もう一回|聞こえな|聞き取れ|なんですか|何ですか|準備でき|お待たせ/.test(text)) return answer(prompt());
   if (/^(こんにちは|おはよう(?:ございます)?|こんばんは|はじめまして)[!！。\s]*$/.test(text)) return answer(prompt());
+  if (state.step === 'delivery' && (anyone.test(text) || yes.test(text))) return answer('chatDelivery');
   if (state.step === 'visitorName') {
     if (/分から|わから|言いたくない|教えたくない|匿名|名乗りたくない/.test(text)) return answer('chatNameRequired');
     if (anyone.test(text) || /^(はい|いいえ)[。!！\s]*$/.test(text) || /[?？]$/.test(text)) return answer('chatVisitorName');
@@ -79,7 +92,6 @@ export function respond(input, previous = {}) {
     else state.recipient = clean(text.replace(/^(担当者は|宛先は)/, '').replace(/(に会いたいです|に会いたい|に会いに来ました|をお願いします|お願いします|です)[。!！\s]*$/, ''));
     return next(state.recipient === '総務担当者');
   }
-  if (/配達|配送|荷物|宅配|お届け|ヤマト|佐川|郵便/.test(text)) { state.role = 'delivery'; state.purpose = '荷物のお届け'; return answer('chatDelivery', 'recipient'); }
   if (/ただいま|社員です|出社/.test(text)) { state.role = 'employee'; return answer('chatEmployee', 'purpose'); }
   const directRecipient = text.match(/^(.{1,40}?(?:さん|様|さま|担当))(?:を|に)?(?:お願いします|お願いできますか|呼んでください|呼んでもらえますか|に会いたいです)[。!！\s]*$/);
   if (directRecipient) { state.recipient = directRecipient[1]; return next(); }

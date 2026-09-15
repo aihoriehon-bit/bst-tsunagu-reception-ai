@@ -22,19 +22,20 @@ test('unknown guests and general affairs also collect a purpose without repeatin
   const recipient=respond('平井さん',early.state);
   assert.equal(respond('山田太郎です',recipient.state).key,'chatConfirm');
 });
-test('delivery purpose already supplied is retained, not asked again', () => {
+test('delivery starts with a handover guide, not a recipient question', () => {
   const start=initialReceptionState('delivery',null);
-  const who=respond('平井さん',start);
-  const name=respond('山田太郎です',who.state);
-  assert.equal(name.key,'chatConfirm');assert.equal(name.state.purpose,'荷物のお届け');
+  assert.equal(start.step,'delivery');
+  const again=respond('もう一度お願いします',start);
+  assert.equal(again.key,'chatDelivery'); assert.equal(again.state.recipient,undefined);
+  assert.equal(again.state.purpose,'荷物のお届け');
 });
 test('purpose corrections preserve name and recipient, then return to confirmation', () => {
   const state={step:'confirm',visitor:'山田太郎',recipient:'平井さん',purpose:'相談'};
   for(const selection of [respond('用件を訂正します',state),respond('用件',respond('訂正',state).state)]) {
     assert.equal(selection.key,'chatPurpose');assert.equal(selection.state.purpose,undefined);
-    const corrected=respond('荷物をお届けしました',selection.state);
+    const corrected=respond('修理の相談です',selection.state);
     assert.equal(corrected.key,'chatConfirm');assert.equal(corrected.state.visitor,state.visitor);
-    assert.equal(corrected.state.recipient,state.recipient);assert.equal(corrected.state.purpose,'荷物をお届けしました');
+    assert.equal(corrected.state.recipient,state.recipient);assert.equal(corrected.state.purpose,'修理の相談です');
   }
 });
 test('bare yes does not become the purpose or finish an incomplete reception', () => {

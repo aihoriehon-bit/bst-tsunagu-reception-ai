@@ -38,7 +38,8 @@ test('conversation collects recipient and visitor separately and confirms before
   assert.equal(named.state.visitor, '鈴木');
   assert.equal(respond('はい', named.state).key, 'chatReceived');
   const delivery = respond('荷物を届けに来ました'); assert.equal(delivery.key, 'chatDelivery');
-  const general = respond('誰でもいいです', delivery.state); assert.equal(general.key, 'chatGeneral');
+  assert.equal(delivery.state.step, 'delivery'); assert.equal(delivery.state.recipient, undefined);
+  const general = respond('誰でもいいです', {step:'recipient',purpose:'打ち合わせ'}); assert.equal(general.key, 'chatGeneral');
   const confirmed = respond('山田太郎です', general.state);
   assert.equal(respond('はい', confirmed.state).key, 'chatGeneralComplete');
   const correction = respond('訂正', confirmed.state);
