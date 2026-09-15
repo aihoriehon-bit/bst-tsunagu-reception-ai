@@ -183,6 +183,12 @@
 .conversation-panel-toolbar button:focus-visible { outline: 3px solid #087f8b; outline-offset: 1px; }
 
 /* Turn guidance remains visible even when the conversation log is folded. */
+.audio-start-prompt { position: fixed; z-index: 250; bottom: max(48px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); width: min(420px, calc(100vw - 32px)); max-height: calc(100dvh - 100px); overflow: auto; box-sizing: border-box; padding: 18px; border: 2px solid #07858d; border-radius: 18px; background: #f7ffff; color: #214950; box-shadow: 0 8px 36px #173f4955; }
+.audio-start-prompt[hidden] { display: none; }
+.audio-start-prompt strong { display: block; font-size: 17px; line-height: 1.5; }
+.audio-start-prompt button { display: block; width: 100%; min-height: 48px; margin: 12px 0; padding: 12px; border: 0; border-radius: 10px; background: #087f8b; color: white; font: inherit; font-weight: 700; cursor: pointer; }
+.audio-start-prompt button:disabled { opacity: .6; }
+.audio-start-prompt p { margin: 0; font-size: 12px; line-height: 1.6; }
 .turn-indicator { --mic-level: 0; --turn-accent: #52677e; position: fixed; z-index: 25; left: 50%; top: auto; bottom: max(var(--turn-bottom, 32px), env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(510px, calc(100vw - 32px)); box-sizing: border-box; display: grid; grid-template-columns: 76px 1fr; align-items: center; gap: 6px 20px; padding: 22px 26px 16px; color: #24464e; background: #fffffffa; border: 2px solid #afc7ce; border-radius: 24px; box-shadow: 0 10px 40px #153f4938; pointer-events: none; }
 .turn-indicator[hidden] { display: none !important; }
 .turn-indicator-copy { min-width: 0; }

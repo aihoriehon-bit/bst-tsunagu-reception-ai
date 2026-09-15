@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { needsAudioGesture, primeSpeechPlayer } from './audio-access.mjs?v=20260915-mobile-audio-1';
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { EXTRA_SPEECH } from "../wide-desk/additional-speech.js?v=20260909-conversation-1";
 import { createVisitorRecognition } from "./visitor-recognition.js?v=20260915-recipient-kana-1";
@@ -230,12 +231,24 @@ let deviceVoiceTimeout = null;
 let sensorAttending = false;
 let sensorAutomationActive = false;
 const speechPlayer = new Audio();
-let soundEnabled = true;
+speechPlayer.setAttribute('playsinline', '');
+let soundEnabled = !needsAudioGesture();
+let blockedSpeechKey = null;
+let audioStarting = false;
+let audioStartToken = 0;
+let audioEnabledOnce = false;
 let speechBusy = false;
 let lastSpeechAt = Date.now();
 let workLineIndex = 0;
 let attendLineIndex = 0;
 const soundToggle = document.querySelector("#soundToggle");
+const audioPrompt = document.createElement('section');
+audioPrompt.className = 'audio-start-prompt'; audioPrompt.hidden = soundEnabled;
+audioPrompt.setAttribute('aria-label', '音声の開始');
+audioPrompt.innerHTML = '<strong>音声を聞くにはタップしてください</strong><button type="button">タップして音声を開始</button><p role="status">端末のメディア音量もご確認ください。マイクの許可は、音声を聞くだけなら不要です。</p>';
+document.body.append(audioPrompt);
+const audioStartButton = audioPrompt.querySelector('button');
+audioStartButton.addEventListener('click', startAudioFromGesture);
 const extraSpeechSelect = document.querySelector("#extraSpeechSelect");
 const visitorRecognition = createVisitorRecognition({
   video: cameraPreviewElement,
@@ -256,6 +269,7 @@ const conversation = createConversation({
   registeredNames: () => visitorRecognition.registeredNames(),
   available: () => Boolean(mixer) && sensorAttending && isSensorVisitorPresent() && !visitorRecognition.paused,
   onEnableAudio() {
+    if (needsAudioGesture() && !soundEnabled) { audioPrompt.hidden = false; return; }
     soundEnabled = true;
     updateSoundToggle();
     conversation.setAudible(true);
@@ -284,26 +298,57 @@ for (const [name, keys] of [
 }
 document.querySelector("#extraSpeechPlay").addEventListener("click", () => speakLine(extraSpeechSelect.value));
 soundToggle.addEventListener("click", () => {
-  soundEnabled = !soundEnabled;
+  if (audioStarting) return;
+  if (!soundEnabled) { void startAudioFromGesture(); return; }
+  audioStartToken++;
+  soundEnabled = false;
+  audioPrompt.hidden = true;
   cancelSpeechSequence(false);
   sequenceId += 1;
   greetingPending = false;
   updateSoundToggle();
   conversation.setAudible(soundEnabled);
   if (conversation.active) { conversation.speechFinished(); return; }
-  if (soundEnabled) {
-    if (sensorAttending && !currentReceptionPlan) beginSensorGreeting();
-    else if (sensorAttending) {
-      greetingPending = true;
-      playReceptionGreeting(0);
-    } else if (sensorAutomationActive) runSensorSitDown();
-    else speakLine("startup");
-  } else {
-    speechStatusElement.textContent = "音声停止中";
-    if (sensorAutomationActive && !isSensorVisitorPresent()) runSensorSitDown();
-    else if (!sensorAttending) returnToDeskAfterStartup();
-  }
+  speechStatusElement.textContent = "音声停止中";
+  if (sensorAutomationActive && !isSensorVisitorPresent()) runSensorSitDown();
+  else if (!sensorAttending) returnToDeskAfterStartup();
 });
+async function startAudioFromGesture() {
+  if (audioStarting) return;
+  audioStarting = true; audioStartButton.disabled = true;
+  const token = ++audioStartToken;
+  const retryKey = blockedSpeechKey;
+  const firstEnable = !audioEnabledOnce;
+  cancelSpeechSequence(false); sequenceId++; greetingPending = false;
+  const request = speechRequestId;
+  soundEnabled = false; conversation.setAudible(false); updateSoundToggle();
+  audioPrompt.querySelector('p').textContent = '音声を準備しています…';
+  try {
+    // This play() happens in the original tap handler, before the first await.
+    const unlocked = await primeSpeechPlayer(speechPlayer);
+    if (!unlocked || token !== audioStartToken || request !== speechRequestId || document.hidden) {
+      if (token === audioStartToken) audioPrompt.querySelector('p').textContent = '準備を中断しました。もう一度「音声を開始」を押してください。';
+      return;
+    }
+    audioEnabledOnce = true;
+    soundEnabled = true; blockedSpeechKey = null; audioPrompt.hidden = true;
+    updateSoundToggle(); conversation.setAudible(true);
+    if (conversation.active) {
+      if (retryKey) speakLine(retryKey, null, { standForSpeech: true });
+      else if (firstEnable && currentReceptionPlan) { greetingPending = true; playReceptionGreeting(0); }
+      else conversation.speechFinished();
+    } else if (sensorAttending && !currentReceptionPlan) beginSensorGreeting();
+    else if (sensorAttending) { greetingPending = true; playReceptionGreeting(0); }
+    else if (mixer) speakLine('startup');
+  } catch {
+    if (token !== audioStartToken) return;
+    soundEnabled = false; conversation.setAudible(false); updateSoundToggle();
+    audioPrompt.hidden = false;
+    audioPrompt.querySelector('p').textContent = '音声を開始できませんでした。もう一度タップしてください。音量やBluetoothの出力先もご確認ください。';
+  } finally {
+    if (token === audioStartToken) { audioStarting = false; audioStartButton.disabled = false; }
+  }
+}
 document.querySelector("#autoSpeech").addEventListener("change", () => { lastSpeechAt = Date.now(); });
 sensorPanelToggleElement.addEventListener("click", () => {
   setSensorPanelVisible(cameraPanelElement.hidden);
@@ -489,6 +534,9 @@ async function speakLine(speechKey, button = null, { onFinish = null, onFailure 
   audio.onerror = () => {
     finish(true);
     speechStatusElement.textContent = "音声を再生できませんでした";
+    blockedSpeechKey = speechKey; soundEnabled = false; conversation.setAudible(false); updateSoundToggle();
+    audioPrompt.hidden = false;
+    audioPrompt.querySelector('p').textContent = '音声を読み込めませんでした。通信を確認して「音声を開始」をお試しください。';
   };
 
   audio.play().then(() => {
@@ -498,6 +546,10 @@ async function speakLine(speechKey, button = null, { onFinish = null, onFailure 
     finish(true);
     if (error.name === "NotAllowedError") {
       soundEnabled = false;
+      blockedSpeechKey = speechKey;
+      conversation.setAudible(false);
+      audioPrompt.hidden = false;
+      audioPrompt.querySelector('p').textContent = 'スマホでは最初のタップが必要です。「音声を開始」を押してください。';
       updateSoundToggle();
       speechStatusElement.textContent = "「音声を開始」を押すと声が出ます";
     } else speechStatusElement.textContent = "音声を再生できませんでした。再生ボタンでお試しください。";
