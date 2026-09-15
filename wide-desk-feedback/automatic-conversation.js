@@ -1,9 +1,9 @@
-import { respond, initialReceptionState, recognizeLateGuest } from './dialogue.mjs?v=20260915-delivery-1';
+import { respond, initialReceptionState, recognizeLateGuest, recognizeLateEmployee } from './dialogue.mjs?v=20260915-employee-1';
 import { createHandsfree } from './handsfree.mjs?v=20260911-distance-1';
 import { conversationCue } from './conversation-cue.mjs?v=20260909-6';
 import { createReceptionCard } from './reception-card.mjs?v=20260915-confirm-buttons-1';
 import { attachPanelLayout } from './panel-layout.mjs?v=20260915-panel-size-1';
-const texts = await fetch(new URL('./dialogue-lines.json?v=20260915-delivery-1', import.meta.url)).then(r => {
+const texts = await fetch(new URL('./dialogue-lines.json?v=20260915-employee-1', import.meta.url)).then(r => {
   if (!r.ok) throw new Error('会話の台本を読み込めません');
   return r.json();
 });
@@ -39,7 +39,7 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
   const q = s => panel.querySelector(s), log = q('.conversation-log'), status = q('.conversation-status'), input = q('input');
   function renderReception() {
     if (!completed) confirmation.show(state);
-    const labels = { delivery: 'お荷物は受付スタッフへお渡しください（実際の呼び出しは行いません）', recipient: 'お取次ぎ先をお答えください（例：山田太郎さん／誰でもいい）', visitorName: 'あなたのお名前をお答えください', purpose: 'ご用件をお答えください', confirm: '内容は合っていますか？「はい」または「訂正」', correction: '「自分の名前」「担当者」「用件」とお答えください', done: '受付完了（確認用デモ）', cancelled: '今回の受付を取り消しました', finished: 'ご用件がありましたらお声がけください' };
+    const labels = { employee: '社員の方へのご挨拶が終わりました。お取次ぎが必要なときはお声がけください。', delivery: 'お荷物は受付スタッフへお渡しください（実際の呼び出しは行いません）', recipient: 'お取次ぎ先をお答えください（例：山田太郎さん／誰でもいい）', visitorName: 'あなたのお名前をお答えください', purpose: 'ご用件をお答えください', confirm: '内容は合っていますか？「はい」または「訂正」', correction: '「自分の名前」「担当者」「用件」とお答えください', done: '受付完了（確認用デモ）', cancelled: '今回の受付を取り消しました', finished: 'ご用件がありましたらお声がけください' };
     const prompt = q('[data-question]'); prompt.textContent = labels[state.step] || ''; prompt.hidden = !prompt.textContent;
     const summary = q('[data-reception-summary]'); summary.replaceChildren();
     for (const [label, value] of [['お取次ぎ先', state.recipient], ['お名前', state.visitor], ['ご用件', state.purpose]]) {
@@ -134,9 +134,9 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
     get active() { return active; },
     get canAnnounceName() { return !completed && !speaking && !visitorSpeaking && micStatus !== 'processing' && !input.value.trim() && Date.now() - voiceActivityAt > 4000; },
     close,
-    recognizeGuest(identity) {
+    recognizeVisitor(identity) {
       if (!active || !present || completed || document.hidden) return null;
-      const result = recognizeLateGuest(state, identity);
+      const result = recognizeLateEmployee(state, identity) || recognizeLateGuest(state, identity);
       if (!result) return null;
       state = result.state; renderReception();
       append('つなぐ', texts[result.key]);

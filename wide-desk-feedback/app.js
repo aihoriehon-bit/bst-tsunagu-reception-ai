@@ -6,7 +6,7 @@ import { createPersonDetector, createBodyConfirmation } from "./person-presence.
 import { CAMERA_CONSTRAINTS, createDetectionLoop } from "./face-detection.mjs?v=20260915-auto-region-1";
 import { receptionPlan } from "./visitor-matching.mjs?v=20260915-group-names-1";
 import { nameLine, cancelNameVoice, speakDeviceName } from "./name-voice.js?v=20260911-devicevoice-1";
-import { createConversation, DIALOGUE_LINES } from "./automatic-conversation.js?v=20260915-delivery-1";
+import { createConversation, DIALOGUE_LINES } from "./automatic-conversation.js?v=20260915-employee-1";
 
 const MODEL_URL = "../blender/tsunagu-reception-actions-20260826.glb?v=20260831-pc-gaze-1";
 const MODEL_FRONT_Y = -Math.PI / 2 + 0.03;
@@ -66,7 +66,7 @@ const FACE_PART_URLS = {
   mouthWideOpen: "../assets/face-parts/mouth-wide-open.png",
 };
 
-const SPEECH_AUDIO_VERSION = "20260915-delivery-1";
+const SPEECH_AUDIO_VERSION = "20260915-employee-1";
 const SPEECH_LINES = {
   welcome: {
     text: "いらっしゃいませ。こちらでご用件をお伺いいたします。",
@@ -95,6 +95,11 @@ Object.assign(SPEECH_LINES, DIALOGUE_LINES);
 // Delivery uses a dedicated handover guide; visits collect the addressee.
 SPEECH_LINES.calling = DIALOGUE_LINES.chatDelivery;
 SPEECH_LINES.visitor = DIALOGUE_LINES.chatGuestRecipient;
+// Real employees use their registered name separately. Demos must not invent
+// a person's name or automatically begin a visitor intake either.
+for (const key of ['employeeGeneric', 'employeeSato', 'employeeTanaka']) {
+  SPEECH_LINES[key] = { ...DIALOGUE_LINES.chatRecognizedEmployee, group: 'employee' };
+}
 for (const key of ['greetingMorningArrival', 'greetingDayArrival', 'greetingEveningArrival']) SPEECH_LINES[key] = DIALOGUE_LINES.chatHello;
 for (const key of ["greetingMorning", "greetingDay", "greetingEvening"]) {
   SPEECH_LINES[`${key}Arrival`] = {
@@ -1138,13 +1143,15 @@ async function announceRecognizedName(person) {
           }
           // Only the first identified visitor may advance the reception. A later
           // companion receives an acknowledgment without changing the current answers.
-          if (!previousPlan.identity) followUp = conversation.recognizeGuest(person) || followUp;
+          if (!previousPlan.identity) followUp = conversation.recognizeVisitor(person) || followUp;
           const followUpSequence = sequenceId + 1;
           const finish = () => { if (sequenceId === followUpSequence) greetingPending = false; };
           speakLine(followUp, null, { onFinish: finish, onFailure: finish });
         },
         onFailure() { if (sequenceId === nameSequence) greetingPending = false; },
       });
+    } else if (!previousPlan.identity && person.role === 'employee') {
+      conversation.recognizeVisitor(person);
     }
   } finally {
     if (!playbackStarted && (sequenceId === ownSequence || currentReceptionPlan === previousPlan)) greetingPending = false;

@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 import { receptionPlan } from './visitor-matching.mjs';
 import { nameLine as realNameLine } from './name-voice.js';
-import { initialReceptionState, recognizeLateGuest, respond } from './dialogue.mjs';
+import { initialReceptionState, recognizeLateGuest, recognizeLateEmployee, respond } from './dialogue.mjs';
 
 const source = readFileSync(new URL('./app.js', import.meta.url), 'utf8');
 // Execute the actual orchestration with deterministic camera, motion and audio adapters.
@@ -18,7 +18,7 @@ function fixture(identity = null, demo = null) {
     sensorAttending: true, attendLineIndex: 0, workLineIndex: 0, currentReceptionPlan: null,
     currentVisitorSpeechKey: null, pendingTestSpeechKey: demo, testVisitorUntil: demo ? Date.now() + 24000 : 0,
     soundEnabled: true, speechBusy: false, posture: 0, currentMotionKey: 'deskWork', lastSpeechAt: 0,
-    greetingStartedAt: 0, conversation: { active: false, state: {}, close() { this.active = false; this.state = {}; }, beginReception(role, identity) { this.active = true; this.state = initialReceptionState(role, identity); }, recognizeGuest(person) { const result = recognizeLateGuest(this.state, person); if (result) this.state = result.state; return result?.key; }, setPresence(value) { this.present = value; }, setAudible() {} }, SPEECH_LINES: {},
+    greetingStartedAt: 0, conversation: { active: false, state: {}, close() { this.active = false; this.state = {}; }, beginReception(role, identity) { this.active = true; this.state = initialReceptionState(role, identity); }, recognizeVisitor(person) { const result = recognizeLateEmployee(this.state, person) || recognizeLateGuest(this.state, person); if (result) this.state = result.state; return result?.key; }, setPresence(value) { this.present = value; }, setAudible() {} }, SPEECH_LINES: {},
     nameLine: async person => ({ text: person.name + 'さん。', spokenText: person.name + 'さん' }),
     faceFirstSeenAt: 0, faceLastSeenAt: 0, TEST_VISITOR_MS: 24000,
     faceVisible: false, FACE_CONFIRM_MS: 600, FACE_LOST_MS: 5000,
@@ -184,6 +184,7 @@ test('late recognition joins a role-appropriate greeting once without restarting
     assert.equal(f.state.greetingPending, false);
     assert.equal(f.spoken.length, 4); assert.equal(restarts, 0);
     assert.equal(f.state.conversation.active, true);
+    if (role === 'employee') assert.equal(f.state.conversation.state.step, 'employee');
   }
 });
 

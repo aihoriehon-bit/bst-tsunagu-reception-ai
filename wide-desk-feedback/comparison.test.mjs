@@ -13,7 +13,7 @@ test('recognized guests answer the recipient first without their answer becoming
   assert.equal(answer.key,'chatPurpose');
   assert.equal(respond('誰でもいいです',state).key,'chatGeneralPurpose');
   assert.equal(initialReceptionState('guest',null).step,undefined);
-  assert.equal(initialReceptionState('employee',{source:'face',role:'employee',name:'社員'}).step,undefined);
+  assert.equal(initialReceptionState('employee',{source:'face',role:'employee',name:'社員'}).step,'employee');
 });
 
 const vector = (x = 0) => [x, ...Array(127).fill(0)];
