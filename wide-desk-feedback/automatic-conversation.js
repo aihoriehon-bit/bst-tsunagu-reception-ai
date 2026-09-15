@@ -1,5 +1,5 @@
 import { respond, initialReceptionState, recognizeLateGuest, recognizeLateEmployee } from './dialogue.mjs?v=20260915-delivery-addressee-1';
-import { createHandsfree } from './handsfree.mjs?v=20260911-distance-1';
+import { createHandsfree } from './handsfree.mjs?v=20260915-fast-listen-1';
 import { conversationCue } from './conversation-cue.mjs?v=20260909-6';
 import { createReceptionCard } from './reception-card.mjs?v=20260915-recipient-kana-1';
 import { attachPanelLayout } from './panel-layout.mjs?v=20260915-panel-size-1';

@@ -61,7 +61,9 @@ export function createHandsfree({ Recognition, onText, onStatus, onVoiceActivity
   return {
     update(next = {}) {
       ({ enabled = enabled, active = active, present = present, audible = audible, visible = visible, speaking = speaking } = next);
-      if (!eligible()) stop(); else if (!current && restart === null) queue();
+      // Audio playback has already ended before speaking becomes false.
+      // Do not add the silence-retry delay to the visitor's answering turn.
+      if (!eligible()) stop(); else if (!current && restart === null) queue(0);
     },
     retry() { failures = 0; blocked = false; stop(); queue(0); },
     stop,
