@@ -1,4 +1,4 @@
-export function createReceptionCard({ onAnswer = () => {} } = {}) {
+export function createReceptionCard({ onAnswer = () => {}, onRestart = () => {} } = {}) {
   const panel = document.createElement('section');
   panel.className = 'reception-card'; panel.hidden = true;
   panel.setAttribute('role', 'region'); panel.setAttribute('aria-label', '受付内容の確認'); panel.setAttribute('aria-live', 'polite');
@@ -38,7 +38,12 @@ export function createReceptionCard({ onAnswer = () => {} } = {}) {
       panel.append(actions);
     },
     setEnabled(enabled) {
+      if (mode !== 'confirm') return;
       panel.querySelectorAll('.reception-card-actions button').forEach(b => { b.disabled = !enabled; });
+    },
+    setRestartEnabled(enabled) {
+      const restart = panel.querySelector('[data-restart]');
+      if (restart) restart.disabled = !enabled;
     },
     setSpeaking(speaking) {
       if (mode !== 'confirm') return;
@@ -51,6 +56,14 @@ export function createReceptionCard({ onAnswer = () => {} } = {}) {
       panel.append(text('p', '✓', 'reception-card-check'), text('h2', 'ここまでが受付デモです'),
         text('p', 'ご協力ありがとうございました。', 'reception-card-thanks'),
         text('p', '実際の担当者への電話・通知は行っていません。', 'reception-card-note'));
+      const actions = document.createElement('div'); actions.className = 'reception-card-actions';
+      const restart = text('button', 'もう一度受付を試す'); restart.type = 'button';
+      restart.dataset.restart = ''; restart.disabled = true;
+      restart.addEventListener('click', () => {
+        if (mode !== 'complete' || restart.disabled) return;
+        restart.disabled = true; onRestart();
+      });
+      actions.append(restart); panel.append(actions);
       fadeTimer = setTimeout(() => {
         panel.classList.add('is-fading'); hideTimer = setTimeout(clear, 700);
       }, 4500);

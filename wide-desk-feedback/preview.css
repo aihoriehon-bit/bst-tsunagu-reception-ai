@@ -164,4 +164,6 @@
 .conversation .conversation-panel-toolbar button { padding: 5px 7px; min-height: 34px; border-radius: 8px; font-size: 12px; white-space: nowrap; }
 .conversation .conversation-panel-resize { cursor: nesw-resize; touch-action: none; user-select: none; font-size: 20px; min-width: 34px; }
 .conversation-panel-content { padding: 12px 14px; min-height: 0; overflow: auto; overscroll-behavior: contain; }
+.conversation .conversation-restart { flex: 0 0 auto; margin: 8px; min-height: 44px; padding: 10px; background: #087f8b; color: white; font-weight: 800; border-radius: 10px; }
+.conversation .conversation-restart[hidden] { display: none; }
 .conversation-panel-toolbar button:focus-visible { outline: 3px solid #087f8b; outline-offset: 1px; }

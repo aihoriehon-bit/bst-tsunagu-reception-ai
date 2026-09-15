@@ -1,9 +1,9 @@
-import { respond, initialReceptionState, recognizeLateGuest, recognizeLateEmployee } from './dialogue.mjs?v=20260915-short-call-1';
+import { respond, initialReceptionState, recognizeLateGuest, recognizeLateEmployee } from './dialogue.mjs?v=20260915-restart-1';
 import { createHandsfree } from './handsfree.mjs?v=20260911-distance-1';
 import { conversationCue } from './conversation-cue.mjs?v=20260909-6';
-import { createReceptionCard } from './reception-card.mjs?v=20260915-confirm-buttons-1';
+import { createReceptionCard } from './reception-card.mjs?v=20260915-restart-2';
 import { attachPanelLayout } from './panel-layout.mjs?v=20260915-panel-size-1';
-const texts = await fetch(new URL('./dialogue-lines.json?v=20260915-short-call-1', import.meta.url)).then(r => {
+const texts = await fetch(new URL('./dialogue-lines.json?v=20260915-restart-1', import.meta.url)).then(r => {
   if (!r.ok) throw new Error('会話の台本を読み込めません');
   return r.json();
 });
@@ -11,7 +11,7 @@ export const DIALOGUE_LINES = Object.fromEntries(Object.entries(texts).map(([key
   text, audio: `../wide-desk-feedback/audio/${key}.wav`, group: 'attend',
 }]));
 
-export function createConversation({ onSpeak, onInterrupt, onEnableAudio, available }) {
+export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRestart, available }) {
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const PREF = 'tsunagu-feedback-handsfree-enabled';
   let enabled = false, active = false, present = false, speaking = false, audible = true, state = {}, epoch = 0, micStatus = 'waiting';
@@ -19,7 +19,7 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
   let voiceActivityAt = 0;
   let visitorSpeaking = false;
   let completed = false;
-  const confirmation = createReceptionCard({ onAnswer: submit });
+  const confirmation = createReceptionCard({ onAnswer: submit, onRestart: restartReception });
   try { enabled = localStorage.getItem(PREF) === 'true'; } catch { /* optional preference */ }
   const panel = document.createElement('section'); panel.className = 'conversation handsfree-conversation';
   panel.setAttribute('aria-label', '音声会話');
@@ -36,6 +36,13 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
     </div></details>`;
   document.body.append(panel);
   attachPanelLayout(panel);
+  // Keep restart outside the collapsible/scrollable content so it remains
+  // reachable after the large completion card has faded out.
+  const restartButton = document.createElement('button');
+  restartButton.type = 'button'; restartButton.className = 'conversation-restart';
+  restartButton.textContent = 'もう一度受付を試す'; restartButton.hidden = true;
+  panel.insertBefore(restartButton, panel.querySelector('.conversation-panel-content'));
+  restartButton.addEventListener('click', restartReception);
   const q = s => panel.querySelector(s), log = q('.conversation-log'), status = q('.conversation-status'), input = q('input');
   function renderReception() {
     if (!completed) confirmation.show(state);
@@ -53,7 +60,7 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
     confirmation.setSpeaking(speaking);
     if (completed) {
       panel.dataset.turn = 'waiting'; q('.turn-label').textContent = 'デモ終了';
-      status.textContent = '受付デモが終了しました'; q('.turn-detail').textContent = 'ご協力ありがとうございました。'; return;
+      status.textContent = '受付デモが終了しました'; q('.turn-detail').textContent = issue || '「もう一度受付を試す」ボタンで、挨拶から再開できます。'; return;
     }
     const cue = conversationCue({ speaking, enabled, supported: Boolean(Recognition), audible, active, present, visible: !document.hidden, micStatus, issue });
     panel.dataset.turn = cue.mode;
@@ -77,6 +84,9 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
     }
   } });
   function sync() {
+    const canRestart = completed && active && present && !document.hidden && available() && typeof onRestart === 'function';
+    restartButton.hidden = !completed; restartButton.disabled = !canRestart;
+    confirmation.setRestartEnabled(canRestart);
     confirmation.setEnabled(active && present && !completed && !document.hidden);
     listener.update({ enabled, active: active && !completed, present, speaking, audible, visible: !document.hidden });
     input.disabled = !active || !present || completed; q('form button').disabled = !active || !present || completed;
@@ -108,6 +118,18 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
   function close() {
     active = false; epoch++; state = {}; speaking = false; completed = false; confirmation.clear(); issue = ''; listener.update({ active: false });
     log.replaceChildren(); input.value = ''; renderReception(); sync();
+  }
+  async function restartReception() {
+    if (!completed || !active || !present || document.hidden || !available() || typeof onRestart !== 'function') return;
+    // Clear completion before invoking external callbacks: double clicks and
+    // stale completion audio must not finish the newly started reception.
+    close(); onInterrupt();
+    try { await onRestart(); }
+    catch {
+      if (!present || document.hidden || active) return;
+      active = true; completed = true;
+      issue = '再開できませんでした。もう一度ボタンを押してください。'; sync();
+    }
   }
   q('[data-enable]').addEventListener('click', async () => {
     if (!Recognition) return;
