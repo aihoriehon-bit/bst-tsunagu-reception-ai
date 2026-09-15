@@ -1,7 +1,7 @@
-export function createReceptionCard() {
+export function createReceptionCard({ onAnswer = () => {} } = {}) {
   const panel = document.createElement('section');
   panel.className = 'reception-card'; panel.hidden = true;
-  panel.setAttribute('role', 'status'); panel.setAttribute('aria-live', 'polite');
+  panel.setAttribute('role', 'region'); panel.setAttribute('aria-label', '受付内容の確認'); panel.setAttribute('aria-live', 'polite');
   panel.setAttribute('aria-atomic', 'true');
   document.body.append(panel);
   let fadeTimer, hideTimer, mode = '';
@@ -25,10 +25,24 @@ export function createReceptionCard() {
         const row = document.createElement('div'); row.append(text('dt', label), text('dd', value)); list.append(row);
       }
       panel.append(list, text('p', '', 'reception-card-answer'));
+      const actions = document.createElement('div'); actions.className = 'reception-card-actions';
+      for (const answer of ['はい', '訂正']) {
+        const button = text('button', answer); button.type = 'button'; button.disabled = true;
+        button.addEventListener('click', () => {
+          if (mode !== 'confirm' || button.disabled) return;
+          actions.querySelectorAll('button').forEach(b => { b.disabled = true; });
+          onAnswer(answer);
+        });
+        actions.append(button);
+      }
+      panel.append(actions);
+    },
+    setEnabled(enabled) {
+      panel.querySelectorAll('.reception-card-actions button').forEach(b => { b.disabled = !enabled; });
     },
     setSpeaking(speaking) {
       if (mode !== 'confirm') return;
-      const message = speaking ? '案内を聞いてからお答えください' : '合っていれば「はい」、変更する場合は「訂正」とお答えください';
+      const message = speaking ? '内容を確認し、下のボタンでも選べます。音声で答える場合は案内のあとにお願いします。' : '合っていれば「はい」、変更する場合は「訂正」を選んでください。音声でもお答えいただけます。';
       const hint = panel.querySelector('.reception-card-answer');
       if (hint.textContent !== message) hint.textContent = message;
     },

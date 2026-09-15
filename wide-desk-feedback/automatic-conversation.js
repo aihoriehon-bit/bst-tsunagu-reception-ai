@@ -1,7 +1,7 @@
 import { respond, initialReceptionState } from './dialogue.mjs?v=20260915-purpose-1';
 import { createHandsfree } from './handsfree.mjs?v=20260911-distance-1';
 import { conversationCue } from './conversation-cue.mjs?v=20260909-6';
-import { createReceptionCard } from './reception-card.mjs';
+import { createReceptionCard } from './reception-card.mjs?v=20260915-confirm-buttons-1';
 const texts = await fetch(new URL('./dialogue-lines.json?v=20260915-purpose-1', import.meta.url)).then(r => {
   if (!r.ok) throw new Error('会話の台本を読み込めません');
   return r.json();
@@ -18,7 +18,7 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
   let voiceActivityAt = 0;
   let visitorSpeaking = false;
   let completed = false;
-  const confirmation = createReceptionCard();
+  const confirmation = createReceptionCard({ onAnswer: submit });
   try { enabled = localStorage.getItem(PREF) === 'true'; } catch { /* optional preference */ }
   const panel = document.createElement('section'); panel.className = 'conversation handsfree-conversation';
   panel.setAttribute('aria-label', '音声会話');
@@ -75,6 +75,7 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
     }
   } });
   function sync() {
+    confirmation.setEnabled(active && present && !completed && !document.hidden);
     listener.update({ enabled, active: active && !completed, present, speaking, audible, visible: !document.hidden });
     input.disabled = !active || !present || completed; q('form button').disabled = !active || !present || completed;
     q('[data-disable]').hidden = !enabled || !Recognition;

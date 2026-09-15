@@ -137,7 +137,7 @@
 .detection-body span { background: #795000; top: auto; bottom: 0; }
 .detection-legend { font-size: 10px; color: #d3f5ff; }
 .capture-direction { z-index: 3; }
-.reception-card { position: fixed; z-index: 40; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(680px, calc(100vw - 32px)); max-height: 80dvh; overflow-y: auto; box-sizing: border-box; padding: clamp(20px, 3vw, 36px); border: 2px solid #63b6bf; border-radius: 24px; background: #fafffffa; color: #194952; box-shadow: 0 12px 70px #062d4566; opacity: 1; transition: opacity .7s ease; }
+.reception-card { position: fixed; z-index: 40; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(680px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; box-sizing: border-box; padding: clamp(20px, 3vw, 36px); border: 2px solid #63b6bf; border-radius: 24px; background: #fafffffa; color: #194952; box-shadow: 0 12px 70px #062d4566; opacity: 1; transition: opacity .7s ease; }
 .reception-card[hidden] { display: none; }
 .reception-card.is-fading { opacity: 0; pointer-events: none; }
 .reception-card-kicker { margin: 0 0 6px; color: #467780; font-size: 16px; font-weight: bold; }
@@ -148,6 +148,12 @@
 .reception-card dd { margin: 0; font-size: clamp(24px, 3.4vw, 36px); font-weight: 800; line-height: 1.4; overflow-wrap: anywhere; }
 .reception-card-answer { padding: 12px 15px; margin: 18px 0 0; background: #deefed; border-radius: 12px; font-size: clamp(16px, 2vw, 20px); font-weight: bold; line-height: 1.5; }
 .reception-card[data-mode=complete] { text-align: center; }
+.reception-card-actions { display: flex; gap: 12px; margin-top: 18px; }
+.reception-card-actions button { flex: 1; min-height: 52px; padding: 12px 18px; border: 2px solid #087f8b; border-radius: 12px; background: #f1fafb; color: #16545c; font: inherit; font-size: 22px; font-weight: 800; cursor: pointer; }
+.reception-card-actions button:first-child { background: #087f8b; color: white; }
+.reception-card-actions button:hover:not(:disabled) { filter: brightness(.94); }
+.reception-card-actions button:focus-visible { outline: 3px solid #173b57; outline-offset: 3px; }
+.reception-card-actions button:disabled { opacity: .5; cursor: default; }
 .reception-card-check { margin: 0 0 8px; color: #16804d; font-size: 48px; }
 .reception-card-thanks { font-size: 20px; }
 .reception-card-note { font-size: 14px; line-height: 1.6; color: #537278; }
