@@ -1,4 +1,10 @@
 // Bounded reception dialogue; details are only taken from the visitor's answers.
+export function initialReceptionState(role, identity) {
+  if (role === 'guest' && identity?.source === 'face' && identity.role === 'guest') {
+    return { role, visitor: identity.name, step: 'recipient' };
+  }
+  return role === 'delivery' ? { role, purpose: '荷物のお届け', step: 'recipient' } : { role };
+}
 export function respond(input, previous = {}) {
   const text = String(input).normalize('NFKC').trim().slice(0, 300);
   const state = { ...previous };

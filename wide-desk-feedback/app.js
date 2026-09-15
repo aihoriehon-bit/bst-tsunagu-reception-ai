@@ -6,7 +6,7 @@ import { createPersonDetector, createBodyConfirmation } from "./person-presence.
 import { CAMERA_CONSTRAINTS, createDetectionLoop } from "./face-detection.mjs?v=20260915-auto-region-1";
 import { receptionPlan } from "./visitor-matching.mjs?v=20260909-2";
 import { nameLine, cancelNameVoice, speakDeviceName } from "./name-voice.js?v=20260911-devicevoice-1";
-import { createConversation, DIALOGUE_LINES } from "./automatic-conversation.js?v=20260911-distance-1";
+import { createConversation, DIALOGUE_LINES } from "./automatic-conversation.js?v=20260915-guest-recipient-1";
 
 const MODEL_URL = "../blender/tsunagu-reception-actions-20260826.glb?v=20260831-pc-gaze-1";
 const MODEL_FRONT_Y = -Math.PI / 2 + 0.03;
@@ -94,6 +94,7 @@ for (const line of EXTRA_SPEECH) SPEECH_LINES[line.key] = line;
 Object.assign(SPEECH_LINES, DIALOGUE_LINES);
 // This comparison demo collects the addressee before announcing completion.
 SPEECH_LINES.calling = DIALOGUE_LINES.chatDelivery;
+SPEECH_LINES.visitor = DIALOGUE_LINES.chatGuestRecipient;
 for (const key of ['greetingMorningArrival', 'greetingDayArrival', 'greetingEveningArrival']) SPEECH_LINES[key] = DIALOGUE_LINES.chatHello;
 for (const key of ["greetingMorning", "greetingDay", "greetingEvening"]) {
   SPEECH_LINES[`${key}Arrival`] = {
@@ -1082,7 +1083,7 @@ function updateSensorBehavior() {
     return;
   }
   if (visitorPresent && sensorAttending && !currentReceptionPlan && !greetingPending && !speechBusy) { beginSensorGreeting(); return; }
-  if (visitorPresent && sensorAttending && currentReceptionPlan && !greetingPending && !speechBusy && !conversation.active && !document.hidden) conversation.beginReception(currentReceptionPlan.role);
+    if (visitorPresent && sensorAttending && currentReceptionPlan && !greetingPending && !speechBusy && !conversation.active && !document.hidden) conversation.beginReception(currentReceptionPlan.role, currentReceptionPlan.identity);
   updateAutomaticSpeech(now);
 }
 
@@ -1173,7 +1174,7 @@ async function beginSensorGreeting() {
 
 function playReceptionGreeting(index) {
   const key = currentReceptionPlan?.greeting[index];
-  if (!key) { greetingPending = false; conversation.beginReception(currentReceptionPlan?.role); return; }
+  if (!key) { greetingPending = false; conversation.beginReception(currentReceptionPlan?.role, currentReceptionPlan?.identity); return; }
   currentVisitorSpeechKey = key;
   const expectedSequence = sequenceId + 1;
   speakLine(key, null, {

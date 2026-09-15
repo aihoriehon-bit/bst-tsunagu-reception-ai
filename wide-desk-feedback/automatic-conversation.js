@@ -1,7 +1,7 @@
-import { respond } from './dialogue.mjs?v=20260914-feedback-1';
+import { respond, initialReceptionState } from './dialogue.mjs?v=20260915-guest-recipient-1';
 import { createHandsfree } from './handsfree.mjs?v=20260911-distance-1';
 import { conversationCue } from './conversation-cue.mjs?v=20260909-6';
-const texts = await fetch(new URL('./dialogue-lines.json?v=20260914-feedback-1', import.meta.url)).then(r => {
+const texts = await fetch(new URL('./dialogue-lines.json?v=20260915-guest-recipient-1', import.meta.url)).then(r => {
   if (!r.ok) throw new Error('会話の台本を読み込めません');
   return r.json();
 });
@@ -118,7 +118,7 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
     get active() { return active; },
     get canAnnounceName() { return !speaking && !visitorSpeaking && micStatus !== 'processing' && !input.value.trim() && Date.now() - voiceActivityAt > 4000; },
     close,
-    beginReception(role) { if (!active) { state = role === 'delivery' ? { role, purpose: '荷物のお届け', step: 'recipient' } : { role }; log.replaceChildren(); renderReception(); } active = true; speaking = false; sync(); },
+    beginReception(role, identity) { if (!active) { state = initialReceptionState(role, identity); log.replaceChildren(); renderReception(); } active = true; speaking = false; sync(); },
     setPresence(value) { if (present !== value) { present = value; sync(); } },
     setAudible(value) { audible = value; issue = ''; sync(); },
     speechStarted() { speaking = true; issue = ''; micStatus = 'preparing'; sync(); },

@@ -2,7 +2,19 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { matchFace, receptionPlan, matchClothing } from './visitor-matching.mjs';
-import { respond } from './dialogue.mjs';
+import { respond, initialReceptionState } from './dialogue.mjs';
+
+test('recognized guests answer the recipient first without their answer becoming their own name or purpose', () => {
+  const state = initialReceptionState('guest', { source:'face', role:'guest', name:'山田太郎' });
+  assert.equal(state.step,'recipient');
+  const answer=respond('平井さんをお願いします',state);
+  assert.equal(answer.state.recipient,'平井さん');
+  assert.equal(answer.state.visitor,'山田太郎');
+  assert.equal(answer.key,'chatConfirm');
+  assert.equal(respond('誰でもいいです',state).key,'chatGeneralConfirm');
+  assert.equal(initialReceptionState('guest',null).step,undefined);
+  assert.equal(initialReceptionState('employee',{source:'face',role:'employee',name:'社員'}).step,undefined);
+});
 
 const vector = (x = 0) => [x, ...Array(127).fill(0)];
 test('centroid recovers noisy enrollment while unknown and ambiguous faces stay unnamed', () => {
