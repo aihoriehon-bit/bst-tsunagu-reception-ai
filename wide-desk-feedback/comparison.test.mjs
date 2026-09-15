@@ -10,8 +10,8 @@ test('recognized guests answer the recipient first without their answer becoming
   const answer=respond('平井さんをお願いします',state);
   assert.equal(answer.state.recipient,'平井さん');
   assert.equal(answer.state.visitor,'山田太郎');
-  assert.equal(answer.key,'chatConfirm');
-  assert.equal(respond('誰でもいいです',state).key,'chatGeneralConfirm');
+  assert.equal(answer.key,'chatPurpose');
+  assert.equal(respond('誰でもいいです',state).key,'chatGeneralPurpose');
   assert.equal(initialReceptionState('guest',null).step,undefined);
   assert.equal(initialReceptionState('employee',{source:'face',role:'employee',name:'社員'}).step,undefined);
 });

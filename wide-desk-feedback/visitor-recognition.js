@@ -1,4 +1,4 @@
-import { ROLES, validVector, matchFace, clothingSignature, matchClothing } from './visitor-matching.mjs?v=20260909-2';
+import { ROLES, validVector, matchFace, clothingSignature, matchClothing } from './visitor-matching.mjs?v=20260915-group-names-1';
 import { previewName, cancelNameVoice } from './name-voice.js?v=20260911-devicevoice-1';
 import { nameApprovalToken, isNameApproved, createNameAudition, shouldCallName, hasNameReading } from './name-confirmation.mjs?v=20260911-devicevoice-1';
 import { NAME_RECORDINGS, normalizeNameReading } from './name-library.mjs?v=20260911-devicevoice-1';
@@ -11,6 +11,7 @@ import { captureDirection, mirroredRegionLeft, createShutterSound } from './enro
 import { bindReadingAutofill } from './reading-autofill.mjs';
 import { captureProblem, faceMoved, CAPTURE_STABLE_MS, CAPTURE_TURN_MS } from './capture-guidance.mjs';
 import { createDetectionOverlay } from './detection-overlay.mjs';
+import { createGroupConfirmation, targetDescriptor, overlap } from './group-recognition.mjs';
 const STORAGE_KEY = 'tsunagu-feedback-identities-v1';
 const REGION_KEY = 'tsunagu-feedback-camera-region-v2';
 const API_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.15/dist/face-api.esm.js';
@@ -30,6 +31,8 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
   const detectionCanvases = { frame: document.createElement('canvas'), tile: document.createElement('canvas') };
   let detectionMs = 0, descriptorMissing = false, lastSampleFrame = 0;
   let peopleCount = 0;
+  const groupConfirmation = createGroupConfirmation();
+  let groupIdentities = [], groupAt = 0;
   let regionMode = 'auto', regionEpoch = 0, instructionAudio = null;
   const autoRegion = createAutoRegion();
   const shutter = createShutterSound();
@@ -304,7 +307,7 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     db = next; storageError = false; reset();
   }
-  function reset() { epoch++; identity = null; identityAt = 0; candidate = ''; hits = 0; lastSampleFrame = 0; }
+  function reset() { epoch++; identity = null; identityAt = 0; candidate = ''; hits = 0; lastSampleFrame = 0; groupConfirmation.reset(); groupIdentities = []; groupAt = 0; }
   function singleFace() { return peopleCount <= 1 && faceQuality(faces, video.videoWidth, video.videoHeight).usable && Date.now() - facesAt < frameLifetime(detectionMs) && video.readyState >= 2 && video.videoWidth > 0; }
   function captureIssue(stepStartedAt = 0, moved = false) {
     let light = null;
@@ -502,8 +505,51 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     }
     if (!list.children.length) { const li = document.createElement('li'); li.textContent = 'まだ登録がありません'; list.append(li); }
   }
+  function groupFacesReady() {
+    return video.readyState >= 2 && Date.now()-facesAt < frameLifetime(detectionMs)
+      && faces.some(f => faceQuality([f],video.videoWidth,video.videoHeight).usable);
+  }
+  function currentGroup() {
+    if (dialog.open || document.hidden || !groupFacesReady() || Date.now()-groupAt >= frameLifetime(detectionMs)) return [];
+    return groupIdentities.filter(p => faces.some(f => overlap(p.boundingBox,f.boundingBox) >= .3));
+  }
+  async function scanGroup() {
+    identity = null; candidate = ''; hits = 0;
+    if (!groupFacesReady()) { groupConfirmation.reset(); groupIdentities = []; live.textContent = '顔を十分確認できた方から名前を呼びます'; return; }
+    if (lastSampleFrame === facesAt) return;
+    if (!db.people.length) { live.textContent = '登録済みの顔はありません'; return; }
+    if (Date.now() < retryAt) return;
+    lastSampleFrame = facesAt;
+    const sampleAt = facesAt, own = epoch;
+    // Freeze both the source image and its boxes before any asynchronous model work.
+    const samples = faces.filter(f=>faceQuality([f],video.videoWidth,video.videoHeight).usable).map(f=> {
+      const b=f.boundingBox, x=Math.max(0,b.originX-b.width*.2), y=Math.max(0,b.originY-b.height*.2);
+      const w=Math.min(b.width*1.4,descriptorFrame.width-x), h=Math.min(b.height*1.4,descriptorFrame.height-y);
+      if (w<=0 || h<=0) return null;
+      const crop=document.createElement('canvas'); crop.width=320; crop.height=Math.round(h/w*320);
+      crop.getContext('2d').drawImage(descriptorFrame,x,y,w,h,0,0,crop.width,crop.height);
+      return {crop,box:b,target:{originX:(b.originX-x)/w*crop.width,originY:(b.originY-y)/h*crop.height,width:b.width/w*crop.width,height:b.height/h*crop.height}};
+    }).filter(Boolean);
+    busy = true;
+    try {
+      const api=await ensureApi(), results=[];
+      for (const s of samples) {
+        if (own!==epoch || dialog.open || document.hidden) return;
+        const detected=await api.detectAllFaces(s.crop,new api.TinyFaceDetectorOptions(FACE_DESCRIPTOR_OPTIONS)).withFaceLandmarks().withFaceDescriptors();
+        const v=targetDescriptor(detected,s.target);
+        results.push({person:v?matchFace(v,db.people):null,box:s.box});
+      }
+      if (own!==epoch || dialog.open || document.hidden || Date.now()-sampleAt>=frameLifetime(detectionMs)) return;
+      groupIdentities=groupConfirmation.update(results,sampleAt); groupAt=sampleAt;
+      const known=currentGroup();
+      live.textContent=known.length ? known.map(p=>`${ROLES[p.role]}：${p.name}${!shouldCallName(p)?'・名前呼びOFF':''}`).join(' ／ ')
+        : '顔ごとに登録情報を照合中・確認できた方から名前を呼びます';
+    } finally { busy=false; }
+  }
   async function scan() {
     if (busy || capturing || stopped || dialog.open || document.hidden) return;
+    if (faces.length > 1 || peopleCount > 1) { await scanGroup(); return; }
+    groupConfirmation.reset(); groupIdentities = [];
     if (!singleFace()) { identity = null; candidate = ''; hits = 0; live.textContent = faces.length > 1 || peopleCount > 1 ? '複数人のため個人の識別を保留' : faces.length ? '顔を十分確認できたら名前を呼びます' : peopleCount ? '来訪を検知・顔を確認できるまで名前は呼びません' : '顔・配達の登録から識別を設定できます'; return; }
     if (!db.people.length && !db.uniforms.length) { live.textContent = '未登録の来訪者'; return; }
     if (lastSampleFrame === facesAt) return;
@@ -558,18 +604,20 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
       peopleCount = count;
       if (count > 1) { identity = null; candidate = ''; hits = 0; if (regionMode === 'auto') { autoRegion.reset(); showRegion(); } }
     },
-    canIdentify() { return singleFace(); },
+    canIdentify() { return singleFace() || groupFacesReady(); },
     updateFaces(next) {
       if (!next.length && regionMode === 'auto') { autoRegion.reset(); showRegion(); }
       if (!faceQuality(next, video.videoWidth, video.videoHeight).usable) { identity = null; candidate = ''; hits = 0; }
       faces = next; facesAt = next[0]?.capturedAt || Date.now();
       drawDetections();
     },
-    current() { return !dialog.open && singleFace() && Date.now() - identityAt < frameLifetime(detectionMs) ? identity : null; },
+    currentAll() { return faces.length>1 || peopleCount>1 ? currentGroup() : !dialog.open && singleFace() && Date.now()-identityAt < frameLifetime(detectionMs) && identity?.source==='face' ? [identity] : []; },
+    current() { return faces.length>1 || peopleCount>1 ? currentGroup()[0] || null : !dialog.open && singleFace() && Date.now() - identityAt < frameLifetime(detectionMs) ? identity : null; },
     async identify(timeoutMs = 2400) {
       if (!db.people.length && !db.uniforms.length) return null;
       const own = epoch, deadline = Date.now() + timeoutMs;
       while (own === epoch && !dialog.open && Date.now() < deadline) {
+        if (currentGroup().length) return currentGroup()[0];
         if (singleFace() && identity && Date.now() - identityAt < frameLifetime(detectionMs)) return identity;
         if (modelError && !db.uniforms.length) return null;
         scan().catch(() => {});

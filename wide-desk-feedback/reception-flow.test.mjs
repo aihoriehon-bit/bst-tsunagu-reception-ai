@@ -29,7 +29,7 @@ function fixture(identity = null, demo = null) {
     isSensorVisitorPresent: () => true,
     visitorRecognition: { paused: false, identify: async () => identity, current: () => identity },
     playMotion(key) { motions.push(key); state.currentMotionKey = key; state.posture = 1; },
-    speakLine(key, button, options) { spoken.push(key); state.sequenceId++; state.finish = options?.onFinish; },
+    speakLine(key, button, options) { spoken.push(key); state.sequenceId++; state.finish = options?.onFinish; state.fail = options?.onFailure; },
     runSensorSitDown() { motions.push('sitDown'); }, updateSensorBehavior() {},
   };
   vm.createContext(state); vm.runInContext(sensorLoop + '\n' + flow + '\n' + trigger, state);
@@ -120,6 +120,37 @@ test('late recognition calls a registered name after the anonymous greeting', as
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(f.spoken.at(-1), 'registeredName');
 });
+test('two registered faces are both named before the shared greeting and microphone turn', async () => {
+  const a={id:'a',name:'山田太郎',role:'guest',source:'face'}, b={id:'b',name:'平井',role:'guest',source:'face'};
+  const f=fixture(a); f.state.visitorRecognition.currentAll=()=>[a,b];
+  await f.state.beginSensorGreeting();
+  assert.deepEqual(f.spoken,['registeredName']);f.state.finish();
+  assert.deepEqual(f.spoken,['registeredName','registeredNameGroup0']);
+  assert.equal(f.state.SPEECH_LINES.registeredNameGroup0.text,'平井さん。');
+  assert.equal(f.state.conversation.active,false);
+  f.state.finish();assert.equal(f.spoken.at(-1),'visitor');f.state.finish();
+  f.state.updateAutomaticSpeech(Date.now());assert.equal(f.spoken.length,3);
+  assert.equal(f.state.conversation.active,true);
+});
+test('additional registered faces arriving later are named once without replacing the first visitor',async()=>{
+  const a={id:'a',name:'山田太郎',role:'guest',source:'face'}, b={id:'b',name:'平井',role:'employee',source:'face'};
+  const f=fixture(a);f.state.visitorRecognition.currentAll=()=>[a];
+  await f.state.beginSensorGreeting();f.state.finish();f.state.finish();
+  f.state.visitorRecognition.currentAll=()=>[a,b];
+  f.state.updateAutomaticSpeech(Date.now());await new Promise(r=>setImmediate(r));
+  assert.equal(f.spoken.at(-1),'registeredName');assert.equal(f.state.SPEECH_LINES.registeredName.text,'平井さん。');
+  f.state.finish();assert.equal(f.spoken.at(-1),'chatRecognizedEmployee');f.state.finish();
+  f.state.updateAutomaticSpeech(Date.now());assert.equal(f.spoken.length,4);
+  assert.equal(f.state.currentReceptionPlan.identity.id,'a');
+});
+test('a companion leaving before their turn is skipped and name OFF remains respected',async()=>{
+  const a={id:'a',name:'山田太郎',role:'guest',source:'face'}, b={id:'b',name:'平井',role:'guest',source:'face'};
+  const f=fixture(a);f.state.visitorRecognition.currentAll=()=>[a,b];await f.state.beginSensorGreeting();
+  f.state.visitorRecognition.currentAll=()=>[a];f.state.finish();assert.equal(f.spoken.at(-1),'visitor');
+  const g=fixture(a);g.state.visitorRecognition.currentAll=()=>[a,{...b,nameCallingEnabled:false}];
+  g.state.nameLine=async p=>p.nameCallingEnabled===false?null:{text:p.name+'さん。'};
+  await g.state.beginSensorGreeting();g.state.finish();assert.equal(g.spoken.at(-1),'visitor');
+});
 test('body-only arrivals do not wait for face identification, then name once even after 20 seconds', async () => {
   const f = fixture();
   f.state.visitorRecognition.canIdentify = () => false;
@@ -132,7 +163,44 @@ test('body-only arrivals do not wait for face identification, then name once eve
   assert.deepEqual(f.spoken, ['welcome', 'greetingDayArrival', 'registeredName']);
   assert.equal(f.state.currentReceptionPlan.role, 'employee');
   f.state.finish(); f.state.updateAutomaticSpeech(Date.now());
-  assert.equal(f.spoken.length, 3);
+  assert.equal(f.spoken.at(-1), 'chatRecognizedEmployee');
+  f.state.finish(); f.state.updateAutomaticSpeech(Date.now());
+  assert.equal(f.spoken.length, 4);
+});
+
+test('late recognition joins a role-appropriate greeting once without restarting the conversation', async () => {
+  for (const role of ['guest', 'employee', 'delivery']) {
+    const f = fixture(); await f.state.beginSensorGreeting(); f.state.finish(); f.state.finish();
+    let restarts = 0; f.state.conversation.beginReception = () => restarts++;
+    const person = { id: 'known', name: '山田太郎', source: 'face', role };
+    f.state.visitorRecognition.current = () => person;
+    f.state.updateAutomaticSpeech(Date.now()); await new Promise(r => setImmediate(r));
+    assert.equal(f.state.greetingPending, true);
+    f.state.finish();
+    assert.equal(f.spoken.at(-1), { guest: 'chatRecognizedGuest', employee: 'chatRecognizedEmployee', delivery: 'chatRecognizedDelivery' }[role]);
+    assert.equal(f.state.greetingPending, true);
+    f.state.finish(); f.state.updateAutomaticSpeech(Date.now());
+    assert.equal(f.state.greetingPending, false);
+    assert.equal(f.spoken.length, 4); assert.equal(restarts, 0);
+    assert.equal(f.state.conversation.active, true);
+  }
+});
+
+test('late greeting stops safely for departure, a different face, interruption or audio failure', async () => {
+  for (const scenario of ['departed', 'faceChanged', 'interrupted', 'nameFailed', 'followUpFailed', 'muted']) {
+    const f = fixture(); await f.state.beginSensorGreeting(); f.state.finish(); f.state.finish();
+    const person = { id: 'known', name: '山田太郎', source: 'face', role: 'guest' };
+    f.state.visitorRecognition.current = () => person;
+    f.state.updateAutomaticSpeech(Date.now()); await new Promise(r => setImmediate(r));
+    if (scenario === 'departed') f.state.isSensorVisitorPresent = () => false;
+    if (scenario === 'faceChanged') f.state.visitorRecognition.current = () => ({ ...person, id: 'other' });
+    if (scenario === 'muted') f.state.soundEnabled = false;
+    if (scenario === 'interrupted') { const stale = f.state.finish; f.state.beginSensorReturn(); stale(); assert.equal(f.spoken.at(-1), 'goodbye'); continue; }
+    if (scenario === 'nameFailed') f.state.fail();
+    else { f.state.finish(); if (scenario === 'followUpFailed') f.state.fail(); }
+    assert.equal(f.state.greetingPending, false);
+    assert.equal(f.spoken.length, scenario === 'followUpFailed' ? 4 : 3);
+  }
 });
 test('late name waits while the visitor is speaking and discards a replaced face during audio preparation', async () => {
   const f = fixture(); await f.state.beginSensorGreeting(); f.state.finish(); f.state.finish();

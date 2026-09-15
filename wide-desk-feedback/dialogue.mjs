@@ -9,6 +9,12 @@ export function respond(input, previous = {}) {
   const text = String(input).normalize('NFKC').trim().slice(0, 300);
   const state = { ...previous };
   const answer = (key, step = state.step || null) => ({ key, state: { ...state, step } });
+  const next = (general = false) => {
+    if (!state.recipient) return answer('chatRecipient', 'recipient');
+    if (!state.visitor) return answer(general ? 'chatGeneral' : 'chatVisitorName', 'visitorName');
+    if (!state.purpose) return answer(general ? 'chatGeneralPurpose' : 'chatPurpose', 'purpose');
+    return answer(general ? 'chatGeneralConfirm' : 'chatConfirm', 'confirm');
+  };
   const clean = value => value.replace(/[。！!\s]+$/, '').trim().slice(0, 80);
   const no = /^(いいえ|違い|ちがい|違う|ちがう|いいや|訂正|修正)/;
   const yes = /^(はい|ええ|うん|そうです|お願いします|大丈夫|間違いありません|合っています|確認しました)/;
@@ -24,17 +30,22 @@ export function respond(input, previous = {}) {
   if (/使い方|どうすれば|何て言えば|何を話せば|ヘルプ/.test(text)) return answer('chatHelp');
   if (/さようなら|さよなら|失礼します|帰ります|またね|バイバイ/.test(text)) return answer('chatBye', 'done');
   if (/訂正|修正|間違え|名前.*違/.test(text)) {
+    if (/用件|用事|目的/.test(text)) { delete state.purpose; return answer('chatPurpose','purpose'); }
     if (/担当|相手|宛先/.test(text)) { delete state.recipient; return answer('chatRecipient','recipient'); }
     if (/名前|自分|私|わたし/.test(text)) { delete state.visitor; return answer('chatVisitorName','visitorName'); }
     return answer('chatCorrection', 'correction');
   }
   if (state.step === 'correction') {
+    if (/用件|用事|目的/.test(text)) { delete state.purpose; return answer('chatPurpose','purpose'); }
     if (/担当|相手|宛先/.test(text)) { delete state.recipient; return answer('chatRecipient', 'recipient'); }
     if (/名前|自分|私|わたし/.test(text)) { delete state.visitor; return answer('chatVisitorName', 'visitorName'); }
     return answer('chatCorrection', 'correction');
   }
   if (state.step === 'confirm' && no.test(text)) return answer('chatCorrection', 'correction');
-  if (state.step === 'confirm' && yes.test(text) && state.recipient && state.visitor) return answer(state.recipient === '総務担当者' ? 'chatGeneralComplete' : 'chatReceived', 'done');
+  if (state.step === 'confirm' && yes.test(text)) {
+    if (!state.recipient || !state.visitor || !state.purpose) return next();
+    return answer(state.recipient === '総務担当者' ? 'chatGeneralComplete' : 'chatReceived', 'done');
+  }
   if (/ありがとう|助かりま/.test(text)) return answer('chatThanks');
   if (/どんな会社|何の会社|会社.*(教え|案内|事業)|事業内容|通信設備|防犯カメラ/.test(text) && !/相談|打ち合わせ/.test(text)) return answer('chatCompany');
   if (/あなた.*(誰|名前)|君.*誰|自己紹介|つなぐ.*(何|誰)|何ができ/.test(text)) return answer('chatIdentity');
@@ -45,21 +56,23 @@ export function respond(input, previous = {}) {
     if (anyone.test(text) || /^(はい|いいえ)[。!！\s]*$/.test(text) || /[?？]$/.test(text)) return answer('chatVisitorName');
     state.visitor = clean(text.replace(/^(私の名前は|わたしの名前は|名前は|私は|わたしは)/, '').replace(/(と申します|です)[。!！\s]*$/, ''));
     if (!state.visitor) return answer('chatVisitorName');
-    return state.recipient ? answer('chatConfirm', 'confirm') : answer('chatRecipient','recipient');
+    return next();
+  }
+  if (state.role === 'employee' && /^(特に|とくに)?(用事は|用件は|何も)?(ありません|ないです|ない)[。!！\s]*$/.test(text)) return answer('chatNoPurpose','finished');
+  if (state.step === 'purpose') {
+    if (/^(はい|いいえ)[。!！\s]*$/.test(text)) return answer('chatPurpose');
+    state.purpose = clean(text); return next();
   }
   if (state.step === 'recipient' || anyone.test(text)) {
     if (anyone.test(text) || /^(わかりません|分かりません|特にない|不明)/.test(text)) state.recipient = '総務担当者';
     else if (/^(はい|いいえ)[。!！\s]*$/.test(text) || /[?？]$/.test(text)) return answer('chatRecipient', 'recipient');
     else state.recipient = clean(text.replace(/^(担当者は|宛先は)/, '').replace(/(に会いたいです|に会いたい|に会いに来ました|をお願いします|お願いします|です)[。!！\s]*$/, ''));
-    if (state.visitor) return answer(state.recipient === '総務担当者' ? 'chatGeneralConfirm' : 'chatConfirm', 'confirm');
-    return answer(state.recipient === '総務担当者' ? 'chatGeneral' : 'chatVisitorName', 'visitorName');
+    return next(state.recipient === '総務担当者');
   }
   if (/配達|配送|荷物|宅配|お届け|ヤマト|佐川|郵便/.test(text)) { state.role = 'delivery'; state.purpose = '荷物のお届け'; return answer('chatDelivery', 'recipient'); }
   if (/ただいま|社員です|出社/.test(text)) { state.role = 'employee'; return answer('chatEmployee', 'purpose'); }
-  if (state.role === 'employee' && /^(特に|とくに)?(用事は|用件は|何も)?(ありません|ないです|ない)[。!！\s]*$/.test(text)) return answer('chatNoPurpose','finished');
-  if (state.step === 'purpose') { if (/^(はい|いいえ)[。!！\s]*$/.test(text)) return answer('chatPurpose'); state.purpose = clean(text); return answer('chatRecipient', 'recipient'); }
   const directRecipient = text.match(/^(.{1,40}?(?:さん|様|さま|担当))(?:を|に)?(?:お願いします|お願いできますか|呼んでください|呼んでもらえますか|に会いたいです)[。!！\s]*$/);
-  if (directRecipient) { state.recipient = directRecipient[1]; return answer(state.visitor ? 'chatConfirm' : 'chatVisitorName', state.visitor ? 'confirm' : 'visitorName'); }
+  if (directRecipient) { state.recipient = directRecipient[1]; return next(); }
   if (/と申します|^(私の名前は|名前は)|^[一-龯々]{1,8}です[。！!\s]*$/.test(text) && !/面会|訪問|営業|商談|点検|修理|打合|相談|資料|書類/.test(text)) {
     state.visitor = clean(text.replace(/^(私の名前は|名前は)/, '').replace(/(と申します|です)[。!！\s]*$/, ''));
     return answer('chatPurpose', 'purpose');
@@ -67,7 +80,7 @@ export function respond(input, previous = {}) {
   if (/担当|取次|取り次|会いた|会いに|打ち合わせ|打合せ|アポ|約束|予約|相談|お客|訪問|面会|商談|ミーティング|営業|修理|点検|資料|書類/.test(text)) {
     state.role = 'guest'; state.purpose = clean(text);
     const match = text.match(/^(.{1,40}?さん)に(?:会い|会う)/);
-    if (match) { state.recipient = clean(match[1]); return answer(state.visitor ? 'chatConfirm' : 'chatVisitorName', state.visitor ? 'confirm' : 'visitorName'); }
+    if (match) { state.recipient = clean(match[1]); return next(); }
     return answer('chatRecipient', 'recipient');
   }
   if (state.step === 'confirm') return answer('chatConfirm', 'confirm');

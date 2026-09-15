@@ -7,7 +7,7 @@ test('general affairs variants give the requested phrase both before and after l
  for(const input of ['誰でもいいです','だれでも大丈夫です','どなたでも構いません','お任せします','担当者が分かりません']) {
    const result=respond(input,{step:'recipient'});assert.equal(result.key,'chatGeneral');assert.equal(result.state.recipient,'総務担当者');
    assert.ok(lines[result.key].startsWith('では、総務担当者をお呼びいたしますね。'));
-   const known=respond(input,{step:'recipient',visitor:'山田太郎'});assert.equal(known.key,'chatGeneralConfirm');assert.equal(known.state.visitor,'山田太郎');
+   const known=respond(input,{step:'recipient',visitor:'山田太郎'});assert.equal(known.key,'chatGeneralPurpose');assert.equal(known.state.visitor,'山田太郎');
    assert.ok(lines[known.key].startsWith('では、総務担当者をお呼びいたしますね。'));
  }
 });

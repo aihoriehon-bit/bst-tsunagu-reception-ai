@@ -1,12 +1,12 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { EXTRA_SPEECH } from "../wide-desk/additional-speech.js?v=20260909-conversation-1";
-import { createVisitorRecognition } from "./visitor-recognition.js?v=20260915-guided-sequence-1";
+import { createVisitorRecognition } from "./visitor-recognition.js?v=20260915-group-names-1";
 import { createPersonDetector, createBodyConfirmation } from "./person-presence.mjs?v=20260915-detection-box-1";
 import { CAMERA_CONSTRAINTS, createDetectionLoop } from "./face-detection.mjs?v=20260915-auto-region-1";
-import { receptionPlan } from "./visitor-matching.mjs?v=20260909-2";
+import { receptionPlan } from "./visitor-matching.mjs?v=20260915-group-names-1";
 import { nameLine, cancelNameVoice, speakDeviceName } from "./name-voice.js?v=20260911-devicevoice-1";
-import { createConversation, DIALOGUE_LINES } from "./automatic-conversation.js?v=20260915-guest-recipient-2";
+import { createConversation, DIALOGUE_LINES } from "./automatic-conversation.js?v=20260915-group-names-1";
 
 const MODEL_URL = "../blender/tsunagu-reception-actions-20260826.glb?v=20260831-pc-gaze-1";
 const MODEL_FRONT_Y = -Math.PI / 2 + 0.03;
@@ -66,7 +66,7 @@ const FACE_PART_URLS = {
   mouthWideOpen: "../assets/face-parts/mouth-wide-open.png",
 };
 
-const SPEECH_AUDIO_VERSION = "20260915-guest-recipient-2";
+const SPEECH_AUDIO_VERSION = "20260915-group-names-1";
 const SPEECH_LINES = {
   welcome: {
     text: "いらっしゃいませ。こちらでご用件をお伺いいたします。",
@@ -1090,8 +1090,8 @@ function updateSensorBehavior() {
 function updateAutomaticSpeech(now) {
   if (!soundEnabled || speechBusy || greetingPending || document.hidden) return;
   // A distant arrival can be identified later in the same visit, not just its first 20 seconds.
-  const lateIdentity = visitorRecognition.current();
-  if (sensorAttending && !testVisitorUntil && currentReceptionPlan && !currentReceptionPlan.identity && lateIdentity?.source === 'face' && conversation.canAnnounceName !== false) {
+  const lateIdentity = recognizedVisitors().find(p => !(currentReceptionPlan?.namedIds || []).includes(p.id || p.name));
+  if (sensorAttending && !testVisitorUntil && currentReceptionPlan && lateIdentity?.source === 'face' && conversation.canAnnounceName !== false) {
     announceRecognizedName(lateIdentity);
     return;
   }
@@ -1107,20 +1107,45 @@ function updateAutomaticSpeech(now) {
   }
 }
 
+function recognizedVisitors() {
+  return visitorRecognition.currentAll?.() || [visitorRecognition.current()].filter(p => p?.source === 'face');
+}
+function recognizedPersonPresent(person) {
+  return recognizedVisitors().some(p => (p.id || p.name) === (person.id || person.name));
+}
 async function announceRecognizedName(person) {
   const ownSequence = sequenceId, previousPlan = currentReceptionPlan;
+  let playbackStarted = false;
   greetingPending = true;
   try {
     let line = null;
     try { line = await nameLine(person); } catch (error) { speechStatusElement.textContent = error.message; }
-    if (sequenceId !== ownSequence || !sensorAttending || !isSensorVisitorPresent() || visitorRecognition.paused || document.hidden || visitorRecognition.current()?.id !== person.id || conversation.canAnnounceName === false) return;
-    currentReceptionPlan = receptionPlan(person, timeSpeechKey());
+    if (sequenceId !== ownSequence || !sensorAttending || !isSensorVisitorPresent() || visitorRecognition.paused || document.hidden || !recognizedPersonPresent(person) || conversation.canAnnounceName === false) return;
+    const namedIds = [...(currentReceptionPlan?.namedIds || []), person.id || person.name];
+    if (!currentReceptionPlan.identity) currentReceptionPlan = receptionPlan(person, timeSpeechKey());
+    currentReceptionPlan.namedIds = namedIds;
     if (line && soundEnabled) {
       SPEECH_LINES.registeredName = line;
-      speakLine('registeredName', null, { onFinish() { greetingPending = false; }, onFailure() { greetingPending = false; } });
+      const followUp = person.role === 'employee' ? 'chatRecognizedEmployee'
+        : person.role === 'delivery' ? 'chatRecognizedDelivery' : 'chatRecognizedGuest';
+      const nameSequence = sequenceId + 1;
+      playbackStarted = true;
+      speakLine('registeredName', null, {
+        onFinish() {
+          if (sequenceId !== nameSequence) return;
+          if (!soundEnabled || !sensorAttending || !isSensorVisitorPresent() || visitorRecognition.paused || document.hidden || !recognizedPersonPresent(person)) {
+            greetingPending = false; return;
+          }
+          // Acknowledge the person without restarting or re-questioning the ongoing reception.
+          const followUpSequence = sequenceId + 1;
+          const finish = () => { if (sequenceId === followUpSequence) greetingPending = false; };
+          speakLine(followUp, null, { onFinish: finish, onFailure: finish });
+        },
+        onFailure() { if (sequenceId === nameSequence) greetingPending = false; },
+      });
     }
   } finally {
-    if (sequenceId === ownSequence || currentReceptionPlan === previousPlan) greetingPending = false;
+    if (!playbackStarted && (sequenceId === ownSequence || currentReceptionPlan === previousPlan)) greetingPending = false;
   }
 }
 
@@ -1160,11 +1185,28 @@ async function beginSensorGreeting() {
       }
     }
     if (sequenceId !== ownSequence || !sensorAttending || !isSensorVisitorPresent() || visitorRecognition.paused || conversation.active) return;
-    if (identity.id && visitorRecognition.current()?.id !== identity.id) {
+    if (identity.id && !recognizedPersonPresent(identity)) {
       currentReceptionPlan = receptionPlan(null, timeSpeechKey());
       line = null;
     }
     SPEECH_LINES.registeredName = line;
+    if (line) currentReceptionPlan.greetingPeople = { registeredName: identity };
+    // Announce other confirmed faces before the shared greeting and microphone turn.
+    const companions = recognizedVisitors().filter(p => (p.id || p.name) !== (identity.id || identity.name));
+    let groupIndex = 0;
+    for (const person of companions) {
+      let companionLine;
+      try { companionLine = await nameLine(person); } catch { continue; }
+      if (sequenceId !== ownSequence || !sensorAttending || !isSensorVisitorPresent() || visitorRecognition.paused || conversation.active) return;
+      if (!recognizedPersonPresent(person)) continue;
+      currentReceptionPlan.namedIds.push(person.id || person.name);
+      if (!companionLine) continue;
+      const key = `registeredNameGroup${groupIndex++}`;
+      SPEECH_LINES[key] = companionLine;
+      currentReceptionPlan.greetingPeople ||= {};
+      currentReceptionPlan.greetingPeople[key] = person;
+      currentReceptionPlan.greeting.splice(currentReceptionPlan.greeting.length-1,0,key);
+    }
   }
   pendingTestSpeechKey = null;
   visitorStatusElement.textContent = currentReceptionPlan.role === "employee" ? "社員へご挨拶中"
@@ -1175,6 +1217,8 @@ async function beginSensorGreeting() {
 function playReceptionGreeting(index) {
   const key = currentReceptionPlan?.greeting[index];
   if (!key) { greetingPending = false; conversation.beginReception(currentReceptionPlan?.role, currentReceptionPlan?.identity); return; }
+  const person = currentReceptionPlan.greetingPeople?.[key];
+  if (person && !recognizedPersonPresent(person)) { playReceptionGreeting(index+1); return; }
   currentVisitorSpeechKey = key;
   const expectedSequence = sequenceId + 1;
   speakLine(key, null, {
@@ -1185,7 +1229,7 @@ function playReceptionGreeting(index) {
     },
     onFailure: () => {
       if (sequenceId !== expectedSequence) return;
-      if (key === "registeredName" && sensorAttending && isSensorVisitorPresent() && soundEnabled) playReceptionGreeting(index + 1);
+      if (key.startsWith("registeredName") && sensorAttending && isSensorVisitorPresent() && soundEnabled) playReceptionGreeting(index + 1);
       else greetingPending = false;
     },
   });

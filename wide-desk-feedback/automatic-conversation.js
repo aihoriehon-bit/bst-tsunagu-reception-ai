@@ -1,7 +1,8 @@
-import { respond, initialReceptionState } from './dialogue.mjs?v=20260915-guest-recipient-1';
+import { respond, initialReceptionState } from './dialogue.mjs?v=20260915-purpose-1';
 import { createHandsfree } from './handsfree.mjs?v=20260911-distance-1';
 import { conversationCue } from './conversation-cue.mjs?v=20260909-6';
-const texts = await fetch(new URL('./dialogue-lines.json?v=20260915-guest-recipient-2', import.meta.url)).then(r => {
+import { createReceptionCard } from './reception-card.mjs';
+const texts = await fetch(new URL('./dialogue-lines.json?v=20260915-purpose-1', import.meta.url)).then(r => {
   if (!r.ok) throw new Error('会話の台本を読み込めません');
   return r.json();
 });
@@ -16,6 +17,8 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
   let issue = '';
   let voiceActivityAt = 0;
   let visitorSpeaking = false;
+  let completed = false;
+  const confirmation = createReceptionCard();
   try { enabled = localStorage.getItem(PREF) === 'true'; } catch { /* optional preference */ }
   const panel = document.createElement('section'); panel.className = 'conversation handsfree-conversation';
   panel.setAttribute('aria-label', '音声会話');
@@ -33,7 +36,8 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
   document.body.append(panel);
   const q = s => panel.querySelector(s), log = q('.conversation-log'), status = q('.conversation-status'), input = q('input');
   function renderReception() {
-    const labels = { recipient: 'お取次ぎ先をお答えください（例：山田太郎さん／誰でもいい）', visitorName: 'あなたのお名前をお答えください', purpose: 'ご用件をお答えください', confirm: '内容は合っていますか？「はい」または「訂正」', correction: '「自分の名前」または「担当者」とお答えください', done: '受付完了（確認用デモ）', cancelled: '今回の受付を取り消しました', finished: 'ご用件がありましたらお声がけください' };
+    if (!completed) confirmation.show(state);
+    const labels = { recipient: 'お取次ぎ先をお答えください（例：山田太郎さん／誰でもいい）', visitorName: 'あなたのお名前をお答えください', purpose: 'ご用件をお答えください', confirm: '内容は合っていますか？「はい」または「訂正」', correction: '「自分の名前」「担当者」「用件」とお答えください', done: '受付完了（確認用デモ）', cancelled: '今回の受付を取り消しました', finished: 'ご用件がありましたらお声がけください' };
     const prompt = q('[data-question]'); prompt.textContent = labels[state.step] || ''; prompt.hidden = !prompt.textContent;
     const summary = q('[data-reception-summary]'); summary.replaceChildren();
     for (const [label, value] of [['お取次ぎ先', state.recipient], ['お名前', state.visitor], ['ご用件', state.purpose]]) {
@@ -44,6 +48,11 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
     if (state.step === 'done') { const note = document.createElement('p'); note.textContent = '実際の電話・通知は送信していません。受付スタッフへお声がけください。'; summary.append(note); summary.hidden = false; }
   }
   function renderCue() {
+    confirmation.setSpeaking(speaking);
+    if (completed) {
+      panel.dataset.turn = 'waiting'; q('.turn-label').textContent = 'デモ終了';
+      status.textContent = '受付デモが終了しました'; q('.turn-detail').textContent = 'ご協力ありがとうございました。'; return;
+    }
     const cue = conversationCue({ speaking, enabled, supported: Boolean(Recognition), audible, active, present, visible: !document.hidden, micStatus, issue });
     panel.dataset.turn = cue.mode;
     // Avoid repeated live-region announcements when the cue has not changed.
@@ -66,8 +75,8 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
     }
   } });
   function sync() {
-    listener.update({ enabled, active, present, speaking, audible, visible: !document.hidden });
-    input.disabled = !active || !present; q('form button').disabled = !active || !present;
+    listener.update({ enabled, active: active && !completed, present, speaking, audible, visible: !document.hidden });
+    input.disabled = !active || !present || completed; q('form button').disabled = !active || !present || completed;
     q('[data-disable]').hidden = !enabled || !Recognition;
     q('[data-enable]').hidden = !Recognition || (enabled && !listener.blocked);
     q('[data-setup]').hidden = enabled;
@@ -75,10 +84,14 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
   }
   function submit(text) {
     text = String(text).trim().slice(0, 300);
-    if (!text || !active || !present || !available() || document.hidden) return;
+    if (!text || !active || !present || completed || !available() || document.hidden) return;
     voiceActivityAt = Date.now();
     issue = ''; speaking = true; sync(); onInterrupt(); input.value = ''; append('あなた', text);
-    const result = respond(text, state); state = result.state; renderReception();
+    const result = respond(text, state);
+    if (state.step === 'confirm' && ['chatReceived', 'chatGeneralComplete'].includes(result.key)) {
+      completed = true; result.key = 'chatDemoComplete'; confirmation.complete();
+    }
+    state = result.state; renderReception(); sync();
     const own = ++epoch; append('つなぐ', texts[result.key]);
     onSpeak(result.key, () => {
       if (own !== epoch || !active) return;
@@ -90,7 +103,7 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
     });
   }
   function close() {
-    active = false; epoch++; state = {}; speaking = false; issue = ''; listener.update({ active: false });
+    active = false; epoch++; state = {}; speaking = false; completed = false; confirmation.clear(); issue = ''; listener.update({ active: false });
     log.replaceChildren(); input.value = ''; renderReception(); sync();
   }
   q('[data-enable]').addEventListener('click', async () => {
@@ -116,7 +129,7 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, availa
   sync();
   return {
     get active() { return active; },
-    get canAnnounceName() { return !speaking && !visitorSpeaking && micStatus !== 'processing' && !input.value.trim() && Date.now() - voiceActivityAt > 4000; },
+    get canAnnounceName() { return !completed && !speaking && !visitorSpeaking && micStatus !== 'processing' && !input.value.trim() && Date.now() - voiceActivityAt > 4000; },
     close,
     beginReception(role, identity) { if (!active) { state = initialReceptionState(role, identity); log.replaceChildren(); renderReception(); } active = true; speaking = false; sync(); },
     setPresence(value) { if (present !== value) { present = value; sync(); } },

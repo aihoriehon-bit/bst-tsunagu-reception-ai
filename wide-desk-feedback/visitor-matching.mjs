@@ -63,6 +63,7 @@ export function receptionPlan(person, defaultKey, demoKey = null) {
   return {
     role,
     identity: named ? person : null,
+    namedIds: named ? [person.id || person.name] : [],
     // Registered guests already have a complete greeting; do not ask their purpose twice.
     greeting: named ? ['registeredName', greeting] : !person && !demoKey ? ['welcome', greeting] : [greeting],
     idle: role === 'guest' ? ['idleRequest', 'idleServices', 'idleAppointment'] : [],
