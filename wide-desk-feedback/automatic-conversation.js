@@ -1,7 +1,7 @@
 import { respond, initialReceptionState } from './dialogue.mjs?v=20260915-guest-recipient-1';
 import { createHandsfree } from './handsfree.mjs?v=20260911-distance-1';
 import { conversationCue } from './conversation-cue.mjs?v=20260909-6';
-const texts = await fetch(new URL('./dialogue-lines.json?v=20260915-guest-recipient-1', import.meta.url)).then(r => {
+const texts = await fetch(new URL('./dialogue-lines.json?v=20260915-guest-recipient-2', import.meta.url)).then(r => {
   if (!r.ok) throw new Error('会話の台本を読み込めません');
   return r.json();
 });
