@@ -1,0 +1,39 @@
+/* Loaded by the comparison page only. The production stylesheet is untouched. */
+.guided-choices {position:fixed;right:20px;bottom:32px;z-index:125;width:min(430px,calc(100vw - 32px));max-height:calc(100dvh - 170px);overflow:auto;padding:18px;border:2px solid #7aafb4;border-radius:22px;background:rgba(248,253,253,.97);box-shadow:0 12px 38px #14363c33;color:#204c53;box-sizing:border-box;}
+.guided-choices[hidden] {display:none;}
+.guided-kicker {font-size:12px;color:#587a80;margin:0 0 6px;}
+.guided-choices h2 {font-size:clamp(19px,2vw,25px);line-height:1.4;margin:0 0 8px;}
+.guided-hint {font-size:13px;line-height:1.5;margin:0 0 12px;}
+.guided-options {display:grid;gap:9px;}
+.guided-choices button {font:inherit;cursor:pointer;border:1px solid #acc9cc;background:#f0f8f8;color:#204c53;border-radius:12px;min-height:46px;padding:10px 13px;}
+.guided-options button {display:flex;align-items:center;gap:12px;text-align:left;font-size:17px;font-weight:700;}
+.guided-options button:hover,.guided-options button:focus-visible {background:#d7f1eb;border-color:#128775;}
+.guided-number {display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:50%;background:#14767d;color:white;}
+.guided-navigation {display:flex;flex-wrap:wrap;gap:8px;margin-top:13px;}
+.guided-navigation button {font-size:13px;min-height:38px;}
+.guided-choices form {margin:12px 0;}
+.guided-choices form[hidden] {display:none;}
+.guided-choices form label {font-size:14px;display:block;margin-bottom:5px;}
+.guided-choices form>div {display:flex;gap:7px;}
+.guided-choices input {min-width:0;flex:1;font:inherit;padding:10px;border:1px solid #90b8be;border-radius:10px;}
+.guided-cue .turn-indicator.is-in-card {position:relative;left:auto;bottom:auto;transform:none;width:100%;min-height:0;box-sizing:border-box;margin:0 0 12px;padding:10px;gap:10px;}
+.guided-cue .turn-orb {width:40px;height:40px;flex-basis:40px;}
+.guided-cue .turn-orb-core {width:34px;height:34px;}
+.guided-cue .turn-orb svg {width:22px;height:22px;}
+.guided-cue .turn-indicator strong {font-size:16px;}
+.guided-cue .turn-indicator p,.guided-cue .turn-meter-caption {display:none;}
+.guided-cue .turn-indicator-label {font-size:11px;}
+@media (max-width:950px) {
+  .guided-choices {right:14px;bottom:125px;width:min(410px,calc(100vw - 28px));max-height:calc(100dvh - 270px);padding:13px;}
+  .handsfree-conversation.adjustable-conversation {max-height:105px!important;width:calc(100vw - 28px)!important;}
+  .handsfree-conversation .conversation-panel-content {max-height:none;overflow:auto;padding:4px 8px;}
+  .handsfree-conversation .conversation-note,.handsfree-conversation .reception-question,
+  .handsfree-conversation .reception-summary,.handsfree-conversation .turn-cue,
+  .handsfree-conversation details {display:none;}
+  .handsfree-conversation .handsfree-summary {margin:0;padding:2px 8px;}
+}
+@media (max-height:650px) and (min-width:951px) {
+  .guided-choices {bottom:16px;max-height:calc(100dvh - 150px);padding:12px;}
+  .guided-options {gap:6px;}
+  .guided-options button {padding:7px 10px;min-height:42px;}
+}

@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
-test('comparison and approved main entry both use the latest feedback runtime', () => {
+test('comparison uses isolated guided runtime; approved main entry stays unchanged', () => {
   const root = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const preview = readFileSync(new URL('../wide-desk-preview/index.html', import.meta.url), 'utf8');
-  assert.match(preview, /src="\.\.\/wide-desk-feedback\/app.js/);
+  assert.match(preview, /src="\.\.\/wide-desk-feedback\/guided-app.js/);
   assert.match(root, /src="\.\.\/wide-desk-feedback\/app.js\?v=20260915-mobile-audio-1"/);
   assert.match(root, /href="\.\.\/wide-desk-feedback\/preview.css\?v=20260915-mobile-audio-1"/);
 });
