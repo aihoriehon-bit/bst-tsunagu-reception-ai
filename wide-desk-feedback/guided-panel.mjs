@@ -1,10 +1,10 @@
-import { choicesFor } from './guided-dialogue.mjs?v=20260917-choices-1';
+import { choicesFor } from './guided-dialogue.mjs?v=20260921-kiosk-1';
 
 export function createChoicePanel({ onAnswer }) {
   const panel=document.createElement('section');
   panel.className='guided-choices';panel.hidden=true;
   panel.setAttribute('aria-label','番号で進める受付');
-  panel.innerHTML='<div class="guided-cue"></div><p class="guided-kicker">選択式の受付・確認用デモ</p><h2></h2><p class="guided-hint"></p><div class="guided-options"></div><form hidden><label></label><div><input maxlength="80" autocomplete="off"><button type="submit">送信</button></div></form><div class="guided-navigation"></div>';
+  panel.innerHTML='<div class="guided-cue"></div><p class="guided-kicker">番号で進める受付・確認用デモ</p><h2></h2><p class="guided-hint"></p><p class="guided-sample" hidden>部署・担当者は動作確認用の仮の名簿です。</p><p class="guided-field-value" hidden></p><div class="guided-options"></div><p class="guided-heard" role="status"></p><div class="guided-navigation"></div>';
   document.body.append(panel);
   const q=s=>panel.querySelector(s);
   let state={}, enabled=false, signature='';
@@ -15,37 +15,35 @@ export function createChoicePanel({ onAnswer }) {
     const text=document.createElement('span');text.textContent=label;el.append(text);
     el.addEventListener('click',()=>send(value));host.append(el);
   }
-  q('form').addEventListener('submit',e=>{e.preventDefault();const input=q('input');if(!enabled||!input.value.trim())return;const value=input.value;input.value='';send(value);});
-  q('input').id='guidedTextInput';q('label').htmlFor='guidedTextInput';
   return {
     get cueHost(){return panel.hidden?null:q('.guided-cue');},
-    get hasText(){return Boolean(q('input').value.trim());},
+    get hasText(){return false;},
+    setHeard(text,interim=false){q('.guided-heard').textContent=text?`${interim?'聞き取り中':'直前の聞き取り'}：${String(text).slice(0,100)}`:'';},
     show(value) {
       state=value;
-      const info=choicesFor(state), nextSignature=JSON.stringify([state.step,state.role,Boolean(state.history?.length)]);
+      const info=choicesFor(state), nextSignature=JSON.stringify([state.step,state.role,state.departmentId,state.page,info.value,Boolean(state.history?.length)]);
       if(signature!==nextSignature){
         signature=nextSignature;q('h2').textContent=info.title;
         q('.guided-options').replaceChildren();q('.guided-navigation').replaceChildren();
-        info.options.forEach((item,index)=>button(item.label,item.value,q('.guided-options'),index+1));
-        q('form').hidden=!info.input;q('input').value='';q('label').textContent=state.step==='purpose'?'文字でご用件を入力':'文字でお名前を入力';
-        q('input').placeholder=state.step==='purpose'?'例：設備の相談です':'例：やまだたろう';
-        if(info.general)button('分からない・総務へ','総務',q('.guided-navigation'));
-        if(state.history?.length)button('戻る','戻る',q('.guided-navigation'));
-        button('もう一度聞く','もう一度',q('.guided-navigation'));
+        info.options.forEach(item=>button(item.label,item.value,q('.guided-options'),item.value));
+        q('.guided-sample').hidden=!info.sample;
+        q('.guided-field-value').hidden=!info.value;q('.guided-field-value').textContent=info.value||'';
+        if(state.history?.length)button('9 戻る','9',q('.guided-navigation'));
+        button('0 もう一度聞く','0',q('.guided-navigation'));
       }
     },
     setEnabled(value,speaking) {
       enabled=value;
       panel.hidden=!enabled || ['confirm','done','cancelled','finished'].includes(state.step) || !state.step;
-      panel.querySelectorAll('button,input').forEach(el=>{el.disabled=!enabled;});
+      panel.querySelectorAll('button').forEach(el=>{el.disabled=!enabled;});
       // Buttons remain available during the guide; speech waits for listening.
-      q('.guided-hint').textContent=speaking?'案内中です。ボタンは今すぐ選べます。音声は緑のマイクが出てからお答えください。':choicesFor(state).input?'音声または文字でお答えください。':'番号を話すか、ボタンを押してください。';
+      q('.guided-hint').textContent=speaking?'案内中です。音声は緑のマイクのあとにお願いします。':choicesFor(state).voiceField?'緑のマイクが出たら、ゆっくりお話しください。':'番号を話すか、ボタンを押してください。';
     },
     setCue(cue){
       panel.dataset.turn=cue.mode;
       q('.guided-hint').textContent=cue.mode==='speaking'?'案内中です。ボタンは今すぐ選べます。音声は緑のマイクが出てからお答えください。'
-        :cue.mode==='listening'?(choicesFor(state).input?'音声または文字でお答えください。':'番号を話すか、ボタンを押してください。')
-        :'音声の準備ができていなくても、ボタンや文字入力で進められます。';
+        :cue.mode==='listening'?(choicesFor(state).voiceField?'会社名・お名前は声でお伝えください。':'番号を話すか、ボタンを押してください。')
+        :choicesFor(state).voiceField?'会社名・お名前はマイクが必要です。マイクを許可・再接続してください。':'マイクの準備前でもボタンで選べます。';
     },
     hide(){panel.hidden=true;enabled=false;signature='';},
   };

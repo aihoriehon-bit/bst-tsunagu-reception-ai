@@ -19,7 +19,8 @@ def main():
     for key, text in lines.items():
         if sys.argv[1:] and key not in sys.argv[1:]:
             continue
-        spoken = generator.spoken_text(text).replace('弊社', 'へいしゃ').replace('納品', 'のうひん').replace('宛先', 'あてさき').replace('お届け物', 'おとどけもの').replace('1番', 'いちばん').replace('2番', 'にばん').replace('3番', 'さんばん').replace('4番', 'よんばん')
+        spoken = generator.spoken_text(text).replace('弊社', 'へいしゃ').replace('納品', 'のうひん').replace('宛先', 'あてさき').replace('お届け物', 'おとどけもの').replace('1番', 'いちばん').replace('2番', 'にばん').replace('3番', 'さんばん').replace('4番', 'よんばん').replace('5番', 'ごばん').replace('6番', 'ろくばん').replace('7番', 'ななばん')
+        spoken = spoken.replace('会社名なし', 'かいしゃめいなし').replace('会社名', 'かいしゃめい')
         query = json.loads(generator.request('/audio_query?' + generator.urllib.parse.urlencode({'speaker': style, 'text': spoken}), b''))
         query.update(speedScale=1.05, outputSamplingRate=24000, outputStereo=False)
         audio = generator.request('/synthesis?speaker=' + str(style), json.dumps(query).encode())

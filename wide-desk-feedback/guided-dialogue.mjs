@@ -1,152 +1,153 @@
-// Comparison-only, bounded choices. Never infer an appointment or send a call.
-import { respond as legacyRespond } from './dialogue.mjs?v=20260915-short-call-1';
 import { receptionPlan as originalPlan } from './visitor-matching.mjs?v=20260915-group-names-1';
-
-export const GUIDED_TEXTS = {
-  guideRoute: 'ご用件を番号でお選びください。1番、弊社スタッフとお約束。2番、宅急便や納品など。3番、お約束なしのご来訪。画面のボタンでも選べます。',
-  guideRecipientChoice: 'お呼びする担当者について、1番、名前を伝える。2番、担当者が分からないので総務に取り次ぐ。どちらでしょうか？',
-  guideDeliveryType: 'お届けの種類をお選びください。1番、宅急便や郵便。2番、商品の納品。3番、その他のお届け物。',
-  guideDeliveryRecipientChoice: 'お荷物の宛先について、1番、宛先の名前を伝える。2番、宛先が分からないので総務に取り次ぐ。どちらでしょうか？',
-  guideRecipientName: '担当者のお名前をお話しください。画面から文字でも入力できます。分からない場合は、総務を選んでください。',
-  guideDeliveryName: 'お荷物の宛先のお名前をお話しください。画面から文字でも入力できます。分からない場合は、総務を選んでください。',
-  guideVisitorName: 'お越しになった、あなたのお名前をお願いします。画面から文字でも入力できます。',
-  guidePurpose: 'ご用件をお選びください。1番、打ち合わせや面会。2番、ご相談。3番、営業のご案内。4番、その他。',
-  guidePurposeDetail: 'ご用件を簡単にお話しください。文字でも入力できます。',
-  guideCorrection: '訂正する項目をお選びください。1番、来訪の種類。2番、担当者や宛先。3番、ご自身のお名前。4番、ご用件。',
-  guideDeliveryCorrection: '訂正する項目をお選びください。1番、来訪の種類。2番、お荷物の宛先。3番、お届けの種類。',
-  guideEmployee: 'お取り次ぎは必要でしょうか？1番、受付を利用する。2番、必要ありません。',
-  guideGeneral: 'では、総務担当者をお呼びいたしますね。',
+import { DIRECTORY, departmentById, directoryPage, PAGE_SIZE } from './guided-directory.mjs?v=20260921-kiosk-1';
+import { spokenNumber } from './guided-speech-input.mjs?v=20260921-kiosk-1';
+export { spokenNumber };
+const c=(label,value)=>({label,value:String(value)});
+const pageOptions=(items,page,format)=>[
+  ...directoryPage(items,page).map((item,i)=>c(format(item),i+1)),
+  ...(items.length>(page+1)*PAGE_SIZE?[c('次の候補',5)]:[]),...(page>0?[c('前の候補',6)]:[]),
+];
+const sample=DIRECTORY.sample?'（仮）':'';
+export const GUIDED_TEXTS={
+  guideRoute:'ご用件を番号でお答えください。1番、弊社スタッフとお約束。2番、宅急便や納品など。3番、お約束なしのご来訪。',
+  guideDeliveryType:'お届けの種類を番号でお答えください。1番、宅急便や郵便。2番、商品の納品。3番、その他のお届け物。',
+  guidePurpose:'ご用件を番号でお答えください。1番、打ち合わせや面会。2番、ご相談。3番、営業のご案内。4番、その他。',
+  guideCompany:'まず、お越しになった方の会社名だけをお話しください。個人でお越しの場合は、個人です、とお答えください。',
+  guideCompanyCheck:'画面の会社名で合っていますか？1番、合っています。2番、会社名を言い直す。3番、会社名なし、個人での来訪。',
+  guideName:'次に、あなたのお名前だけをお話しください。',
+  guideNameCheck:'画面のお名前で合っていますか？1番、合っています。2番、お名前を言い直す。',
+  guideConfirm:'受付内容をご確認ください。1番、受付を完了。2番、担当者を訂正。3番、会社名を訂正。4番、お名前を訂正。5番、ご用件を訂正。6番、来訪の種類を訂正。',
+  guideEmployee:'お取り次ぎは必要ですか？1番、受付を利用する。2番、必要ありません。',
+  guideGeneral:'では、総務担当者へのお取り次ぎで承ります。',
+  guideUnclear:'すみません、番号を一つに絞れませんでした。画面の番号を、もう一度お答えください。',
+  guideRetry:'すみません、うまく聞き取れませんでした。緑のマイクが表示されてから、もう一度お願いします。',
+  guideComplete:'受付内容を確認しました。ここまでが受付デモです。実際の呼び出しは行っていません。ご協力ありがとうございました。',
 };
-const choice = (label, value) => ({ label, value });
-export function choicesFor(state) {
-  const delivery = state.role === 'delivery';
-  switch (state.step) {
-    case 'route': return { key: 'guideRoute', title: 'ご用件をお選びください', options: [choice('弊社スタッフとお約束','1'),choice('宅急便や納品など','2'),choice('お約束なしの来訪','3')] };
-    case 'employee': return {key:'guideEmployee',title:'お取り次ぎは必要ですか？',options:[choice('受付を利用する','1'),choice('必要ありません','2')]};
-    case 'deliveryType': return {key:'guideDeliveryType',title:'お届けの種類をお選びください',options:[choice('宅急便・郵便','1'),choice('商品の納品','2'),choice('その他のお届け物','3')]};
-    case 'recipientChoice': return {key:delivery?'guideDeliveryRecipientChoice':'guideRecipientChoice', title:delivery?'お荷物の宛先は分かりますか？':'お呼びする担当者は分かりますか？', options:[choice(delivery?'宛先の名前を伝える':'担当者の名前を伝える','1'),choice('分からない・総務に取り次ぐ','2')]};
-    case 'recipient': return {key:delivery?'guideDeliveryName':'guideRecipientName',title:delivery?'宛先のお名前をお願いします':'担当者のお名前をお願いします',options:[],input:true,general:true};
-    case 'visitorName': return {key:'guideVisitorName',title:'あなたのお名前をお願いします',options:[],input:true};
-    case 'purposeChoice': return {key:'guidePurpose',title:'ご用件をお選びください',options:[choice('打ち合わせ・面会','1'),choice('ご相談','2'),choice('営業のご案内','3'),choice('その他','4')]};
-    case 'purpose': return {key:'guidePurposeDetail',title:'ご用件を簡単にお聞かせください',options:[],input:true};
-    case 'correction': return {key:delivery?'guideDeliveryCorrection':'guideCorrection',title:'訂正する項目をお選びください',options:delivery?[choice('来訪の種類','1'),choice('お荷物の宛先','2'),choice('お届けの種類','3')]:[choice('来訪の種類','1'),choice('担当者','2'),choice('ご自身のお名前','3'),choice('ご用件','4')]};
-    case 'confirm': return {key:delivery?'chatDeliveryConfirm':'chatConfirm',title:'受付内容をご確認ください',options:[]};
-    default: return {key:'guideRoute',title:'ご用件をお選びください',options:[]};
-  }
+for(let page=0;page<Math.ceil(DIRECTORY.departments.length/PAGE_SIZE);page++){
+  const options=pageOptions(DIRECTORY.departments,page,d=>d.reading);
+  GUIDED_TEXTS[`guideDepartment${page}`]='お呼びする部署を番号でお答えください。'+options.map(o=>`${o.value}番、${o.label}。`).join('')+'7番、部署が分からないので総務へ。';
 }
-export function initialReceptionState(role, identity) {
-  return {role:role || 'guest', step:role==='employee'?'employee':'route',
-    ...(identity?.source==='face' && identity.name ? {visitor:identity.name,recognizedName:identity.name} : {})};
+for(const d of DIRECTORY.departments)for(let page=0;page<Math.ceil(d.people.length/PAGE_SIZE);page++){
+  const options=pageOptions(d.people,page,p=>p.reading);
+  GUIDED_TEXTS[`guideStaff_${d.id}_${page}`]=`${d.reading}の担当者を番号でお答えください。`+options.map(o=>`${o.value}番、${o.label}。`).join('')+'7番、この部署のどなたでも。';
 }
-export function receptionPlan(person, defaultKey, demoKey) {
-  const plan = originalPlan(person, defaultKey, demoKey);
-  const greet = plan.role==='employee'?'chatRecognizedEmployee':plan.identity ? plan.role==='delivery'?'chatRecognizedDelivery':'chatRecognizedGuest':'welcome';
-  plan.greeting = [...(plan.identity?['registeredName']:[]),greet,plan.role==='employee'?'guideEmployee':'guideRoute'];
-  plan.idle = [];
-  return plan;
-}
-// Accept only a single, unambiguous selection; '1か2' must not select 1.
-export function spokenNumber(input) {
-  const text=String(input).normalize('NFKC').trim().replace(/[。！!、,？?\s]+$/,'');
-  const m=text.match(/^(?:えっと[、\s]*|えーと[、\s]*)?([1-4一二三四]|いち|に|さん|よん)(?:番(?:目)?|ばん)?(?:で(?:す|お願いします)?|です|をお願いします|お願いします)?$/);
-  return m ? ({一:1,二:2,三:3,四:4,いち:1,に:2,さん:3,よん:4}[m[1]] || Number(m[1])) : null;
-}
-const anyone = /^(?:誰でも(?:いい(?:です)?)?|だれでも(?:いい(?:です)?)?|分かりません|わかりません|総務(?:担当者)?(?:をお願いします)?)[。！!\s]*$/;
-const clean = text => text.replace(/[。！!\s]+$/,'').trim().slice(0,80);
-function next(state) {
-  if (!state.category) state.step='route';
-  else if (state.role==='delivery' && !state.purpose) state.step='deliveryType';
-  else if (!state.recipient) state.step='recipientChoice';
-  else if (state.role!=='delivery' && !state.visitor) state.step='visitorName';
-  else if (!state.purpose) state.step='purposeChoice';
-  else state.step='confirm';
-  return {key:choicesFor(state).key,state};
-}
-export function recognizeLateVisitor(previous, identity) {
-  if (identity?.source!=='face' || !identity.name || ['done','cancelled','confirm','correction','finished'].includes(previous.step)) return null;
-  const state={...previous, visitor:previous.visitor || identity.name, recognizedName:identity.name};
-  // Identification is not permission to discard an explicitly selected route.
-  if (!state.category && identity.role==='employee') {state.role='employee';state.step='employee';}
-  if (state.step==='visitorName') next(state);
-  return {state,key:identity.role==='employee'?'chatRecognizedEmployee':identity.role==='delivery'?'chatRecognizedDelivery':'chatRecognizedGuest'};
-}
-export const recognizeLateGuest = recognizeLateVisitor;
-export const recognizeLateEmployee = () => null;
-
-export function respond(input, previous={}) {
-  const text=String(input).normalize('NFKC').trim().slice(0,300);
-  let state={...previous};
-  state.step ||= 'route';
-  const reply=()=>({key:choicesFor(state).key,state});
-  const move=step=>{ state.step=step; return reply(); };
-  if (/^(最初から|やり直し|リセット|受付を開始)/.test(text)) return {key:'guideRoute',state:{role:'guest',visitor:state.recognizedName,recognizedName:state.recognizedName,step:'route'}};
-  if (/^(キャンセル|取り消し)/.test(text)) return {key:'chatCancel',state:{...state,step:'cancelled'}};
-  if (/^(もう一度|もう一回|聞こえない|使い方|ヘルプ|こんにちは|おはよう|こんばんは)/.test(text)) return reply();
-  if (/^(戻る|もどる|前に戻)/.test(text)) {
-    const history=state.history || [];
-    if (!history.length) return reply();
-    state={...history[history.length-1],history:history.slice(0,-1)}; return reply();
-  }
-  if (['done','cancelled','finished'].includes(state.step)) return {key:'chatNoPurpose',state};
-  const snapshot={...state}; delete snapshot.history;
-  const advance=result=>({ ...result, state:{...result.state,history:[...(previous.history||[]),snapshot].slice(-15)} });
-  let n=spokenNumber(text);
-  if (state.step==='confirm') {
-    if (/^(訂正|いいえ|違|ちが|修正)/.test(text)) return advance(move('correction'));
-    if (/^(はい|合っています|あっています|間違いありません|大丈夫です|お願いします)[。！!\s]*$/.test(text)) {
-      const result=legacyRespond('はい',state); return advance(result);
+export function choicesFor(s){
+  const o=(key,title,options,extra={})=>({key,title,options,...extra});
+  switch(s.step){
+    case 'employee':return o('guideEmployee','お取り次ぎは必要ですか？',[c('受付を利用する',1),c('必要ありません',2)]);
+    case 'deliveryType':return o('guideDeliveryType','お届けの種類をお選びください',[c('宅急便・郵便',1),c('商品の納品',2),c('その他のお届け物',3)]);
+    case 'purposeChoice':return o('guidePurpose','ご用件をお選びください',[c('打ち合わせ・面会',1),c('ご相談',2),c('営業のご案内',3),c('その他',4)]);
+    case 'department':return o(`guideDepartment${s.page||0}`,'お呼びする部署をお選びください',[...pageOptions(DIRECTORY.departments,s.page||0,d=>d.name+sample),c('分からない・総務へ',7)],{sample:DIRECTORY.sample});
+    case 'staff':{
+      const d=departmentById(s.departmentId);if(!d)return choicesFor({...s,step:'department',page:0});
+      return o(`guideStaff_${d.id}_${s.page||0}`,`${d.name}の担当者をお選びください`,[...pageOptions(d.people,s.page||0,p=>p.name+sample),c('この部署のどなたでも',7)],{sample:DIRECTORY.sample});
     }
-    return reply();
+    case 'company':return o('guideCompany','あなたの会社名をお話しください',[],{voiceField:true,fieldLabel:'聞き取った会社名'});
+    case 'companyCheck':return o('guideCompanyCheck','会社名は合っていますか？',[c('合っています',1),c('会社名を言い直す',2),c('個人での来訪',3)],{value:s.company,fieldLabel:'会社名'});
+    case 'visitorName':return o('guideName','あなたのお名前をお話しください',[],{voiceField:true,fieldLabel:'聞き取ったお名前'});
+    case 'nameCheck':return o('guideNameCheck','お名前は合っていますか？',[c('合っています',1),c('名前を言い直す',2)],{value:s.visitor,fieldLabel:'お名前'});
+    case 'confirm':return o('guideConfirm','受付内容をご確認ください',[c('受付を完了',1),c('担当者を訂正',2),c('会社名を訂正',3),c('名前を訂正',4),c('用件を訂正',5),c('来訪の種類を訂正',6)]);
+    default:return o('guideRoute','ご用件をお選びください',[c('弊社スタッフとお約束',1),c('宅急便や納品など',2),c('お約束なしの来訪',3)]);
   }
-  if (/^(訂正|修正)[。！!\s]*$/.test(text)) return advance(move('correction'));
-  if (state.step==='employee') {
-    if (n===1 || /呼んで|取り次|受付/.test(text)) return advance(move('route'));
-    if (n===2 || /不要|必要ありません|お疲れ/.test(text)) return {key:'chatNoPurpose',state:{...state,step:'employee'}};
-    return reply();
+}
+export function initialReceptionState(role,identity){
+  const known=identity?.source==='face'&&identity.name;
+  return {role:role||'guest',step:role==='employee'?'employee':'route',...(known?{visitor:identity.name,recognizedName:identity.name}:{})};
+}
+export function receptionPlan(person,defaultKey,demoKey){
+  const p=originalPlan(person,defaultKey,demoKey);
+  const greet=p.role==='employee'?'chatRecognizedEmployee':p.role==='delivery'?'chatRecognizedDelivery':p.identity?'chatRecognizedGuest':'welcome';
+  p.greeting=[...(p.identity?['registeredName']:[]),greet,p.role==='employee'?'guideEmployee':'guideRoute'];p.idle=[];return p;
+}
+function next(s){
+  if(!s.category)s.step='route';
+  else if(!s.purpose)s.step=s.role==='delivery'?'deliveryType':'purposeChoice';
+  else if(!s.recipient){s.step='department';s.page=0;}
+  else if(!s.companyConfirmed)s.step=s.company?'companyCheck':'company';
+  else if(!s.visitorConfirmed)s.step=s.visitor?'nameCheck':'visitorName';
+  else s.step='confirm';
+  return {state:s,key:choicesFor(s).key};
+}
+export function recognizeLateVisitor(previous,identity){
+  if(identity?.source!=='face'||!identity.name||['confirm','done','cancelled'].includes(previous.step))return null;
+  const s={...previous,recognizedName:identity.name};
+  if(!s.visitor&&!s.nameRetry){s.visitor=identity.name;s.visitorConfirmed=false;if(s.step==='visitorName')s.step='nameCheck';}
+  if(!s.category&&identity.role==='employee'){s.role='employee';s.step='employee';}
+  return {state:s,key:identity.role==='employee'?'chatRecognizedEmployee':identity.role==='delivery'?'chatRecognizedDelivery':'chatRecognizedGuest'};
+}
+export const recognizeLateGuest=recognizeLateVisitor;
+export const recognizeLateEmployee=()=>null;
+function spokenField(text,kind){
+  if(!text||text.length>80||spokenNumber(text)!==null||/^(はい|いいえ|分かりません|わかりません|もう一度|ありがとう|音声認識に失敗|聞き取れ)/.test(text))return null;
+  let value=text.replace(/[。！!\s]+$/,'').replace(/(?:と申します|でございます|です)$/,'');
+  value=value.replace(kind==='company'?/^(?:会社名は|会社は|勤務先は|所属は)/:/^(?:私の名前は|わたしの名前は|名前は|私は|わたしは)/,'').trim();
+  return value||null;
+}
+export function respond(input,previous={}){
+  const text=String(input).normalize('NFKC').trim().slice(0,300);
+  let s={...previous,step:previous.step||'route'};
+  const answer=(extra={})=>({state:s,key:choicesFor(s).key,...extra}),n=spokenNumber(text);
+  if(n===0||/^(もう一度|もう一回|聞き直し|聞こえない)/.test(text))return answer();
+  if(n===9||/^(戻る|もどる|前に戻)/.test(text)){
+    const history=s.history||[];if(!history.length)return answer();s={...history.at(-1),history:history.slice(0,-1)};return answer();
   }
-  if (state.step==='route') {
-    if (/^(?:お)?約束(?:は)?(?:なし|無し)|約束していない|アポなし/.test(text)) n=3;
-    else if (/^(宅急便|宅配便|配達|納品|荷物を届け)/.test(text)) n=2;
-    else if (/^(?:お)?約束(?:が)?あります|^予約しています/.test(text)) n=1;
-    if (![1,2,3].includes(n)) return reply();
-    state={role:n===2?'delivery':'guest',category:['','appointment','delivery','walkIn'][n],visitor:state.visitor,recognizedName:state.recognizedName};
-    return advance(move(n===2?'deliveryType':n===3?'purposeChoice':'recipientChoice'));
+  if(/^(最初から|やり直し|リセット)/.test(text))return {key:'guideRoute',state:initialReceptionState('guest',null)};
+  if(/^(キャンセル|取り消し)/.test(text))return {key:'chatCancel',state:{...s,step:'cancelled'}};
+  const snapshot={...s};delete snapshot.history;
+  const advance=result=>({...result,state:{...result.state,history:[...(previous.history||[]),snapshot].slice(-25)}});
+  const move=step=>{s.step=step;s.page=0;return advance(answer());};
+  const retry=()=>answer({prefix:choicesFor(s).voiceField?'guideRetry':'guideUnclear',unrecognized:true});
+  if(s.step==='employee'){
+    if(n===1)return move('route');if(n===2)return {key:'chatNoPurpose',state:s};return retry();
   }
-  if (state.step==='deliveryType') {
-    if (![1,2,3].includes(n)) return reply();
-    state.purpose=['','宅急便・郵便のお届け','商品の納品','その他のお届け物'][n]; return advance(next(state));
+  if(s.step==='route'){
+    if(![1,2,3].includes(n))return retry();
+    s={role:n===2?'delivery':'guest',category:['','appointment','delivery','walkIn'][n],visitor:s.visitor,recognizedName:s.recognizedName,company:s.company,companyConfirmed:s.companyConfirmed,visitorConfirmed:s.visitorConfirmed};
+    return move(n===2?'deliveryType':'purposeChoice');
   }
-  if (state.step==='recipientChoice') {
-    if (anyone.test(text)) n=2;
-    if (n===1) return advance(move('recipient'));
-    if (n===2) { state.recipient='総務担当者'; const result=next(state); result.prefix='guideGeneral'; return advance(result); }
-    return reply();
+  if(s.step==='purposeChoice'||s.step==='deliveryType'){
+    const purposes=s.step==='deliveryType'?['宅急便・郵便のお届け','商品の納品','その他のお届け物']:['打ち合わせ・面会','ご相談','営業のご案内','その他のご用件'];
+    if(!n||!purposes[n-1])return retry();s.purpose=purposes[n-1];return advance(next(s));
   }
-  if (state.step==='purposeChoice') {
-    if (![1,2,3,4].includes(n)) return reply();
-    if (n===4) return advance(move('purpose'));
-    state.purpose=['','打ち合わせ・面会','ご相談','営業のご案内'][n]; return advance(next(state));
+  if(s.step==='department'||s.step==='staff'){
+    const items=s.step==='department'?DIRECTORY.departments:departmentById(s.departmentId)?.people||[],page=s.page||0;
+    if(n===5&&items.length>(page+1)*PAGE_SIZE){s.page=page+1;return advance(answer());}
+    if(n===6&&page>0){s.page=page-1;return advance(answer());}
+    if(n===7){
+      const d=s.step==='staff'?departmentById(s.departmentId):null;
+      s.department=d?.name||'総務';s.departmentId=d?.id||'general';s.recipient=`${s.department}担当者`;s.recipientReading=d?`${d.reading}たんとうしゃ`:'そうむたんとうしゃ';s.staffId=null;
+      return advance({...next(s),...(d?{}:{prefix:'guideGeneral'})});
+    }
+    const selected=n>=1&&n<=PAGE_SIZE?directoryPage(items,page)[n-1]:null;if(!selected)return retry();
+    if(s.step==='department'){s.departmentId=selected.id;s.department=selected.name;delete s.recipient;delete s.staffId;return move('staff');}
+    s.staffId=selected.id;s.recipient=selected.name;s.recipientReading=selected.reading;return advance(next(s));
   }
-  if (state.step==='correction') {
-    if (n===1) return advance(move('route'));
-    if (n===2) {delete state.recipient;delete state.recipientReading;delete state.recipientReadingFor;return advance(move('recipientChoice'));}
-    if (n===3 && state.role==='delivery') {delete state.purpose;return advance(move('deliveryType'));}
-    if (n===3) {delete state.visitor;return advance(move('visitorName'));}
-    if (n===4 && state.role!=='delivery') {delete state.purpose;return advance(move('purposeChoice'));}
-    return reply();
+  if(s.step==='company'){
+    if(/^(個人|こじん|会社名なし|会社なし)(?:です)?[。！!\s]*$/.test(text)){s.company='個人での来訪';s.companyConfirmed=true;return advance(next(s));}
+    const value=spokenField(text,'company');if(!value)return retry();s.company=value;s.companyConfirmed=false;return move('companyCheck');
   }
-  if (state.step==='recipient' && anyone.test(text)) {state.recipient='総務担当者';const result=next(state);result.prefix='guideGeneral';return advance(result);}
-  // Courtesy, requests and pure numbers are never saved as somebody's name.
-  if (!text || /^(はい|いいえ|ありがとう|分かりません|わかりません)|[?？]$/.test(text) || n || /^\d+$/.test(text) || /呼んで(?:ほしい|欲しい|ください)?[。！!\s]*$/.test(text) && !/さん|さま|様/.test(text)) return reply();
-  if (state.step==='recipient') {
-    const value=clean(text.replace(/^(担当者は|宛先は|お届け先は)/,'').replace(/(?:宛て|あて)?(?:を呼んでください|を呼んでほしい|をお願いします|お願いします|です|と申します)[。！!\s]*$/,''));
-    if (!value) return reply(); state.recipient=value;return advance(next(state));
+  if(s.step==='companyCheck'){
+    if(n===1||/^(はい|合っています|あっています)[。！!\s]*$/.test(text)){s.companyConfirmed=true;return advance(next(s));}
+    if(n===2){delete s.company;s.companyConfirmed=false;return move('company');}
+    if(n===3){s.company='個人での来訪';s.companyConfirmed=true;return advance(next(s));}return retry();
   }
-  if (state.step==='visitorName') {
-    if (/匿名|言いたくない|名乗りたくない/.test(text)) return {key:'chatNameRequired',state};
-    const value=clean(text.replace(/^(私の名前は|わたしの名前は|名前は|私は|わたしは)/,'').replace(/(?:と申します|です)[。！!\s]*$/,''));
-    if (!value) return reply();state.visitor=value;return advance(next(state));
+  if(s.step==='visitorName'){
+    const value=spokenField(text,'name');if(!value)return retry();s.visitor=value;s.visitorConfirmed=false;return move('nameCheck');
   }
-  if (state.step==='purpose') {state.purpose=clean(text);return advance(next(state));}
-  return reply();
+  if(s.step==='nameCheck'){
+    if(n===1||/^(はい|合っています|あっています)[。！!\s]*$/.test(text)){s.visitorConfirmed=true;return advance(next(s));}
+    if(n===2){delete s.visitor;s.visitorConfirmed=false;s.nameRetry=true;return move('visitorName');}return retry();
+  }
+  if(s.step==='confirm'){
+    if(n===1||/^(はい|合っています|あっています)[。！!\s]*$/.test(text)){
+      if(!s.recipient||!s.companyConfirmed||!s.visitorConfirmed||!s.purpose)return advance(next(s));
+      return {key:'guideComplete',state:{...s,step:'done'}};
+    }
+    if(n===2){delete s.recipient;delete s.recipientReading;delete s.staffId;return move('department');}
+    if(n===3){delete s.company;s.companyConfirmed=false;return move('company');}
+    if(n===4){delete s.visitor;s.visitorConfirmed=false;s.nameRetry=true;return move('visitorName');}
+    if(n===5){delete s.purpose;return move(s.role==='delivery'?'deliveryType':'purposeChoice');}
+    if(n===6)return move('route');return retry();
+  }
+  return retry();
 }

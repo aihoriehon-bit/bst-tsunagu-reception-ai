@@ -5,9 +5,9 @@ import { EXTRA_SPEECH } from "../wide-desk/additional-speech.js?v=20260909-conve
 import { createVisitorRecognition } from "./visitor-recognition.js?v=20260915-recipient-kana-1";
 import { createPersonDetector, createBodyConfirmation } from "./person-presence.mjs?v=20260915-detection-box-1";
 import { CAMERA_CONSTRAINTS, createDetectionLoop } from "./face-detection.mjs?v=20260915-auto-region-1";
-import { receptionPlan } from "./guided-dialogue.mjs?v=20260917-choices-1";
+import { receptionPlan } from "./guided-dialogue.mjs?v=20260921-kiosk-1";
 import { nameLine, cancelNameVoice, speakDeviceName } from "./name-voice.js?v=20260911-devicevoice-1";
-import { createConversation, DIALOGUE_LINES } from "./guided-conversation.js?v=20260917-choices-1";
+import { createConversation, DIALOGUE_LINES } from "./guided-conversation.js?v=20260921-kiosk-1";
 
 const MODEL_URL = "../blender/tsunagu-reception-actions-20260826.glb?v=20260831-pc-gaze-1";
 const MODEL_FRONT_Y = -Math.PI / 2 + 0.03;
@@ -67,7 +67,7 @@ const FACE_PART_URLS = {
   mouthWideOpen: "../assets/face-parts/mouth-wide-open.png",
 };
 
-const SPEECH_AUDIO_VERSION = "20260915-delivery-addressee-1";
+const SPEECH_AUDIO_VERSION = "20260921-kiosk-1";
 const SPEECH_LINES = {
   welcome: {
     text: "いらっしゃいませ。こちらでご用件をお伺いいたします。",

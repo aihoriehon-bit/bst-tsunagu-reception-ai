@@ -1,12 +1,12 @@
-import { respond, initialReceptionState, recognizeLateGuest, recognizeLateEmployee, choicesFor, GUIDED_TEXTS } from './guided-dialogue.mjs?v=20260917-choices-1';
-import { createChoicePanel } from './guided-panel.mjs?v=20260917-choices-1';
-import { createHandsfree } from './handsfree.mjs?v=20260915-prepared-input-1';
+import { respond, initialReceptionState, recognizeLateGuest, recognizeLateEmployee, choicesFor, GUIDED_TEXTS } from './guided-dialogue.mjs?v=20260921-kiosk-1';
+import { selectSpeechAnswer } from './guided-speech-input.mjs?v=20260921-kiosk-1';
+import { createChoicePanel } from './guided-panel.mjs?v=20260921-kiosk-1';
+import { createHandsfree } from './guided-handsfree.mjs?v=20260921-kiosk-1';
 import { conversationCue } from './conversation-cue.mjs?v=20260909-6';
-import { createReceptionCard } from './reception-card.mjs?v=20260915-recipient-kana-1';
+import { createReceptionCard } from './guided-card.mjs?v=20260921-kiosk-1';
 import { attachPanelLayout } from './panel-layout.mjs?v=20260915-panel-size-1';
 import { createTurnIndicator } from './turn-indicator.mjs?v=20260915-turn-bottom-1';
 import { createMicLevel } from './mic-level.mjs?v=20260915-prepared-input-1';
-import { recipientReading } from './recipient-reading.mjs?v=20260915-recipient-kana-1';
 import { supportsPreparedInput, createRecognitionInput } from './recognition-input.mjs?v=20260915-prepared-input-1';
 const texts = await fetch(new URL('./dialogue-lines.json?v=20260915-delivery-addressee-1', import.meta.url)).then(r => {
   if (!r.ok) throw new Error('会話の台本を読み込めません');
@@ -26,10 +26,7 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
   let visitorSpeaking = false;
   let completed = false;
   const choicePanel = createChoicePanel({ onAnswer: submit });
-  const confirmation = createReceptionCard({ onAnswer: submit, onRestart: restartReception, onRecipientReading(reading) {
-    state = { ...state, recipientReading: reading, recipientReadingFor: state.recipient };
-    renderSummary();
-  } });
+  const confirmation = createReceptionCard({ onAnswer: submit, onRestart: restartReception });
   const turnIndicator = createTurnIndicator();
   const recognitionInput = supportsPreparedInput() ? createRecognitionInput() : null;
   const micLevel = createMicLevel({ onLevel(value) {
@@ -47,10 +44,9 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
     ${recognitionInput ? '<p class="conversation-note">対応環境では、会話中のマイク接続を維持します。AIの発話中は音声認識へ無音を渡します。利用できない場合は通常の切り替え方式になります。</p>' : ''}
     <div class="handsfree-summary"><button type="button" data-enable>マイクを許可</button><button type="button" data-disable hidden>音声会話を停止</button></div>
     <p class="conversation-note" data-setup>初回にマイクを許可すると、カメラの挨拶後にそのまま話せます。音声入力はブラウザの認識サービスへ送信される場合があります。</p>
-    <details><summary>会話内容・文字入力</summary><div id="conversationBody">
+    <details><summary>会話内容を確認</summary><div id="conversationBody">
       <p class="conversation-note">用件・配達・会社案内などの会話デモです。実際の呼び出し・予約・伝言送信は行いません。会話内容は保存しません。</p>
       <div class="conversation-log" role="log" aria-label="会話内容" aria-live="polite"></div>
-      <form><label class="sr-only" for="conversationInput">つなぐへのメッセージ</label><input id="conversationInput" maxlength="300" placeholder="挨拶のあと、ご用件を入力" autocomplete="off"><button type="submit">送信</button></form>
     </div></details>`;
   document.body.append(panel);
   attachPanelLayout(panel);
@@ -61,18 +57,18 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
   restartButton.textContent = 'もう一度受付を試す'; restartButton.hidden = true;
   panel.insertBefore(restartButton, panel.querySelector('.conversation-panel-content'));
   restartButton.addEventListener('click', restartReception);
-  const q = s => panel.querySelector(s), log = q('.conversation-log'), status = q('.conversation-status'), input = q('input');
+  const q = s => panel.querySelector(s), log = q('.conversation-log'), status = q('.conversation-status');
   function renderReception() {
     choicePanel.show(state);
-    if (!completed) confirmation.show(state, recipientReading(state, registeredNames()));
+    if (!completed) confirmation.show(state);
     const labels = { employee: '社員の方へのご挨拶が終わりました。お取次ぎが必要なときはお声がけください。', delivery: 'お荷物の宛先をお答えください（例：やまだたろうさん）', recipient: 'お取次ぎ先をお答えください（例：やまだたろうさん／誰でもいい）', visitorName: 'あなたのお名前をお答えください', purpose: 'ご用件をお答えください', confirm: '内容は合っていますか？「はい」または「訂正」', correction: '「自分の名前」「担当者」「用件」とお答えください', done: '受付完了（確認用デモ）', cancelled: '今回の受付を取り消しました', finished: 'ご用件がありましたらお声がけください' };
     const prompt = q('[data-question]'); prompt.textContent = ['done','cancelled','finished'].includes(state.step) ? labels[state.step] : choicesFor(state).title; prompt.hidden = !active;
     renderSummary();
   }
   function renderSummary() {
     const summary = q('[data-reception-summary]'); summary.replaceChildren();
-    const recipient = state.recipient ? recipientReading(state, registeredNames()).text || '読みがなを確認してください' : '';
-    for (const [label, value] of [['お取次ぎ先', recipient], ['お名前', state.visitor], ['ご用件', state.purpose]]) {
+    const recipient = state.recipientReading || state.recipient;
+    for (const [label, value] of [['お取次ぎ先', recipient], ['会社名',state.company], ['お名前', state.visitor], ['ご用件', state.purpose]]) {
       if (!value) continue;
       const row = document.createElement('p'); row.textContent = `${label}：${value}`; summary.append(row);
     }
@@ -107,7 +103,13 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
     while (log.children.length > 30) log.firstChild.remove();
     log.scrollTop = log.scrollHeight;
   }
-  const listener = createHandsfree({ Recognition, input: recognitionInput, onText: submit, onVoiceActivity(value) { visitorSpeaking = value; voiceActivityAt = Date.now(); turnIndicator.setVoiceActivity(value); }, onStatus(code) {
+  const listener = createHandsfree({ Recognition, input: recognitionInput,
+    onInterim(text) { choicePanel.setHeard(text,true); },
+    onText(text,alternatives) {
+      const selected=selectSpeechAnswer(alternatives||[{transcript:text}],choicesFor(state));
+      submit(selected.text,selected.heard||text,true);
+    },
+    onVoiceActivity(value) { visitorSpeaking = value; voiceActivityAt = Date.now(); turnIndicator.setVoiceActivity(value); }, onStatus(code) {
     // This is a NEW listening turn, not the previous visitor's pending answer.
     // Do not carry its four-second greeting suppression past the AI reply.
     if (code === 'listening') { visitorSpeaking = false; voiceActivityAt = 0; }
@@ -125,28 +127,23 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
     confirmation.setEnabled(active && present && !completed && !document.hidden);
     choicePanel.setEnabled(active && present && !completed && !document.hidden, speaking);
     listener.update({ enabled, active: active && !completed, present, speaking, audible, visible: !document.hidden });
-    input.disabled = !active || !present || completed; q('form button').disabled = !active || !present || completed;
     q('[data-disable]').hidden = !enabled || !Recognition;
     q('[data-enable]').hidden = !Recognition || (enabled && !listener.blocked);
     q('[data-setup]').hidden = enabled;
     renderCue();
   }
-  function submit(text) {
+  function submit(text,heard=text,voice=false) {
     text = String(text).trim().slice(0, 300);
-    if (!text || !active || !present || completed || !available() || document.hidden) return;
-    if (state.step === 'confirm' && confirmation.canConfirm === false && /^(はい|ええ|うん|そうです|お願いします|大丈夫|間違いありません|合っています|確認しました)/.test(text)) {
-      document.querySelector('.recipient-reading-label input')?.focus();
-      return;
-    }
+    if ((!text && !voice) || !active || !present || completed || !available() || document.hidden) return;
     voiceActivityAt = Date.now();
-    issue = ''; speaking = true; sync(); onInterrupt(); input.value = ''; append('あなた', text);
+    issue = ''; speaking = true; sync(); onInterrupt(); append('あなた', heard||'聞き取れませんでした');
     const result = respond(text, state);
-    if (state.step === 'confirm' && ['chatReceived', 'chatGeneralComplete', 'chatDeliveryCall'].includes(result.key)) {
+    if (state.step === 'confirm' && result.key === 'guideComplete') {
       completed = true;
-      if (result.key !== 'chatDeliveryCall') result.key = 'chatDemoComplete';
       confirmation.complete();
     }
     state = result.state; renderReception(); sync();
+    choicePanel.setHeard(voice?heard:'');
     const own = ++epoch; append('つなぐ', [texts[result.prefix],texts[result.key]].filter(Boolean).join(''));
     const playReply = () => onSpeak(result.key, () => {
       if (own !== epoch || !active) return;
@@ -161,7 +158,7 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
   }
   function close() {
     active = false; epoch++; state = {}; speaking = false; completed = false; confirmation.clear(); choicePanel.hide(); issue = ''; listener.update({ active: false });
-    log.replaceChildren(); input.value = ''; renderReception(); sync();
+    log.replaceChildren(); choicePanel.setHeard(''); renderReception(); sync();
   }
   async function restartReception() {
     if (!completed || !active || !present || document.hidden || !available() || typeof onRestart !== 'function') return;
@@ -193,13 +190,12 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
     try { localStorage.setItem(PREF, 'false'); } catch { /* Always stop. */ }
     sync();
   });
-  q('form').addEventListener('submit', e => { e.preventDefault(); submit(input.value); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) { close(); onInterrupt(); } else sync(); });
   window.addEventListener('pagehide', close);
   sync();
   return {
     get active() { return active; },
-    get canAnnounceName() { return !completed && !speaking && !visitorSpeaking && micStatus !== 'processing' && !input.value.trim() && !choicePanel.hasText && Date.now() - voiceActivityAt > 800; },
+    get canAnnounceName() { return !completed && !speaking && !visitorSpeaking && micStatus !== 'processing' && Date.now() - voiceActivityAt > 800; },
     close,
     recognizeVisitor(identity) {
       if (!active || !present || completed || document.hidden) return null;

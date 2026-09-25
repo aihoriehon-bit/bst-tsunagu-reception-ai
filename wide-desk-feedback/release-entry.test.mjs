@@ -3,11 +3,18 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
-test('comparison uses isolated guided runtime; approved main entry stays unchanged', () => {
+test('approved main and comparison resolve to the same guided runtime and styles', () => {
   const root = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const preview = readFileSync(new URL('../wide-desk-preview/index.html', import.meta.url), 'utf8');
-  assert.match(preview, /src="\.\.\/wide-desk-feedback\/guided-app.js/);
-  assert.match(root, /src="\.\.\/wide-desk-feedback\/app.js\?v=20260915-mobile-audio-1"/);
+  const site = 'https://aihoriehon-bit.github.io/bst-tsunagu-reception-ai/';
+  assert.match(root, /<base href="\.\/wide-desk-preview\/"/);
+  for (const pattern of [/src="([^\"]*guided-app.js[^\"]*)"/, /href="([^\"]*guided.css[^\"]*)"/]) {
+    const mainAsset = root.match(pattern)?.[1];
+    const previewAsset = preview.match(pattern)?.[1];
+    assert.ok(mainAsset); assert.ok(previewAsset);
+    assert.equal(new URL(mainAsset, new URL('./wide-desk-preview/', site)).href,
+      new URL(previewAsset, site + 'wide-desk-preview/').href);
+  }
   assert.match(root, /href="\.\.\/wide-desk-feedback\/preview.css\?v=20260915-mobile-audio-1"/);
 });
 test('previous main registrations merge only when explicitly imported, preserving newer names and OFF', () => {
