@@ -5,7 +5,8 @@
   const stopButton = document.querySelector('#stop');
   const tracks = {
     original: { src: './audio/voicevox-startup.wav', label: '元の声（春日部つむぎ）', button: '元の声' },
-    new: { src: './audio/achernar-startup.wav', label: '新しい声（Achernar）', button: '新しい声' },
+    new: { src: './audio/achernar-startup.wav', label: 'Gemini 3.1の声（Achernar）', button: '3.1の声' },
+    latest: { src: './audio/achernar-38-startup.wav', label: 'Gemini 3.8の声（Achernar）', button: '3.8の声' },
   };
   let active = null, request = 0, pending = false, failed = false;
   const clock = value => Number.isFinite(value) ? `${Math.floor(value / 60)}:${String(Math.floor(value % 60)).padStart(2, '0')}` : '0:00';
@@ -64,7 +65,7 @@
   player.addEventListener('loadedmetadata', paint);
   player.addEventListener('ended', () => {
     pending = false;
-    if (active) status.textContent = `${tracks[active].label}の再生が終わりました。もう一方の声もお試しください。`;
+    if (active) status.textContent = `${tracks[active].label}の再生が終わりました。他の声もお試しください。`;
     paint();
   });
   window.addEventListener('pagehide', stop);
