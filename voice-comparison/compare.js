@@ -5,7 +5,7 @@
   const stopButton = document.querySelector('#stop');
   const tracks = {
     original: { src: './audio/voicevox-startup.wav', label: '元の声（春日部つむぎ）', button: '元の声' },
-    new: { src: './audio/achernar-greeting.wav', label: '新しい声（Achernar）', button: '新しい声' },
+    new: { src: './audio/achernar-startup.wav', label: '新しい声（Achernar）', button: '新しい声' },
   };
   let active = null, request = 0, pending = false, failed = false;
   const clock = value => Number.isFinite(value) ? `${Math.floor(value / 60)}:${String(Math.floor(value % 60)).padStart(2, '0')}` : '0:00';
