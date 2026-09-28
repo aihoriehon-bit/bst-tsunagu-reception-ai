@@ -15,6 +15,7 @@ export const GUIDED_TEXTS={
   guideCompany:'まず、お越しになった方の会社名だけをお話しください。個人でお越しの場合は、個人です、とお答えください。',
   guideCompanyCheck:'画面の会社名で合っていますか？1番、合っています。2番、会社名を言い直す。3番、会社名なし、個人での来訪。',
   guideName:'次に、あなたのお名前だけをお話しください。',
+  guideGoAhead:'どうぞ。',
   guideNameCheck:'画面のお名前で合っていますか？1番、合っています。2番、お名前を言い直す。',
   guideConfirm:'受付内容をご確認ください。1番、受付を完了。2番、担当者を訂正。3番、会社名を訂正。4番、お名前を訂正。5番、ご用件を訂正。6番、来訪の種類を訂正。',
   guideEmployee:'お取り次ぎは必要ですか？1番、受付を利用する。2番、必要ありません。',
@@ -57,7 +58,7 @@ export function initialReceptionState(role,identity){
 export function receptionPlan(person,defaultKey,demoKey){
   const p=originalPlan(person,defaultKey,demoKey);
   const greet=p.role==='employee'?'chatRecognizedEmployee':p.role==='delivery'?'chatRecognizedDelivery':p.identity?'chatRecognizedGuest':'welcome';
-  p.greeting=[...(p.identity?['registeredName']:[]),greet,p.role==='employee'?'guideEmployee':'guideRoute'];p.idle=[];return p;
+  p.greeting=[...(p.identity?['registeredName']:[]),greet,p.role==='employee'?'guideEmployee':'guideRoute','guideGoAhead'];p.idle=[];return p;
 }
 function next(s){
   if(!s.category)s.step='route';

@@ -25,7 +25,9 @@ test('walk in and department fallback select general affairs with explicit demo 
 });
 test('recognized names precede guide; names are confirmed and can be corrected without re-insertion',()=>{
   const person={source:'face',role:'guest',name:'山田太郎',id:'x'};
-  assert.deepEqual(receptionPlan(person,'greetingDayArrival').greeting,['registeredName','chatRecognizedGuest','guideRoute']);
+  assert.deepEqual(receptionPlan(person,'greetingDayArrival').greeting,['registeredName','chatRecognizedGuest','guideRoute','guideGoAhead']);
+  assert.deepEqual(receptionPlan(null,'greetingDayArrival').greeting.slice(-2),['guideRoute','guideGoAhead']);
+  assert.deepEqual(receptionPlan({role:'employee',name:'佐藤'},'greetingDayArrival').greeting.slice(-2),['guideEmployee','guideGoAhead']);
   let s=run(['1','2','7','個人です'],initialReceptionState('guest',person));assert.equal(s.step,'nameCheck');
   s=respond('2',s).state;assert.equal(s.step,'visitorName');assert.equal(s.visitor,undefined);
   assert.equal(recognizeLateVisitor(s,person).state.visitor,undefined);
@@ -86,7 +88,7 @@ test('visitor screens have no typing form; both approved entries use guided runt
     assert.doesNotMatch(readFileSync(new URL('./'+file,import.meta.url),'utf8'),/<input|<textarea|<form/);
   }
   const root=readFileSync(new URL('../index.html',import.meta.url),'utf8');
-  assert.match(root,/guided-app.js\?v=20260921-kiosk-1/);assert.match(root,/guided.css/);
+  assert.match(root,/guided-app.js\?v=20260928-goahead-2/);assert.match(root,/guided.css/);
   assert.match(readFileSync(new URL('../wide-desk-preview/index.html',import.meta.url),'utf8'),/guided-app.js/);
   assert.doesNotMatch(readFileSync(new URL('./app.js',import.meta.url),'utf8'),/guided/);
 });

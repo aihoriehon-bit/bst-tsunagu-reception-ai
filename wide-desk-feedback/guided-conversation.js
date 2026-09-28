@@ -1,4 +1,4 @@
-import { respond, initialReceptionState, recognizeLateGuest, recognizeLateEmployee, choicesFor, GUIDED_TEXTS } from './guided-dialogue.mjs?v=20260921-kiosk-1';
+import { respond, initialReceptionState, recognizeLateGuest, recognizeLateEmployee, choicesFor, GUIDED_TEXTS } from './guided-dialogue.mjs?v=20260928-goahead-2';
 import { selectSpeechAnswer } from './guided-speech-input.mjs?v=20260921-kiosk-1';
 import { createChoicePanel } from './guided-panel.mjs?v=20260921-kiosk-1';
 import { createHandsfree } from './guided-handsfree.mjs?v=20260921-kiosk-1';
@@ -145,16 +145,24 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
     state = result.state; renderReception(); sync();
     choicePanel.setHeard(voice?heard:'');
     const own = ++epoch; append('つなぐ', [texts[result.prefix],texts[result.key]].filter(Boolean).join(''));
-    const playReply = () => onSpeak(result.key, () => {
+    const playReply = () => speakPrompt(result.key, () => {
       if (own !== epoch || !active) return;
       speaking = false; sync();
     }, () => {
       if (own !== epoch || !active) return;
       speaking = true; sync();
       issue = '返答音声を再生できません。右上の音声ボタンをご確認ください。'; renderCue();
-    });
+    }, () => own === epoch && active);
     if (result.prefix) onSpeak(result.prefix, () => { if (own === epoch && active) playReply(); }, () => { if (own !== epoch || !active) return; speaking = false; issue = '音声を再生できません。画面の選択肢でも進められます。'; sync(); });
     else playReply();
+  }
+  function speakPrompt(key, onFinish, onFailure, isCurrent) {
+    onSpeak(key, () => {
+      if (!isCurrent()) return;
+      if (key !== choicesFor(state).key) { onFinish(); return; }
+      append('つなぐ', texts.guideGoAhead);
+      onSpeak('guideGoAhead', onFinish, onFailure);
+    }, onFailure);
   }
   function close() {
     active = false; epoch++; state = {}; speaking = false; completed = false; confirmation.clear(); choicePanel.hide(); issue = ''; listener.update({ active: false });
@@ -214,7 +222,7 @@ export function createConversation({ onSpeak, onInterrupt, onEnableAudio, onRest
       const own = epoch;
       const key = choicesFor(state).key;
       speaking = true; sync(); append('つなぐ',texts[key]);
-      onSpeak(key, () => { if (own === epoch) {speaking=false;sync();} }, () => {if (own === epoch) {speaking=false;sync();}});
+      speakPrompt(key, () => { if (own === epoch) {speaking=false;sync();} }, () => {if (own === epoch) {speaking=false;sync();}}, () => own === epoch && active);
     },
     speechFinished() { speaking = false; sync(); },
   };

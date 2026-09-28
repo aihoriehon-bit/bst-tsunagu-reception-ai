@@ -5,9 +5,9 @@ import { EXTRA_SPEECH } from "../wide-desk/additional-speech.js?v=20260909-conve
 import { createVisitorRecognition } from "./visitor-recognition.js?v=20260915-recipient-kana-1";
 import { createPersonDetector, createBodyConfirmation } from "./person-presence.mjs?v=20260915-detection-box-1";
 import { CAMERA_CONSTRAINTS, createDetectionLoop } from "./face-detection.mjs?v=20260915-auto-region-1";
-import { receptionPlan } from "./guided-dialogue.mjs?v=20260921-kiosk-1";
+import { receptionPlan } from "./guided-dialogue.mjs?v=20260928-goahead-2";
 import { nameLine, cancelNameVoice, speakDeviceName } from "./name-voice.js?v=20260911-devicevoice-1";
-import { createConversation, DIALOGUE_LINES } from "./guided-conversation.js?v=20260921-kiosk-1";
+import { createConversation, DIALOGUE_LINES } from "./guided-conversation.js?v=20260928-goahead-2";
 
 const MODEL_URL = "../blender/tsunagu-reception-actions-20260826.glb?v=20260831-pc-gaze-1";
 const MODEL_FRONT_Y = -Math.PI / 2 + 0.03;
@@ -239,7 +239,6 @@ let audioStartToken = 0;
 let audioEnabledOnce = false;
 let speechBusy = false;
 let lastSpeechAt = Date.now();
-let workLineIndex = 0;
 let attendLineIndex = 0;
 const soundToggle = document.querySelector("#soundToggle");
 const audioPrompt = document.createElement('section');
@@ -1160,9 +1159,6 @@ function updateAutomaticSpeech(now) {
     const keys = currentReceptionPlan?.idle || [];
     if (!keys.length) return;
     speakLine(keys[attendLineIndex++ % keys.length]);
-  } else if (!sensorAttending && !sensorAutomationActive && !isSensorVisitorPresent() && currentMotionKey === "deskWork" && now - lastSpeechAt >= 60000) {
-    const keys = ["workMemo", "workPrepare", "workSchedule"];
-    speakLine(keys[workLineIndex++ % keys.length], null, { keepPose: true });
   }
 }
 
