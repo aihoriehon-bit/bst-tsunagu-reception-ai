@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>つなぐ｜Ledaの声で3D試聴</title>
+  <link rel="stylesheet" href="./style.css?v=1">
+  <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.165.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.165.0/examples/jsm/"}}</script>
+  <script type="module" src="./app.js?v=1"></script>
+</head>
+<body>
+<main>
+  <header><div><span class="eyebrow">TSUNAGU · LEDA VOICE PREVIEW</span><h1>つなぐが、Ledaの声でご案内。</h1></div><a href="../voice-comparison/?v=001d3531">VOICEVOXと比較する ↗</a></header>
+  <div class="layout">
+    <section class="stage" aria-label="3Dキャラクターの試聴画面">
+      <div id="scene" role="img" aria-label="受付で仕事をする3Dのつなぐ"></div>
+      <div class="stage-top"><span class="voice-label">Leda · Gemini 3.8</span><span id="pose">準備中</span></div>
+      <div id="loading" role="status"><strong>つなぐを読み込んでいます</strong><span id="load-detail">少々お待ちください</span></div>
+      <span class="stage-caption">3D音声テスト · カメラ・マイクは使用しません</span>
+    </section>
+    <section class="panel" aria-labelledby="panel-title">
+      <p class="eyebrow">4つのセリフを試す</p><h2 id="panel-title">聞きたい案内を選んでください</h2>
+      <p class="hint">ボタンで立ち上がって話します。話し終えると、受付のPC作業へ戻ります。</p>
+      <div class="buttons">
+        <button type="button" data-line="startup" disabled><span>01</span>自己紹介 <b aria-hidden="true">▶</b></button>
+        <button type="button" data-line="route" disabled><span>02</span>番号での受付案内 <b aria-hidden="true">▶</b></button>
+        <button type="button" data-line="confirm" disabled><span>03</span>受付内容の確認 <b aria-hidden="true">▶</b></button>
+        <button type="button" data-line="goodbye" disabled><span>04</span>お見送り <b aria-hidden="true">▶</b></button>
+      </div>
+      <div class="readout"><span id="line-title">自己紹介</span><p id="script">受付AIのつなぐです。受付で仕事をしながら、ご来客をお待ちしています。どうぞよろしくお願いします。</p></div>
+      <div class="status-row"><p id="status" role="status" aria-live="polite">キャラクターの読み込みを待っています。</p><button id="stop" type="button" disabled>停止</button></div>
+      <progress id="progress" max="1" value="0" aria-label="音声の再生位置"></progress>
+      <p class="hint small">別のボタンを押すと切り替わります。音が出ない場合は端末の音量・出力先をご確認ください。</p>
+    </section>
+  </div>
+  <footer><span>音声：Gemini 3.8 Flash TTS / Leda</span><span>生成済み音声を再生するだけの確認用ページです。本番の受付とは別です。</span></footer>
+  <audio id="player" preload="none" playsinline></audio>
+  <noscript>3D表示と音声再生にはJavaScriptが必要です。</noscript>
+</main>
+</body>
+</html>
