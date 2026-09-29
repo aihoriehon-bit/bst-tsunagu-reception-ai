@@ -5,7 +5,6 @@
   const stopButton = document.querySelector('#stop');
   const tracks = {
     original: { src: './audio/voicevox-startup.wav', label: '元の声（春日部つむぎ）', button: '元の声' },
-    new: { src: './audio/achernar-startup.wav', label: 'Gemini 3.1の声（Achernar）', button: '3.1の声' },
     latest: { src: './audio/achernar-38-startup.wav', label: 'Gemini 3.8の声（Achernar）', button: '3.8の声' },
   };
   let active = null, request = 0, pending = false, failed = false;
