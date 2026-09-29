@@ -3,6 +3,12 @@
   const player = document.querySelector('#player');
   const status = document.querySelector('#status');
   const stopButton = document.querySelector('#stop');
+  const scenes = {
+    startup: { title: '起動時の挨拶', text: '受付AIのつなぐです。受付で仕事をしながら、ご来客をお待ちしています。どうぞよろしくお願いします。' },
+    route: { title: '番号での受付案内', text: 'ご用件を番号でお答えください。1番、弊社スタッフとお約束。2番、宅急便や納品など。3番、お約束なしのご来訪。' },
+    confirm: { title: '受付内容の確認', text: '受付内容をご確認ください。1番、受付を完了。2番、担当者を訂正。3番、会社名を訂正。4番、お名前を訂正。5番、ご用件を訂正。6番、来訪の種類を訂正。' },
+    goodbye: { title: 'お見送り', text: 'ありがとうございました。どうぞお気をつけてお帰りください。' },
+  };
   const tracks = {
     original: { src: './audio/voicevox-startup.wav', label: '元の声（春日部つむぎ）', button: '元の声' },
     latest: { src: './audio/achernar-38-startup.wav', label: 'Gemini 3.8の声（Achernar）', button: '3.8の声' },
@@ -57,6 +63,17 @@
     player.removeAttribute('src'); player.load(); active = null;
     status.textContent = '停止しました。聞きたい声を選んでください。'; paint();
   }
+  function selectScene(id) {
+    if (!scenes[id]) return;
+    stop();
+    tracks.original.src = `./audio/voicevox-${id}.wav`;
+    tracks.latest.src = `./audio/achernar-38-${id}.wav`;
+    document.querySelectorAll('[data-scene]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.scene === id)));
+    document.querySelectorAll('.script-label').forEach(label => { label.textContent = scenes[id].title; });
+    document.querySelectorAll('blockquote').forEach(quote => { quote.textContent = scenes[id].text; });
+    status.textContent = `「${scenes[id].title}」を選びました。聞きたい声の再生ボタンを押してください。`;
+  }
+  document.querySelectorAll('[data-scene]').forEach(button => button.addEventListener('click', () => selectScene(button.dataset.scene)));
   document.querySelectorAll('[data-play]').forEach(button => button.addEventListener('click', () => play(button.dataset.play)));
   document.querySelectorAll('[data-restart]').forEach(button => button.addEventListener('click', () => play(button.dataset.restart, true)));
   stopButton.addEventListener('click', stop);
