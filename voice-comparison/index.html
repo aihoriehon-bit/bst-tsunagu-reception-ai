@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; media-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'">
-  <meta name="description" content="受付AIつなぐの音声比較。VOICEVOX春日部つむぎとGemini Achernarの日本語サンプルを聞き比べられます。">
+  <meta name="description" content="受付AIつなぐの音声比較。VOICEVOX春日部つむぎとGemini Ledaの日本語サンプルを聞き比べられます。">
   <meta name="robots" content="noindex, nofollow">
   <title>つなぐ｜声の聞き比べ</title>
   <link rel="stylesheet" href="./compare.css?v=20260929-scenes">
-  <script src="./compare.js?v=20260929-scenes" defer></script>
+  <script src="./compare.js?v=20260929-leda" defer></script>
 </head>
 <body>
   <main>
@@ -19,7 +19,7 @@
     <section class="intro">
       <p class="eyebrow">受付の声を、聞き比べる。</p>
       <h1>同じ言葉で、声を聞き比べ。</h1>
-      <p>元のVOICEVOXと、新しく試したGemini 3.8。<br>それぞれの再生ボタンから、話し方や声の雰囲気をご確認ください。</p>
+      <p>元のVOICEVOXと、試聴室の候補01で選んだLeda（Gemini 3.8）。<br>同じ4パターンのセリフで、話し方や声の雰囲気をご確認ください。</p>
       <p><a href="./voices.html">いろいろな声を聴いて選ぶ → 声を選ぶ試聴室</a></p>
     </section>
     <section class="scene-picker" aria-labelledby="scene-heading">
@@ -45,18 +45,18 @@
       </article>
       <article class="voice-card latest" data-card="latest">
         <div class="card-top"><span class="voice-tag">B · 新しく試した声</span><span class="voice-state" data-state>再生前</span></div>
-        <h2>Achernar <span class="jp-label">日本語</span></h2>
+        <h2>Leda <span class="jp-label">日本語</span></h2>
         <p class="engine">Gemini 3.8 Flash TTS</p>
         <div class="sound-lines" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         <p class="script-label">起動時の挨拶</p>
         <blockquote>受付AIのつなぐです。受付で仕事をしながら、ご来客をお待ちしています。どうぞよろしくお願いします。</blockquote>
-        <div class="playback"><button class="play-button" type="button" data-play="latest" aria-label="3.8の声を再生">▶ 3.8の声を再生</button><button class="restart" type="button" data-restart="latest" aria-label="3.8の声を最初から再生">↺ 最初から</button></div>
-        <div class="progress-row"><progress data-progress max="1" value="0" aria-label="3.8の声の再生位置"></progress><span data-time>0:00</span></div>
+        <div class="playback"><button class="play-button" type="button" data-play="latest" aria-label="Ledaの声を再生">▶ Ledaの声を再生</button><button class="restart" type="button" data-restart="latest" aria-label="Ledaの声を最初から再生">↺ 最初から</button></div>
+        <div class="progress-row"><progress data-progress max="1" value="0" aria-label="Ledaの声の再生位置"></progress><span data-time>0:00</span></div>
       </article>
     </div>
     <div class="player-status"><span class="status-dot" aria-hidden="true"></span><p id="status" role="status" aria-live="polite">聞きたい声の再生ボタンを押してください。</p><button id="stop" type="button" disabled>停止</button></div>
-    <aside class="note"><strong>同じセリフ・同じ2種類の声で比較できます</strong><p>選んだセリフを、春日部つむぎとGemini 3.8のAchernarで読み上げます。声の種類は全サンプル共通です。話す速さ・間の取り方・音量はそれぞれの録音のままです。音声は同時には再生されません。</p><p>Gemini 3.8のサンプルは無料で生成した保存済み音声です。再生による音声生成料金はかかりません。マイクやカメラの許可・ログインも不要です。本番の受付画面とは別の確認用ページです。</p></aside>
-    <footer><span>音声クレジット：VOICEVOX:春日部つむぎ ／ Gemini・Achernar</span><span>つなぐ · VOICE COMPARISON</span></footer>
+    <aside class="note"><strong>同じセリフ・同じ2種類の声で比較できます</strong><p>選んだセリフを、春日部つむぎとGemini 3.8のLedaで読み上げます。Ledaは試聴室の候補01と同じ声・話し方の設定です。話す速さ・間の取り方・音量はそれぞれの録音のままです。音声は同時には再生されません。</p><p>Gemini 3.8のサンプルは無料で生成した保存済み音声です。再生による音声生成料金はかかりません。マイクやカメラの許可・ログインも不要です。本番の受付画面とは別の確認用ページです。</p></aside>
+    <footer><span>音声クレジット：VOICEVOX:春日部つむぎ ／ Gemini・Leda</span><span>つなぐ · VOICE COMPARISON</span></footer>
     <audio id="player" preload="none" hidden></audio>
     <noscript>再生にはJavaScriptを有効にしてください。</noscript>
   </main>

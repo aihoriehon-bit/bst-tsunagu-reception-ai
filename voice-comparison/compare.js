@@ -11,7 +11,7 @@
   };
   const tracks = {
     original: { src: './audio/voicevox-startup.wav', label: '元の声（春日部つむぎ）', button: '元の声' },
-    latest: { src: './audio/achernar-38-startup.wav', label: 'Gemini 3.8の声（Achernar）', button: '3.8の声' },
+    latest: { src: './audio/leda-startup.wav', label: 'Gemini 3.8の声（Leda）', button: 'Ledaの声' },
   };
   let active = null, request = 0, pending = false, failed = false;
   const clock = value => Number.isFinite(value) ? `${Math.floor(value / 60)}:${String(Math.floor(value % 60)).padStart(2, '0')}` : '0:00';
@@ -67,7 +67,7 @@
     if (!scenes[id]) return;
     stop();
     tracks.original.src = `./audio/voicevox-${id}.wav`;
-    tracks.latest.src = `./audio/achernar-38-${id}.wav`;
+    tracks.latest.src = `./audio/leda-${id}.wav`;
     document.querySelectorAll('[data-scene]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.scene === id)));
     document.querySelectorAll('.script-label').forEach(label => { label.textContent = scenes[id].title; });
     document.querySelectorAll('blockquote').forEach(quote => { quote.textContent = scenes[id].text; });

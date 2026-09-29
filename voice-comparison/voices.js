@@ -5,7 +5,7 @@
     { id:'autonoe', number:'02', name:'Autonoe', profile:'明るい声が特徴の候補', src:'./audio/autonoe-startup.wav' },
     { id:'zephyr', number:'03', name:'Zephyr', profile:'明るく軽やかな印象を試す候補', src:'./audio/zephyr-startup.wav' },
     { id:'aoede', number:'04', name:'Aoede', profile:'さわやかで軽やかな声が特徴の候補', src:'./audio/aoede-startup.wav' },
-    { id:'achernar-current', number:'05', name:'Achernar', profile:'比較用：現在の4パターンで使っている声', src:'./audio/achernar-38-startup.wav', reference:true },
+    { id:'achernar-current', number:'05', name:'Achernar', profile:'比較用：Ledaに変更する前の声', src:'./audio/achernar-38-startup.wav', reference:true },
     { id:'achernar-trial', number:'06', name:'Achernar・高め', profile:'比較用：先ほどの若々しく高めに指定した試作', src:'./audio/achernar-38-youthful-trial.wav', reference:true },
   ];
   const player=document.querySelector('#player'), status=document.querySelector('#status'), stopButton=document.querySelector('#stop');
