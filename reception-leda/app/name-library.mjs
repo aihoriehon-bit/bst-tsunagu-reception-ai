@@ -52,13 +52,13 @@ export function recordedName(person, { preferLeda = true } = {}) {
   const found = baseRecordedName(person);
   if (!preferLeda) return found;
   const reading = found?.reading || normalizeNameReading(person?.reading || person?.name);
-  return ledaByReading.get(reading) || found;
+  return ledaByReading.get(reading) || (found ? { ...found, audio: null, voice: '端末音声' } : null);
 }
 export function nameVoiceDescription(person) {
   const found = recordedName(person);
   if (!found && !normalizeReading(person?.reading) && (byName.get(normalizeReading(person?.name)) || []).length > 1) {
     return '読みがなを入力してください。この漢字には複数の読み方があります。';
   }
-  return found ? `収録済み：${found.reading}さん（${found.voice || 'VOICEVOX'}・名前全体の音声）`
-    : '未収録：入力した読みがなを、以前のAI音声で名前全体として読み上げます。';
+  return found?.voice === 'Gemini Leda' ? `収録済み：${found.reading}さん（Gemini Leda・名前全体の音声）`
+    : 'Leda未準備：入力した読みがなを、端末の日本語音声で名前全体として読み上げます。';
 }

@@ -1,14 +1,14 @@
 import { ROLES, validVector, matchFace, clothingSignature, matchClothing } from './visitor-matching.mjs?v=20260915-group-names-1';
-import { previewName, cancelNameVoice } from './name-voice.js?v=20261006-leda-names-1';
-import { nameApprovalToken, isNameApproved, createNameAudition, shouldCallName, hasNameReading } from './name-confirmation.mjs?v=20261006-leda-names-1';
-import { NAME_RECORDINGS, normalizeNameReading } from './name-library.mjs?v=20261006-leda-names-1';
-import { bindNameAvailability } from './name-availability.mjs?v=20261006-leda-names-1';
-import { registrationName, restoreRegistrationName, validateRegistrationName } from './registration-name.mjs?v=20261006-leda-names-1';
+import { previewName, cancelNameVoice } from './name-voice.js?v=20261006-device-names-1';
+import { nameApprovalToken, isNameApproved, createNameAudition, shouldCallName, hasNameReading } from './name-confirmation.mjs?v=20261006-device-names-1';
+import { NAME_RECORDINGS, normalizeNameReading } from './name-library.mjs?v=20261006-device-names-1';
+import { bindNameAvailability } from './name-availability.mjs?v=20261006-device-names-1';
+import { registrationName, restoreRegistrationName, validateRegistrationName } from './registration-name.mjs?v=20261006-device-names-1';
 import { detectFaces, faceQuality, FACE_DETECTION_OPTIONS, FACE_DESCRIPTOR_OPTIONS } from './face-detection.mjs?v=20260915-auto-region-1';
 
 import { cameraRegion, REGION_MODES, REGION_LABELS, createAutoRegion, frameLifetime } from './camera-region.mjs?v=20260915-auto-region-1';
 import { captureDirection, mirroredRegionLeft, createShutterSound } from './enrollment-feedback.mjs';
-import { bindReadingAutofill } from './reading-autofill.mjs?v=20261006-leda-names-1';
+import { bindReadingAutofill } from './reading-autofill.mjs?v=20261006-device-names-1';
 import { captureProblem, faceMoved, CAPTURE_STABLE_MS, CAPTURE_TURN_MS } from './capture-guidance.mjs';
 import { createDetectionOverlay } from './detection-overlay.mjs';
 import { createGroupConfirmation, targetDescriptor, overlap } from './group-recognition.mjs';
@@ -95,8 +95,9 @@ export function createVisitorRecognition({ video, panel, onRegistrationChange, o
     <button type="button" data-import>以前の顔登録を取り込む</button>
     <p class="identity-note">同じ公開サイト・ブラウザにある以前の登録を取り込みます。現在の同名・同IDの登録は上書きしません。別端末・ブラウザへは同期されません。</p>
     </details><details><summary>音声・写真・登録についての詳しい説明</summary>
+    <p class="identity-note"><a href="${new URL('../../wide-desk-preview/name-bank-sources.html', import.meta.url).href}" target="_blank" rel="noopener">名前辞書の出典</a></p>
     <p class="identity-note">登録中は自動の挨拶を休止します。写真・映像は保存・送信しません。画面に映った顔と実際の人を完全に区別する機能ではありません。</p>
-    <p class="identity-note">顔で本人と照合できたら、社員・お客様・配達のどの区分でも登録名で呼びます。このローカル版は準備できた名前をGeminiのLedaで呼び、未準備の名前は従来のVOICEVOX音声、未収録の場合は端末の音声を使用します。Ledaは最終試聴確認中のものも含みます。フルネームのLeda結合は準備中のため従来音声を維持します。</p>
+    <p class="identity-note">顔で本人と照合できたら、社員・お客様・配達のどの区分でも登録名で呼びます。準備できた名前はGeminiのLeda、未準備の名前とフルネームは端末の日本語音声を使用します。Ledaは最終試聴確認中のものも含むため、名前を試聴して発音をご確認ください。</p>
     <p class="identity-note">制服は胸からお腹まで写してください。色が似た服でも反応するため「配達の可能性」として扱います。判断できない場合はカメラ欄の「配達受付」を使えます。</p>
     <p class="identity-note">同じ名前でもう一度撮影すると顔のサンプルを追加できます。普段使う距離・明るさでも追加してください。この改善確認版の変更は元ページの登録には反映されません。初回は元ページの登録を読み込みます。</p>
     </details></div>`;

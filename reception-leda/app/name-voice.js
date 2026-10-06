@@ -1,10 +1,9 @@
 import { readingFor } from './kana-name.mjs?v=20260909-5';
-import { shouldCallName } from './name-confirmation.mjs?v=20261006-leda-names-1';
-import { recordedName } from './name-library.mjs?v=20261006-leda-names-1';
-import { structuredParts, validateRegistrationName } from './registration-name.mjs?v=20261006-leda-names-1';
-import { fullNameAudio } from './full-name-audio.mjs?v=20261006-leda-names-1';
+import { shouldCallName } from './name-confirmation.mjs?v=20261006-device-names-1';
+import { recordedName } from './name-library.mjs?v=20261006-device-names-1';
+import { structuredParts, validateRegistrationName } from './registration-name.mjs?v=20261006-device-names-1';
 // Existing uploaded WAVs stay stored. Reading selects a prepared Leda name,
-// otherwise the existing VOICEVOX bank or whole-name device speech is retained.
+// otherwise the whole name uses device speech. Legacy recordings are not played.
 const database = () => new Promise((resolve, reject) => {
   let expired = false;
   const timer = setTimeout(() => { expired = true; reject(new Error('音声の保存先を開けませんでした。')); }, 4000);
@@ -57,23 +56,15 @@ export async function nameLine(person, { audition = false } = {}) {
   const parts = structuredParts(person);
   if (parts) validateRegistrationName(person);
   if (parts?.length === 2) {
-    // Leda needs its own honorific cut points; never reuse VOICEVOX offsets.
-    // Preserve the existing complete full-name playback until those are ready.
-    const [first, last] = parts.map(part => recordedName(part, { preferLeda: false }));
-    const audio = await fullNameAudio(first, last);
-    if (audio) return { text: person.name + 'さん。', audio, group: 'named' };
-    return { text: person.name + 'さん。', spokenText: callName(readingFor(person)), group: 'named' };
+    // Until Leda full-name joins are verified, use one device utterance.
+    const reading = parts.map(part => recordedName(part)?.reading || readingFor(part)).join('');
+    return { text: person.name + 'さん。', spokenText: callName(reading), group: 'named' };
   }
-  let audio = recordedName(person)?.audio;
-  const name = person.name.normalize('NFKC').replace(/\s/g, '').replace(/(?:さん|様|さま)$/, '');
-  const usualReading = { 佐藤: 'さとう', 田中: 'たなか', 福田: 'ふくだ' };
-  if (!audio && usualReading[name] && readingFor(person) === usualReading[name]) {
-    audio = new URL('../../wide-desk-preview/audio/' + ({ 佐藤: 'nameSato', 田中: 'nameTanaka', 福田: 'nameFukuda' })[name] + '.wav', import.meta.url).href;
-  }
-  audio ||= recordedName(person)?.audio;
+  const recording = recordedName(person);
+  const audio = recording?.voice === 'Gemini Leda' ? recording.audio : null;
   return audio
     ? { text: callName(person.name) + '。', audio, group: 'named' }
-    : { text: callName(person.name) + '。', spokenText: callName(readingFor(person)), group: 'named' };
+    : { text: callName(person.name) + '。', spokenText: callName(recording?.reading || readingFor(person)), group: 'named' };
 }
 let utterance = null, previewAudio = null, cancelPreview = null, previewRequest = 0;
 export function cancelNameVoice() {

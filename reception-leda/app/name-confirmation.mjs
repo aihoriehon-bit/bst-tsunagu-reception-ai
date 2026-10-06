@@ -1,10 +1,10 @@
 import { readingFor } from './kana-name.mjs?v=20260909-5';
-import { recordedName } from './name-library.mjs?v=20261006-leda-names-1';
-import { structuredParts } from './registration-name.mjs?v=20261006-leda-names-1';
+import { recordedName } from './name-library.mjs?v=20261006-device-names-1';
+import { structuredParts } from './registration-name.mjs?v=20261006-device-names-1';
 
 // Change the revision whenever the bank or assembly changes: old approval must not
 // silently authorize a different pronunciation.
-export const NAME_AUDIO_REVISION = 'local-leda-partial-20261006-v1';
+export const NAME_AUDIO_REVISION = 'leda-device-fallback-20261006-v2';
 export function nameApprovalToken(person) {
   const recording = recordedName(person);
   return JSON.stringify([NAME_AUDIO_REVISION, String(person?.name || '').trim(), recording?.reading || readingFor(person), person?.nameMode || 'legacy', structuredParts(person), recording?.voice || 'legacy', recording?.sha256 || '']);

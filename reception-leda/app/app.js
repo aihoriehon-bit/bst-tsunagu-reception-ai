@@ -3,13 +3,13 @@ import { needsAudioGesture, primeSpeechPlayer } from './audio-access.mjs?v=20260
 import { createWorkerAvatar } from "../model/worker-avatar.js?v=20261006-memo-10";
 import { buildShadowFloor } from "../model/environment.js?v=20261005-idle-6";
 import { EXTRA_SPEECH } from "../../wide-desk/additional-speech.js?v=20260909-conversation-1";
-import { createVisitorRecognition } from "./visitor-recognition.js?v=20261006-leda-names-1";
+import { createVisitorRecognition } from "./visitor-recognition.js?v=20261006-device-names-1";
 import { createPersonDetector, createBodyConfirmation } from "./person-presence.mjs?v=20260915-detection-box-1";
 import { CAMERA_CONSTRAINTS, createDetectionLoop } from "./face-detection.mjs?v=20260915-auto-region-1";
 import { receptionPlan } from "./guided-dialogue.mjs?v=20260928-goahead-2";
-import { nameLine, cancelNameVoice, speakDeviceName } from "./name-voice.js?v=20261006-leda-names-1";
+import { nameLine, cancelNameVoice, speakDeviceName } from "./name-voice.js?v=20261006-device-names-1";
 import { createConversation, DIALOGUE_LINES } from "./guided-conversation.js?v=20260928-goahead-2";
-import { applyLedaSpeechLines, ledaAudioURL } from '../model/leda-voice-profile.mjs?v=20261006-leda-names-1';
+import { applyLedaSpeechLines, ledaAudioURL } from '../model/leda-voice-profile.mjs?v=20261006-device-names-1';
 
 const MODEL_URL = "../blender/tsunagu-reception-actions-20260826.glb?v=20260831-pc-gaze-1";
 const MODEL_FRONT_Y = -Math.PI / 2 + 0.03;

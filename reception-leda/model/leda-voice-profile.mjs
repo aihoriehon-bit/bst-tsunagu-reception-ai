@@ -1,12 +1,12 @@
 // Production profile approved after the owner reviewed the local model/voice preview.
-import { configureLedaNameBank } from '../app/name-library.mjs?v=20261006-leda-names-1';
+import { configureLedaNameBank } from '../app/name-library.mjs?v=20261006-device-names-1';
 if (!['localhost', '127.0.0.1', '[::1]', 'aihoriehon-bit.github.io'].includes(location.hostname)) {
   throw new Error('Leda音声の配置先が一致しません');
 }
 const response = await fetch(new URL('./leda-audio-manifest.json?v=20261006-leda-1', import.meta.url));
 if (!response.ok) throw new Error('Leda音声の設定を読み込めません');
 export const ledaProfile = await response.json();
-const nameResponse = await fetch(new URL('./leda-name-manifest.json?v=20261006-leda-names-1', import.meta.url));
+const nameResponse = await fetch(new URL('./leda-name-manifest.json?v=20261006-device-names-1', import.meta.url));
 if (!nameResponse.ok) throw new Error('Leda名前音声の設定を読み込めません');
 export const ledaNameProfile = await nameResponse.json();
 configureLedaNameBank(ledaNameProfile.entries);

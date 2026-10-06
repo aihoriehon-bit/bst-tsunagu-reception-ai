@@ -1,6 +1,5 @@
-import { recordedName, normalizeNameReading } from './name-library.mjs?v=20261006-leda-names-1';
-import { structuredParts } from './registration-name.mjs?v=20261006-leda-names-1';
-import { canJoinNames } from './full-name-audio.mjs?v=20261006-leda-names-1';
+import { recordedName, normalizeNameReading } from './name-library.mjs?v=20261006-device-names-1';
+import { structuredParts } from './registration-name.mjs?v=20261006-device-names-1';
 
 export function nameAvailability(person) {
   const parts = structuredParts(person);
@@ -8,10 +7,7 @@ export function nameAvailability(person) {
     const status = parts.map(nameAvailability);
     const labels = status.map((s, i) => `${i === 0 ? '名字' : '名前'}：${s.state === 'empty' ? '未入力' : s.state === 'recorded' ? '収録済み' : s.state === 'missing' ? '未収録' : '読みがなを確認'}${s.state === 'recorded' ? `（${recordedName(parts[i]).reading}）` : ''}`).join(' ／ ');
     if (status.some(s => s.state === 'empty' || s.state === 'reading-needed')) return { state: 'reading-needed', title: '名字と名前をそれぞれ確認してください', detail: labels + '。名字と名前は別々の欄に入力してください。' };
-    const canJoin = canJoinNames(...parts.map(part => recordedName(part, { preferLeda: false })));
-    const hasLeda = parts.some(part => recordedName(part)?.voice === 'Gemini Leda');
-    return canJoin ? { state: 'recorded', title: '名字・名前ともに収録済み（フルネームはVOICEVOX）', detail: labels + '。フルネームは従来のVOICEVOX音声をつなぎ、最後だけ「さん」を付けます。' + (hasLeda ? 'Ledaのフルネーム結合は準備中です。名字だけ・名前だけではLedaを優先します。' : '') }
-      : { state: 'missing', title: 'フルネームは以前のAI音声で読み上げます', detail: labels + '。両方の事前収録音声がそろわないため、入力した読みがなを名前全体として、以前のAI音声で読み上げます。' };
+    return { state: 'missing', title: 'フルネームは端末音声で読み上げます', detail: labels + '。Ledaのフルネーム結合は準備中のため、読みがなをつなげて端末の日本語音声で一度に読み上げます。名字だけ・名前だけでは準備済みのLeda音声を優先します。' };
   }
   if (parts?.length === 1) return nameAvailability(parts[0]);
   const name = String(person?.name || '').trim();
@@ -19,14 +15,14 @@ export function nameAvailability(person) {
   if (!name && !reading) return { state: 'empty', title: '名字・名前の収録チェック', detail: '名前または読みがなを入力すると、自動で確認します。' };
   const found = recordedName({ name, reading });
   if (found?.voice === 'Gemini Leda') return { state: 'recorded', title: '収録済み（Leda音声）', detail: `「${found.reading}さん」はGeminiのLeda音声で試聴・呼びかけます。${found.listeningApproved ? '試聴確認済みです。' : '名前を試聴して発音をご確認ください。'}` };
-  if (found) return { state: 'recorded', title: '収録済み（従来音声）', detail: `「${found.reading}さん」のLeda音声は未準備のため、従来のVOICEVOX・春日部つむぎ音声を使用します。` };
+  if (found) return { state: 'missing', title: 'Leda未準備（端末音声）', detail: `「${found.reading}さん」は端末の日本語音声で試聴・呼びかけます。` };
   const normalized = normalizeNameReading(reading || name);
   if (!normalized || !/^[ぁ-ゖー]+$/.test(normalized)) return {
     state: 'reading-needed', title: reading ? '読みがなを確認してください' : '読みがなを入力してください',
     detail: reading ? 'ひらがな・カタカナで、呼んでほしい読み方を入力してください。'
       : '漢字だけでは読みを確定できません。読みがなを入れると、収録済みか確認できます。',
   };
-  return { state: 'missing', title: '未収録（以前のAI音声）', detail: `「${normalized}さん」の事前収録音声はありません。入力した読みがなを名前全体として、以前のAI音声で読み上げます。` };
+  return { state: 'missing', title: 'Leda未準備（端末音声）', detail: `「${normalized}さん」は、入力した読みがなを名前全体として端末の日本語音声で読み上げます。` };
 }
 
 // Local dictionary lookup only: no registration, microphone, or network request.

@@ -1,4 +1,4 @@
-import { NAME_RECORDINGS } from './name-library.mjs?v=20261006-leda-names-1';
+import { NAME_RECORDINGS } from './name-library.mjs?v=20261006-device-names-1';
 
 const literal = value => String(value || '').normalize('NFKC').trim();
 const hiragana = value => literal(value).replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
