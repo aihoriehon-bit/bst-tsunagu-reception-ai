@@ -415,15 +415,21 @@ function computeLayout() {
     seatZ: hipJoint.z - 0.04,
   };
 
-  // 「手を前で重ねる」位置を、胴の骨（Spine1）基準で覚えておく（お辞儀に追従させるため）
+  // 低い位置の手は骨盤基準。お辞儀で上体を傾けても腹部へ入り込ませない。
   const spine1 = avatar.rig.spine1;
+  const hips = avatar.rig.hips;
   const s1 = worldPos(spine1);
-  const belly = s1.clone().add(new THREE.Vector3(0, -0.03, 0.12));
+  // Reference illustration: relaxed elbows, wrists below the belt line,
+  // left hand resting on the back of the right rather than crossing high up.
+  const belly = s1.clone().add(new THREE.Vector3(0, -0.12, 0.105));
+  // Anchor the low clasp to the pelvis: a bow must not pull fingers through
+  // the abdomen as the upper spine tilts forward.
+  avatar.claspRestInverse = hips.getWorldQuaternion(new THREE.Quaternion()).invert();
   for (const side of ["Left", "Right"]) {
     const sign = avatar.arms[side].sign;
     // 左手を右手の上に重ねる（手首は少し離し、指先が中央で重なる）
-    const t = belly.clone().add(new THREE.Vector3(sign * 0.058, side === "Left" ? 0.006 : -0.01, side === "Left" ? 0.024 : 0.0));
-    avatar.claspLocal[side] = spine1.worldToLocal(t.clone());
+    const t = belly.clone().add(new THREE.Vector3(sign * 0.076, side === "Left" ? 0.006 : -0.006, side === "Left" ? 0.023 : 0.0));
+    avatar.claspLocal[side] = hips.worldToLocal(t.clone());
   }
 }
 
@@ -576,10 +582,11 @@ function updatePose(t, dt) {
   // 腕と指
   const busy = W ? Math.max(W.reach, W.left) * fade : S ? S.arm * fade : 0;
   updateTaps(t, w * (1 - busy));
+  const claspRotation = rig.hips.getWorldQuaternion(new THREE.Quaternion()).multiply(avatar.claspRestInverse);
   for (const side of ["Left", "Right"]) {
     const arm = arms[side];
     const s = arm.sign;
-    const clasp = rig.spine1.localToWorld(avatar.claspLocal[side].clone());
+    const clasp = rig.hips.localToWorld(avatar.claspLocal[side].clone());
 
     const tap = state.taps[side];
     const press = tapPress(t, tap.start) * (1 - busy);
@@ -590,28 +597,30 @@ function updatePose(t, dt) {
     );
     const type = layout.homeRow.clone().add(new THREE.Vector3(s * 0.08, 0.012, 0)).add(drift);
     const goal = clasp.clone().lerp(type, w);
-    let pole = worldPos(arm.upper).add(new THREE.Vector3(s * 0.4, -0.3, -0.3 + w * 0.1));
+    const claspPole = new THREE.Vector3(s * 0.10, -0.40, 0.16).applyQuaternion(claspRotation);
+    const typePole = new THREE.Vector3(s * 0.4, -0.3, -0.2);
+    let pole = worldPos(arm.upper).add(claspPole.lerp(typePole, w));
 
     // 手の向き: 重ねるときは手のひらを体へ、打つときは手のひらを下へ
-    const claspFinger = new THREE.Vector3(-s * 0.72, -0.6, 0.08);
-    const claspPalm = new THREE.Vector3(-s * 0.2, 0.05, -1);
+    const claspFinger = new THREE.Vector3(-s * 0.64, -0.76, 0.025).applyQuaternion(claspRotation);
+    const claspPalm = new THREE.Vector3(-s * 0.07, -0.01, -1).applyQuaternion(claspRotation);
     const typeFinger = new THREE.Vector3(-s * 0.1, -0.14, 1);
     const typePalm = new THREE.Vector3(0, -1, 0.12);
     let handQ = basis(claspFinger.lerp(typeFinger, w).normalize(), claspPalm.lerp(typePalm, w).normalize());
 
     // 指: 重ねるときは閉じてそろえ、打つときは少しだけ寄せる
-    let close = [0.8 - 0.55 * w, 0.45 - 0.25 * w];
+    let close = [0.95 - 0.70 * w, 0.70 - 0.50 * w];
     let curls = [0, 1, 2, 3].map((fi) => {
       // 軽く丸める程度（曲げすぎるとこぶしに見える）
-      const base = [0.26 - 0.12 * w, 0.36 + 0.04 * w, 0.2 + 0.02 * w];
+      const base = [0.08 + 0.06 * w, 0.10 + 0.30 * w, 0.06 + 0.16 * w];
       const p = w * (fi === tap.finger ? press : 0);
       return [base[0] + p * 0.38, base[1] + p * 0.22, base[2] + p * 0.08];
     });
     const thumbPress = side === "Right" ? tapPress(t, state.thumbTap.start) * w * (1 - busy) : 0;
-    let thumb = 0.12 + 0.15 * w + thumbPress * 0.35;
+    let thumb = 0.07 + 0.20 * w + thumbPress * 0.35;
 
     let grip = null; // 指先（親指と人差し指の間）で合わせたい位置
-    let wristMax = 180;
+    let wristMax = THREE.MathUtils.lerp(32, 180, w);
     if (W && side === 'Right') {
       const plan = writeHandPlan(ip.elapsed, W);
       const k = W.reach * fade;

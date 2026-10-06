@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { needsAudioGesture, primeSpeechPlayer } from './audio-access.mjs?v=20260915-mobile-audio-1';
-import { createWorkerAvatar } from "../model/worker-avatar.js?v=20261005-idle-6";
+import { createWorkerAvatar } from "../model/worker-avatar.js?v=20261006-handpose-1";
 import { buildShadowFloor } from "../model/environment.js?v=20261005-idle-6";
 import { EXTRA_SPEECH } from "../../wide-desk/additional-speech.js?v=20260909-conversation-1";
 import { createVisitorRecognition } from "./visitor-recognition.js?v=20261006-leda-names-1";
