@@ -421,7 +421,7 @@ function computeLayout() {
   const s1 = worldPos(spine1);
   // Reference illustration: relaxed elbows, wrists below the belt line,
   // left hand resting on the back of the right rather than crossing high up.
-  const belly = s1.clone().add(new THREE.Vector3(0, -0.12, 0.105));
+  const belly = s1.clone().add(new THREE.Vector3(0, -0.08, 0.105));
   // Anchor the low clasp to the pelvis: a bow must not pull fingers through
   // the abdomen as the upper spine tilts forward.
   avatar.claspRestInverse = hips.getWorldQuaternion(new THREE.Quaternion()).invert();
@@ -597,7 +597,7 @@ function updatePose(t, dt) {
     );
     const type = layout.homeRow.clone().add(new THREE.Vector3(s * 0.08, 0.012, 0)).add(drift);
     const goal = clasp.clone().lerp(type, w);
-    const claspPole = new THREE.Vector3(s * 0.10, -0.40, 0.16).applyQuaternion(claspRotation);
+    const claspPole = new THREE.Vector3(s * 0.05, -0.40, -0.04).applyQuaternion(claspRotation);
     const typePole = new THREE.Vector3(s * 0.4, -0.3, -0.2);
     let pole = worldPos(arm.upper).add(claspPole.lerp(typePole, w));
 
