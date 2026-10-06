@@ -4,13 +4,13 @@ import { buildReception, createEnvironmentMap, MEMO_SURFACE } from './environmen
 import { createIdleDirector } from './idle-actions.mjs?v=20261005-idle-6';
 import { WRITE, MEMO, memoTip, memoInkCount, writeChannels, stretchChannels } from './idle-motion.mjs?v=20261005-idle-6';
 // Derived from the supplied worker model runtime. Reception and audio stay in the host app.
-export async function createWorkerAvatar({scene, camera, renderer}) {
+export async function createWorkerAvatar({scene, camera, renderer, clockNow = () => performance.now()}) {
 const MODEL_URL = new URL('./model-assets/worker.glb', import.meta.url).href;
 const FACE_DIR = new URL('./model-assets/face/', import.meta.url).href;
 const DECAL_DIR = new URL('./model-assets/decals/', import.meta.url).href;
 const AX = new THREE.Vector3(1,0,0), AY = new THREE.Vector3(0,1,0), AZ = new THREE.Vector3(0,0,1);
 let autoBlink = true, time = 0, transition = null, fallbackSpeech = false;
-const startedAt = performance.now();
+const startedAt = clockNow();
 const idleDirector = createIdleDirector();
 let idlePose = { kind: null, weight: 0, fade: 0, elapsed: 0, writing: false };
 const _pq = new THREE.Quaternion();
@@ -54,6 +54,25 @@ function solveArm(arm, target, pole) {
   const sinA = Math.sqrt(Math.max(0, 1 - cosA * cosA));
   const p = pole.clone().sub(a);
   p.sub(dir.clone().multiplyScalar(p.dot(dir))).normalize();
+  // Keep the sleeve outside the vest even when the hand target changes.
+  // Adjust on the IK elbow circle, preserving both arm segment lengths.
+  const radius = sinA * lenA;
+  if (arm.elbowOutset > 0 && radius > 1e-4) {
+    const center = a.clone().addScaledVector(dir, cosA * lenA);
+    const outside = new THREE.Vector3(arm.sign, 0, 0).addScaledVector(dir, -arm.sign * dir.x);
+    const available = outside.length();
+    if (available > 1e-4) {
+      outside.divideScalar(available);
+      const required = THREE.MathUtils.clamp((arm.sign * a.x + arm.elbowOutset - arm.sign * center.x) / (radius * available), -1, 0.999);
+      const projection = p.dot(outside);
+      if (projection < required) {
+        const tangent = p.clone().addScaledVector(outside, -projection);
+        if (tangent.lengthSq() < 1e-8) tangent.crossVectors(dir, outside);
+        tangent.normalize();
+        p.copy(outside).multiplyScalar(required).addScaledVector(tangent, Math.sqrt(1 - required * required));
+      }
+    }
+  }
   const elbow = a.clone().addScaledVector(dir, cosA * lenA).addScaledVector(p, sinA * lenA);
 
   rotateWorld(arm.upper, new THREE.Quaternion().setFromUnitVectors(
@@ -586,7 +605,10 @@ function updatePose(t, dt) {
   for (const side of ["Left", "Right"]) {
     const arm = arms[side];
     const s = arm.sign;
+    arm.elbowOutset = 0.06 * (1 - (S ? Math.min(1, S.arm * fade) : 0));
     const clasp = rig.hips.localToWorld(avatar.claspLocal[side].clone());
+    // Give cuffs and forearms a little clearance as the vest tilts in a bow.
+    clasp.z += Math.max(0, Math.sin(state.bowAngle)) * 0.05;
 
     const tap = state.taps[side];
     const press = tapPress(t, tap.start) * (1 - busy);
@@ -597,7 +619,7 @@ function updatePose(t, dt) {
     );
     const type = layout.homeRow.clone().add(new THREE.Vector3(s * 0.08, 0.012, 0)).add(drift);
     const goal = clasp.clone().lerp(type, w);
-    const claspPole = new THREE.Vector3(s * 0.05, -0.40, -0.04).applyQuaternion(claspRotation);
+    const claspPole = new THREE.Vector3(s * 0.12, -0.38, 0.0).applyQuaternion(claspRotation);
     const typePole = new THREE.Vector3(s * 0.4, -0.3, -0.2);
     let pole = worldPos(arm.upper).add(claspPole.lerp(typePole, w));
 
@@ -620,7 +642,7 @@ function updatePose(t, dt) {
     let thumb = 0.07 + 0.20 * w + thumbPress * 0.35;
 
     let grip = null; // 指先（親指と人差し指の間）で合わせたい位置
-    let wristMax = THREE.MathUtils.lerp(32, 180, w);
+    let wristMax = THREE.MathUtils.lerp(42, 180, w);
     if (W && side === 'Right') {
       const plan = writeHandPlan(ip.elapsed, W);
       const k = W.reach * fade;
@@ -629,18 +651,18 @@ function updatePose(t, dt) {
       curls = mixCurls(curls, plan.curls, k);
       close = [THREE.MathUtils.lerp(close[0], 0.92, k), THREE.MathUtils.lerp(close[1], 0.2 + 0.35 * plan.write, k)];
       thumb = THREE.MathUtils.lerp(thumb, plan.thumb, k);
-      wristMax = THREE.MathUtils.lerp(180, 36, Math.min(1, k * 3)); // 書く手の手首は軽く反らす程度まで
-      pole.lerp(worldPos(arm.upper).add(new THREE.Vector3(-0.20, -0.66, -0.04)), k); // 肘は下げて体の近くに（前腕を机に預ける）
+      wristMax = THREE.MathUtils.lerp(180, 42, Math.min(1, k * 3)); // 書く手は軽く曲げ、ペン先合わせの余裕も保つ
+      pole.lerp(worldPos(arm.upper).add(new THREE.Vector3(-0.32, -0.62, 0.04)), k); // 肘を低く保ち、袖がベストへ入らない余裕を確保
     } else if (W && side === 'Left') {
       // 左手はキーボードの手前、メモ帳寄りの机の上にそっと置いて休める
       const k = W.left * fade;
-      const rest = new THREE.Vector3(-0.035, layout.deskTopY + 0.024, layout.homeRow.z - 0.058);
+      const rest = new THREE.Vector3(-0.035, layout.deskTopY + 0.065, layout.homeRow.z - 0.058);
       goal.lerp(rest, k).add(new THREE.Vector3(0, Math.sin(Math.PI * k) * 0.022, 0));
       handQ = handQ.slerp(basis(new THREE.Vector3(-0.62, -0.16, 0.77).normalize(), new THREE.Vector3(0.05, -1, 0.1).normalize()), k);
-      curls = mixCurls(curls, [[0.30, 0.42, 0.25], [0.34, 0.46, 0.27], [0.38, 0.50, 0.28], [0.42, 0.52, 0.30]], k);
+      curls = mixCurls(curls, [[0.12, 0.20, 0.12], [0.14, 0.22, 0.13], [0.16, 0.24, 0.14], [0.18, 0.26, 0.15]], k);
       thumb = THREE.MathUtils.lerp(thumb, 0.18, k);
       wristMax = THREE.MathUtils.lerp(180, 32, Math.min(1, k * 1.5));
-      pole.lerp(worldPos(arm.upper).add(new THREE.Vector3(0.45, -0.3, -0.25)), k);
+      pole.lerp(worldPos(arm.upper).add(new THREE.Vector3(0.50, -0.3, 0.10)), k);
     } else if (S) {
       const SA = side === 'Right' ? stretchChannels(ip.elapsed, 0.07) : S; // 右腕は少し遅れて付いてくる
       const k = SA.arm * fade;
@@ -1057,7 +1079,7 @@ function play(key) {
   }
 }
 function update(dt, { allowIdle = false } = {}) {
-  time=(performance.now()-startedAt)/1000;
+  time=(clockNow()-startedAt)/1000;
   idlePose=idleDirector.tick(time,allowIdle && state.mode==='work' && !state.speaking,
     !transition && state.sit>0.998 && state.typing>0.95);
   if(transition) {
