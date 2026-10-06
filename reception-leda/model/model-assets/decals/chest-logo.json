@@ -1,0 +1,13 @@
+{
+  "space": "bind-pose mesh coordinates (meters), +Z faces the viewer",
+  "x0": 0.024,
+  "x1": 0.076,
+  "y0": 0.748,
+  "y1": 0.792,
+  "zMin": 0.0,
+  "depthZ0": 0.0,
+  "depthZ1": 0.1,
+  "depthTolerance": 0.004,
+  "width": 1040,
+  "height": 880
+}

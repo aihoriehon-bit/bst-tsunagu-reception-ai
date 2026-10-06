@@ -1,0 +1,507 @@
+{
+  "voice": "Leda",
+  "model": "gemini-3.8-flash-tts",
+  "localOnly": false,
+  "lines": [
+    {
+      "key": "welcome",
+      "text": "いらっしゃいませ。こちらでご用件をお伺いいたします。",
+      "sha256": "6c34148652936a53dc360f9e8f4b3d708195c82db2551b8035b3d8c1f0183d91",
+      "bytes": 180524
+    },
+    {
+      "key": "morning",
+      "text": "有限会社ビジネスシステム通信、受付AIのつなぐです。恐れ入りますが、お名前とご用件をお聞かせいただけますか？",
+      "sha256": "c60deeeecc6b243343af56a7435ada944cdcfb8d3a822571ddbe18c6f24043d2",
+      "bytes": 424364
+    },
+    {
+      "key": "visitor",
+      "text": "いつもありがとうございます。担当者をお呼びしますので、どなたにお取り次ぎしましょうか？",
+      "sha256": "f28623b4d3ea77a39e97b35bb8892f916689bce44509e9e824386ed87dc27f8a",
+      "bytes": 284204
+    },
+    {
+      "key": "calling",
+      "text": "配達ありがとうございます。どなた宛てのお荷物でしょうか？宛先が分からない場合は、分かりません、とお答えください。",
+      "sha256": "b0adcd928024ee5f949f99f9a981fed57f5ba273bc1daadbe81310cc0ce1aa48",
+      "bytes": 443564
+    },
+    {
+      "key": "goodbye",
+      "text": "ありがとうございました。どうぞお気をつけてお帰りください。",
+      "sha256": "c534c4134e641301e264a630ca744b6f660df0b023d8f29bf3535f327a99157e",
+      "bytes": 217004
+    },
+    {
+      "key": "employeeGeneric",
+      "text": "お疲れさまです。",
+      "sha256": "613a7cff25542c0aa680e282e13fc9badf6b4101d6adb9b2c5cd288dadfe0a10",
+      "bytes": 76844
+    },
+    {
+      "key": "employeeGoodbye",
+      "text": "お疲れさまです。何かありましたら、いつでもお声がけくださいね。",
+      "sha256": "2a518df8155fac74930a81b9c408b17b47189b18b2e9f38cecf4b0ab2d4b170e",
+      "bytes": 238124
+    },
+    {
+      "key": "startup",
+      "text": "受付AIのつなぐです。受付で仕事をしながら、ご来客をお待ちしています。どうぞよろしくお願いします。",
+      "sha256": "0e265e011d2f8f8985fa6cf3699cfe610acd863af3ee77b1e559ae0d6979d588",
+      "bytes": 368684
+    },
+    {
+      "key": "idleRequest",
+      "text": "ご用件がお決まりになりましたら、いつでもお声がけくださいね。",
+      "sha256": "5c73e2f972c10e5247604e7f6a390786b79659b2a8fc1fd8f85e7850602ec320",
+      "bytes": 213164
+    },
+    {
+      "key": "idleServices",
+      "text": "防犯カメラや業務用無線、LED工事、映像音響設備についてもご案内できます。",
+      "sha256": "b9323dcd36937d2b246968481b52d78fd82b1a68c2f2bd780463be12e85ab34a",
+      "bytes": 339884
+    },
+    {
+      "key": "idleAppointment",
+      "text": "お約束のある方は、お名前と担当者名をお聞かせください。",
+      "sha256": "0a7d9f623adfc4409366bb3f19f5f7497c487ee24a125aef1b7b5bd3f4709b60",
+      "bytes": 228524
+    },
+    {
+      "key": "workMemo",
+      "text": "受付メモを確認しています。",
+      "sha256": "98612f857372b2bfba6970d1aef12a14df4417a7d695177fb6fc6b3a354033fc",
+      "bytes": 117164
+    },
+    {
+      "key": "workPrepare",
+      "text": "次のお客様をお迎えする準備をしています。",
+      "sha256": "d8db2001b519c6da63b9a0d1c86b1cec8e5c27f9f410250bf1dfafdfc888419e",
+      "bytes": 153644
+    },
+    {
+      "key": "workSchedule",
+      "text": "今日の来客予定を確認しています。",
+      "sha256": "59cd6126342ab7bdfeb29b175abe54de4d2adb81a2e69f8ed2e402eac9fd4a1f",
+      "bytes": 136364
+    },
+    {
+      "key": "greetingMorning",
+      "text": "おはようございます。",
+      "sha256": "ffed10b485bc424868bb7dc53ab142900c9f300448f74c18632f48f7342600ff",
+      "bytes": 76844
+    },
+    {
+      "key": "greetingDay",
+      "text": "こんにちは。",
+      "sha256": "4738cad72099d0c03f024ec31a580532bbd832e816f5198266d49e49f48a3d56",
+      "bytes": 63404
+    },
+    {
+      "key": "greetingEvening",
+      "text": "こんばんは。",
+      "sha256": "e15cb932f48559ae52fdf9903b84105e58698edc58caadea4d3e8d3863fd550b",
+      "bytes": 59564
+    },
+    {
+      "key": "employeeSato",
+      "text": "お疲れさまです。",
+      "sha256": "613a7cff25542c0aa680e282e13fc9badf6b4101d6adb9b2c5cd288dadfe0a10",
+      "bytes": 76844
+    },
+    {
+      "key": "employeeTanaka",
+      "text": "お疲れさまです。",
+      "sha256": "613a7cff25542c0aa680e282e13fc9badf6b4101d6adb9b2c5cd288dadfe0a10",
+      "bytes": 76844
+    },
+    {
+      "key": "fukudaMorning",
+      "text": "福田さん、おはようございます。いつもありがとうございます。今日はどのようなご用件でしょうか？",
+      "sha256": "11d1ebe8daf97f0cafec2780e48dff8a359ca71f4899de70cb783b480ec5d754",
+      "bytes": 332204
+    },
+    {
+      "key": "fukudaDay",
+      "text": "福田さん、こんにちは。いつもありがとうございます。今日はどのようなご用件でしょうか？",
+      "sha256": "e69b35f9a7ca31e33092d1f067c0e2b8d96a0cb7e9e1fb92b6971eeec224814f",
+      "bytes": 293804
+    },
+    {
+      "key": "fukudaEvening",
+      "text": "福田さん、こんばんは。いつもありがとうございます。今日はどのようなご用件でしょうか？",
+      "sha256": "a2bfdf74b674840eba7ce6a039f1f3f6ba1ab3842acd4df6822e0278d14af728",
+      "bytes": 284204
+    },
+    {
+      "key": "yamato",
+      "text": "いつもお疲れさまです。ヤマトの方ですね。担当者をお呼びしますので、そのまま少々お待ちください。",
+      "sha256": "e06564826c5c926195d39e74688b5ee37af1ad74c852cc1e80f15e8ced450296",
+      "bytes": 343724
+    },
+    {
+      "key": "chatHello",
+      "text": "受付AIのつなぐです。ご訪問、配達、社員の方のご用件など、どのようなご用件でしょうか？",
+      "sha256": "c8ce465394445af911e891f7624bb72baba9e2095f55b8f68937a6a8aa0102c6",
+      "bytes": 399404
+    },
+    {
+      "key": "chatGuestRecipient",
+      "text": "いつもありがとうございます。担当者をお呼びしますので、どなたにお取り次ぎしましょうか？",
+      "sha256": "f28623b4d3ea77a39e97b35bb8892f916689bce44509e9e824386ed87dc27f8a",
+      "bytes": 284204
+    },
+    {
+      "key": "chatRecognizedGuest",
+      "text": "いつもありがとうございます。",
+      "sha256": "60158d7673ad9af85d86af8e67972c072ceb0340ccfbf71b366773a7bd7f3853",
+      "bytes": 90284
+    },
+    {
+      "key": "chatRecognizedEmployee",
+      "text": "お疲れさまです。",
+      "sha256": "613a7cff25542c0aa680e282e13fc9badf6b4101d6adb9b2c5cd288dadfe0a10",
+      "bytes": 76844
+    },
+    {
+      "key": "chatRecognizedDelivery",
+      "text": "いつも配達ありがとうございます。",
+      "sha256": "3d105ddab0e3bc836d04a1a490fa149202659d78ecb9712aff19dcaa4eabb8de",
+      "bytes": 117164
+    },
+    {
+      "key": "chatRecipient",
+      "text": "どなたへのお取次ぎをご希望ですか？担当者が分からない場合は、誰でもいい、とお答えください。",
+      "sha256": "f5c75f21ddb09c0bf85dcd1b124e085451b2bacb2d6c7c9c2ac6158b21fe1e3d",
+      "bytes": 347564
+    },
+    {
+      "key": "chatVisitorName",
+      "text": "承知しました。お越しになった、あなたのお名前をお願いします。",
+      "sha256": "2db1cd026553fcdb533be80ffecce6c7238ca6556d1aa340dad2bdba9f7b4831",
+      "bytes": 247724
+    },
+    {
+      "key": "chatPurpose",
+      "text": "ご用件を簡単にお聞かせいただけますか？",
+      "sha256": "4d8be630b08c600814b4e722f1cbc6982b3ff5dd4451533a0654fe4568734e0c",
+      "bytes": 149804
+    },
+    {
+      "key": "chatDelivery",
+      "text": "配達ありがとうございます。どなた宛てのお荷物でしょうか？宛先が分からない場合は、分かりません、とお答えください。",
+      "sha256": "b0adcd928024ee5f949f99f9a981fed57f5ba273bc1daadbe81310cc0ce1aa48",
+      "bytes": 443564
+    },
+    {
+      "key": "chatDeliveryConfirm",
+      "text": "ありがとうございます。画面のお荷物の宛先は合っていますか？はい、または、訂正、とお答えください。",
+      "sha256": "a195d7dc10befcd246334c08e423fda87d4d8a06f47bad7d788890d681f76998",
+      "bytes": 380204
+    },
+    {
+      "key": "chatDeliveryCall",
+      "text": "承知しました。宛先の担当者をお呼びしますので、少々お待ちください。ここまでが受付デモです。実際の呼び出しは行っていません。",
+      "sha256": "1dc16abeecf76a1cf59d8eba89d0f5653dbbbf4dfcda2bea1f41adff2c7a70dc",
+      "bytes": 495404
+    },
+    {
+      "key": "chatGeneral",
+      "text": "では、総務担当者をお呼びいたしますね。お越しになった、あなたのお名前をお願いします。",
+      "sha256": "d7f8341215f70d953b29811c58f7094f73ad52fbf8af88020c9c57aef6e16af9",
+      "bytes": 332204
+    },
+    {
+      "key": "chatGeneralConfirm",
+      "text": "では、総務担当者をお呼びいたしますね。画面の受付内容は合っていますか？はい、または、訂正、とお答えください。",
+      "sha256": "f396f5f61741e17a145a4ff1c78b6c75c5b43da9a4be8dd4e792ad29ae901b3d",
+      "bytes": 468524
+    },
+    {
+      "key": "chatGeneralPurpose",
+      "text": "では、総務担当者をお呼びいたしますね。ご用件を簡単にお聞かせいただけますか？",
+      "sha256": "7ef0f284096f605d2a8dc214fb3b4996f318d307a4986f34e7c11722bb2fc19e",
+      "bytes": 330284
+    },
+    {
+      "key": "chatPause",
+      "text": "はい、ご準備ができましたら、お声がけください。",
+      "sha256": "24a5a24e9238e8d67f280630bbf0084218b77fb1e9585ba9429f2f704c131ec7",
+      "bytes": 170924
+    },
+    {
+      "key": "chatCancel",
+      "text": "承知しました。今回の受付は取り消しました。またご用件がございましたら、お声がけください。",
+      "sha256": "41e91fb866b014b005e843e450eb72f1e3ccc3899e0f037966ede8c6c7b6522e",
+      "bytes": 351404
+    },
+    {
+      "key": "chatNoPurpose",
+      "text": "承知しました。また何かございましたら、お声がけください。",
+      "sha256": "eb061be81ab05e94836334006801984613179bff57c2d115c8eeb7ef54c8353e",
+      "bytes": 205484
+    },
+    {
+      "key": "chatHelp",
+      "text": "面会や打ち合わせ、配達などのご用件を伺えます。担当者が分からなければ、誰でもいい、とお答えください。聞き直す場合は、もう一度、内容を直す場合は、訂正、とお話しください。",
+      "sha256": "ba69ce2cad113e044ed7e082025ffd50d849ec608fe0f7d437d270037afbb0f0",
+      "bytes": 756524
+    },
+    {
+      "key": "chatWaitTime",
+      "text": "申し訳ありませんが、正確なお待ち時間は分かりません。お急ぎの場合は、受付スタッフへ直接お声がけください。",
+      "sha256": "2e97b5e8a2211351f1985518b6c58d0d0a985dbeb47c317877d93092bd6588cf",
+      "bytes": 420524
+    },
+    {
+      "key": "chatFacility",
+      "text": "申し訳ありませんが、場所や営業時間などの詳しい情報は、受付スタッフへご確認ください。",
+      "sha256": "077c01eda57db38fd31247847bc124084377ef20804095d7c811fa3969fb0926",
+      "bytes": 343724
+    },
+    {
+      "key": "chatCallStatus",
+      "text": "現在は受付の確認用デモのため、実際の電話や通知は送っていません。受付スタッフへ直接お声がけください。",
+      "sha256": "7f27b65a743fd1e424cffe188784bf0c96d64db1694f8c123c3690483bd50410",
+      "bytes": 437804
+    },
+    {
+      "key": "chatNameRequired",
+      "text": "恐れ入りますが、お越しになった方のお名前をもう一度お願いします。お名前をお伝えになりたくない場合は、受付スタッフへ直接お声がけください。",
+      "sha256": "f0fd2b99fa3acfb25502ad208d029da2e7e091d39b6117f765874288298c50df",
+      "bytes": 497324
+    },
+    {
+      "key": "chatConfirm",
+      "text": "ありがとうございます。画面に受付内容をまとめました。お名前、お取次ぎ先、ご用件は合っていますか？はい、または、訂正、とお答えください。",
+      "sha256": "46742d887b1a661bc74563a3ae0952a1dd92c23e6dafa41486148279b992ce4b",
+      "bytes": 547244
+    },
+    {
+      "key": "chatCorrection",
+      "text": "どの項目を訂正しますか？ご自身のお名前、担当者、または、ご用件、とお答えください。",
+      "sha256": "f1b3625e05506d951f667caf5c0d30d76aae80a023922ef567b0d43e7b1d5cbe",
+      "bytes": 412844
+    },
+    {
+      "key": "chatDemoComplete",
+      "text": "受付内容を確認しました。ここまでが受付デモです。ご協力ありがとうございました。",
+      "sha256": "8fafa7f6a9bd8df5c57a03c93db6161dffba550ff39a951876009213d3f3c79d",
+      "bytes": 332204
+    },
+    {
+      "key": "chatReceived",
+      "text": "受付内容を確認しました。お取次ぎのご案内に進みますので、少々お待ちください。",
+      "sha256": "7ae4815548bad8f90b20e2250df5b165648e4ccafaf66753504bc38bc0677f8d",
+      "bytes": 291884
+    },
+    {
+      "key": "chatGeneralComplete",
+      "text": "受付内容を確認しました。総務担当者へのお取次ぎをご案内します。少々お待ちください。",
+      "sha256": "9e4bdcf9c14c2cc27082b8ee74569244a284c2badf9683528210860c8948f0d7",
+      "bytes": 345644
+    },
+    {
+      "key": "chatCompany",
+      "text": "有限会社ビジネスシステム通信では、通信設備や防犯カメラなどのご相談を承っています。詳しい内容は担当者へご確認ください。",
+      "sha256": "25fc025d140a4e2fcfd6fcd7baf290a4cc795ebecff9535e7417945cb9483b6e",
+      "bytes": 512684
+    },
+    {
+      "key": "chatEmployee",
+      "text": "お疲れさまです。",
+      "sha256": "613a7cff25542c0aa680e282e13fc9badf6b4101d6adb9b2c5cd288dadfe0a10",
+      "bytes": 76844
+    },
+    {
+      "key": "chatIdentity",
+      "text": "私は、受付AIのつなぐです。ご用件やお名前を順番に伺う、受付のデモをしています。",
+      "sha256": "39c3dbb409b74e2dfc774dbfd1bcfff0dcc08180e2cb0c89ccd8c7e8c959e85a",
+      "bytes": 380204
+    },
+    {
+      "key": "chatThanks",
+      "text": "どういたしまして。また何かありましたら、お声がけくださいね。",
+      "sha256": "917ac2536edc2aedb82e768570ba570c246483993b2670c9f7b3b5f8c1f7ea3d",
+      "bytes": 222764
+    },
+    {
+      "key": "chatBye",
+      "text": "ありがとうございました。どうぞお気をつけてお帰りください。",
+      "sha256": "c534c4134e641301e264a630ca744b6f660df0b023d8f29bf3535f327a99157e",
+      "bytes": 217004
+    },
+    {
+      "key": "chatUnknown",
+      "text": "すみません、もう一度ご用件を教えていただけますか？ご訪問、配達、会社案内などに対応しています。",
+      "sha256": "6a69215836e4dc13f542fd8f71668373f831dead7af2f21f076ee740dff436ae",
+      "bytes": 422444
+    },
+    {
+      "key": "nameMakkii",
+      "text": "まっきぃさん。",
+      "sha256": "11934ba9a0f714cea1ea881c28eb0e297117231e6efeb2eebc19e235fd7f5142",
+      "bytes": 61484
+    },
+    {
+      "key": "enrollFrontFast",
+      "text": "正面を向いてください。",
+      "sha256": "b97067d600339345fcff9c1a13f0e95770da64a0c96d507c7f2a7d845e7859a3",
+      "bytes": 96044
+    },
+    {
+      "key": "enrollDoneFast",
+      "text": "登録できました。",
+      "sha256": "24ddd830aaeae5d8abc7f9fa445ac2fd8f2f71555e3341b49d4ca8bd17900558",
+      "bytes": 74924
+    },
+    {
+      "key": "enrollFrontCue",
+      "text": "正面を向いてください。",
+      "sha256": "b97067d600339345fcff9c1a13f0e95770da64a0c96d507c7f2a7d845e7859a3",
+      "bytes": 96044
+    },
+    {
+      "key": "enrollRightCue",
+      "text": "次は右を向いてください。",
+      "sha256": "71904172ea156253a8996815ef6c0b3d34418e8835e126dd786fc629e52e2922",
+      "bytes": 122924
+    },
+    {
+      "key": "enrollLeftCue",
+      "text": "最後に左を向いてください。",
+      "sha256": "6f849c8eb4b44ea49927aba9811db22e475133568c91aaac3f894c970e800311",
+      "bytes": 113324
+    },
+    {
+      "key": "guideRoute",
+      "text": "ご用件を番号でお答えください。1番、弊社スタッフとお約束。2番、宅急便や納品など。3番、お約束なしのご来訪。",
+      "sha256": "a83d80ce7bcf971c49f22c1a66928e5b4a3a92845740fd478030f2d4442024d6",
+      "bytes": 568364
+    },
+    {
+      "key": "guideDeliveryType",
+      "text": "お届けの種類を番号でお答えください。1番、宅急便や郵便。2番、商品の納品。3番、その他のお届け物。",
+      "sha256": "01b2c6fcbb1b41361c79441f3addf1a3cc5ab82994d66b96bee3f546aa9899c9",
+      "bytes": 531884
+    },
+    {
+      "key": "guidePurpose",
+      "text": "ご用件を番号でお答えください。1番、打ち合わせや面会。2番、ご相談。3番、営業のご案内。4番、その他。",
+      "sha256": "978fcbe926aced39ad89e3b5b03bf75995a572b6e26c908d328339356ae9840d",
+      "bytes": 499244
+    },
+    {
+      "key": "guideCompany",
+      "text": "まず、お越しになった方の会社名だけをお話しください。個人でお越しの場合は、個人です、とお答えください。",
+      "sha256": "a1188c12a514c78ccefd790d6673123f579e924578130486f14a2341e4d13df3",
+      "bytes": 407084
+    },
+    {
+      "key": "guideCompanyCheck",
+      "text": "画面の会社名で合っていますか？1番、合っています。2番、会社名を言い直す。3番、会社名なし、個人での来訪。",
+      "sha256": "a50bf1376f31837f2c5fc05293c348f70cb39db2997e9747502873f6ce030010",
+      "bytes": 568364
+    },
+    {
+      "key": "guideName",
+      "text": "次に、あなたのお名前だけをお話しください。",
+      "sha256": "9c8a68630baba3b6dbb93ff0d4723bd579dac40d9b2838e39b55f98b14030320",
+      "bytes": 172844
+    },
+    {
+      "key": "guideGoAhead",
+      "text": "どうぞ。",
+      "sha256": "8e0d6d75fe21989061c89e0454d0f3347ddca80037b0da4bddcc8a34e5b83fb5",
+      "bytes": 49964
+    },
+    {
+      "key": "guideNameCheck",
+      "text": "画面のお名前で合っていますか？1番、合っています。2番、お名前を言い直す。",
+      "sha256": "c0cfa2bb4b04bf1f1d0b2861bc80934a0c0983b3878c9f8a456f5409a9359643",
+      "bytes": 328364
+    },
+    {
+      "key": "guideConfirm",
+      "text": "受付内容をご確認ください。1番、受付を完了。2番、担当者を訂正。3番、会社名を訂正。4番、お名前を訂正。5番、ご用件を訂正。6番、来訪の種類を訂正。",
+      "sha256": "08e72eb52d97db8f8882bba622b96418cf1334a232aa6c882119acc97184a58c",
+      "bytes": 879404
+    },
+    {
+      "key": "guideEmployee",
+      "text": "お取り次ぎは必要ですか？1番、受付を利用する。2番、必要ありません。",
+      "sha256": "bdca9a483760af121cd93f761c0f1a94164af8223c21013aa4567d64b1998c2e",
+      "bytes": 328364
+    },
+    {
+      "key": "guideGeneral",
+      "text": "では、総務担当者へのお取り次ぎで承ります。",
+      "sha256": "6d3c9ac65ad9fcde9cd0a92e9961b6c46f7c3782c9c3fbfc54bf190854a1a059",
+      "bytes": 178604
+    },
+    {
+      "key": "guideUnclear",
+      "text": "すみません、番号を一つに絞れませんでした。画面の番号を、もう一度お答えください。",
+      "sha256": "a418c6294ca886d3493c2661f0140b5eb8fae3eb155c196215992539e0efd90c",
+      "bytes": 372524
+    },
+    {
+      "key": "guideRetry",
+      "text": "すみません、うまく聞き取れませんでした。緑のマイクが表示されてから、もう一度お願いします。",
+      "sha256": "3f90876fe843cbacee4f68f11a2c874494d091ecc9d973fe282733a2dd39061f",
+      "bytes": 347564
+    },
+    {
+      "key": "guideComplete",
+      "text": "受付内容を確認しました。ここまでが受付デモです。実際の呼び出しは行っていません。ご協力ありがとうございました。",
+      "sha256": "bb1b6efc925bcf382ae2ff914c71d680c3b56560d87cfa3f60c50fb94defe391",
+      "bytes": 445484
+    },
+    {
+      "key": "guideDepartment0",
+      "text": "お呼びする部署を番号でお答えください。1番、えいぎょう。2番、そうむ。7番、部署が分からないので総務へ。",
+      "sha256": "ce9e4bbec0fcff0739a6af222549b3ff08a7d99c627e780a3df73dda0a2f54bf",
+      "bytes": 487724
+    },
+    {
+      "key": "guideStaff_sales_0",
+      "text": "えいぎょうの担当者を番号でお答えください。1番、やまだたろう。2番、えいぎょうのうけつけたんとう。7番、この部署のどなたでも。",
+      "sha256": "8f8861a7558707c2d99d773806eba189e70197c12aac5eca072d58f96d1f25fe",
+      "bytes": 574124
+    },
+    {
+      "key": "guideStaff_general_0",
+      "text": "そうむの担当者を番号でお答えください。1番、そうむたんとうしゃ。7番、この部署のどなたでも。",
+      "sha256": "3fa721b13e6dd2a24b4454927ce7c1b563891faa4fe2afd144740db4fa2a5ec9",
+      "bytes": 420524
+    },
+    {
+      "key": "greetingMorningArrival",
+      "text": "おはようございます。有限会社ビジネスシステム通信、受付AIのつなぐです。恐れ入りますが、お名前とご用件をお聞かせいただけますか？",
+      "sha256": "6355885ab418e85ea4f1bb48ac8597c82343490890f9b38901fcdaefffde1a35",
+      "bytes": 487724
+    },
+    {
+      "key": "greetingDayArrival",
+      "text": "こんにちは。有限会社ビジネスシステム通信、受付AIのつなぐです。恐れ入りますが、お名前とご用件をお聞かせいただけますか？",
+      "sha256": "e31086875e05c84bb9e33a884251d9918603aee817e97f7cef9deda29f7d0efc",
+      "bytes": 512684
+    },
+    {
+      "key": "greetingEveningArrival",
+      "text": "こんばんは。有限会社ビジネスシステム通信、受付AIのつなぐです。恐れ入りますが、お名前とご用件をお聞かせいただけますか？",
+      "sha256": "4aa24a95edd1e7907d38f8c808cdccc62decf3748d0d3fdb113daf42f47afc0f",
+      "bytes": 472364
+    }
+  ],
+  "unusedLegacyKeys": [
+    "enrollFront",
+    "enrollRight",
+    "enrollLeft",
+    "enrollDone",
+    "enrollRightFast",
+    "enrollLeftFast"
+  ]
+}
