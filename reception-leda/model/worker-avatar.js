@@ -894,6 +894,9 @@ const padDir = (u, v) => new THREE.Vector3(-u, 0, v).applyQuaternion(papers.getW
 // 書く手の向き（手のひらは下・体の中心側、指は前へ）と、そのときのペンの向き（ペン先→後ろ、右肩の方へ寝かせる）
 const WRITE_HAND_Q = basis(new THREE.Vector3(0.22, -0.40, 0.89).normalize(), new THREE.Vector3(0.86, -0.50, 0.08).normalize());
 const WRITE_AXIS = new THREE.Vector3(-0.30, 0.74, -0.60).normalize();
+// Keep the original hand pose, placing the pen 18mm toward the gap between
+// index and thumb instead of alongside the outer edge of the thumb.
+const PEN_IN_HAND = new THREE.Vector3(-0.018, 0, 0.002);
 // 机に寝ているペンは上からつまむ（手のひらを下、指先を斜め下・前へ）。持ち上げながら書く持ち方へ持ち替える
 const GRASP_HAND_Q = basis(new THREE.Vector3(0.28, -0.55, 0.79).normalize(), new THREE.Vector3(0.35, -0.94, 0.0).normalize());
 const REST_TIP = padPoint(WRITE.penRest.tip[0], WRITE.penRest.tip[1], PEN_R);
@@ -942,7 +945,7 @@ const WRITE_GRIP = [[0.50, 0.55, 0.28], [0.80, 1.00, 0.55], [1.15, 1.25, 0.75], 
 /** 右手の計画: 指先を合わせる位置・手の向き・指の曲げ。 */
 function writeHandPlan(e, W) {
   const pose = penPoseAt(e, W);
-  const grip = pose.handTip.clone().addScaledVector(pose.axis, PEN_GRIP);
+  const grip = pose.handTip.clone().addScaledVector(pose.axis, PEN_GRIP).sub(PEN_IN_HAND);
   // つまむ前は上から近づいて下ろし、置いた後は指を開きながら少し上げる
   const hoverIn = 1 - THREE.MathUtils.smoothstep(e, 1.05, 1.52);
   const hoverOut = THREE.MathUtils.smoothstep(e, WRITE.release - 0.02, WRITE.release + 0.30);
@@ -965,7 +968,7 @@ function gripPen(arm, e, W, fade, reachK) {
   const held = W.held * THREE.MathUtils.smoothstep(fade, 0.55, 1);
   let tip = REST_TIP.clone(), axis = REST_AXIS.clone();
   if (held > 0) {
-    const g = fingerGrip(arm);
+    const g = fingerGrip(arm).add(PEN_IN_HAND);
     const pivot = g.clone().sub(pose.tip).normalize();
     const heldAxis = pivot.dot(pose.axis) > 0.85 ? pivot : pose.axis.clone();
     const heldTip = g.clone().addScaledVector(heldAxis, -PEN_GRIP);
