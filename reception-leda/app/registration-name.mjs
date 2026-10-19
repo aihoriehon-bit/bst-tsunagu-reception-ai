@@ -1,4 +1,4 @@
-import { recordedName, normalizeNameReading } from './name-library.mjs?v=20261006-device-names-1';
+import { recordedName, normalizeNameReading } from './name-library.mjs?v=20261019-restored-names-1';
 
 const clean = value => String(value || '').trim().slice(0, 40);
 export function registrationName(mode, firstName, firstReading, lastName = '', lastReading = '') {

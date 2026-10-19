@@ -1,14 +1,14 @@
 import { ROLES, validVector, matchFace, clothingSignature, matchClothing } from './visitor-matching.mjs?v=20260915-group-names-1';
-import { previewName, cancelNameVoice } from './name-voice.js?v=20261006-device-names-1';
-import { nameApprovalToken, isNameApproved, createNameAudition, shouldCallName, hasNameReading } from './name-confirmation.mjs?v=20261006-device-names-1';
-import { NAME_RECORDINGS, normalizeNameReading } from './name-library.mjs?v=20261006-device-names-1';
-import { bindNameAvailability } from './name-availability.mjs?v=20261006-device-names-1';
-import { registrationName, restoreRegistrationName, validateRegistrationName } from './registration-name.mjs?v=20261006-device-names-1';
+import { previewName, cancelNameVoice } from './name-voice.js?v=20261019-restored-names-1';
+import { nameApprovalToken, isNameApproved, createNameAudition, shouldCallName, hasNameReading } from './name-confirmation.mjs?v=20261019-restored-names-1';
+import { NAME_RECORDINGS, normalizeNameReading } from './name-library.mjs?v=20261019-restored-names-1';
+import { bindNameAvailability } from './name-availability.mjs?v=20261019-restored-names-1';
+import { registrationName, restoreRegistrationName, validateRegistrationName } from './registration-name.mjs?v=20261019-restored-names-1';
 import { detectFaces, faceQuality, FACE_DETECTION_OPTIONS, FACE_DESCRIPTOR_OPTIONS } from './face-detection.mjs?v=20260915-auto-region-1';
 
 import { cameraRegion, REGION_MODES, REGION_LABELS, createAutoRegion, frameLifetime } from './camera-region.mjs?v=20260915-auto-region-1';
 import { captureDirection, mirroredRegionLeft, createShutterSound } from './enrollment-feedback.mjs';
-import { bindReadingAutofill } from './reading-autofill.mjs?v=20261006-device-names-1';
+import { bindReadingAutofill } from './reading-autofill.mjs?v=20261019-restored-names-1';
 import { captureProblem, faceMoved, CAPTURE_STABLE_MS, CAPTURE_TURN_MS } from './capture-guidance.mjs';
 import { createDetectionOverlay } from './detection-overlay.mjs';
 import { createGroupConfirmation, targetDescriptor, overlap } from './group-recognition.mjs';

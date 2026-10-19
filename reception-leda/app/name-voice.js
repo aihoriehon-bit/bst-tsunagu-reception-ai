@@ -1,7 +1,7 @@
 import { readingFor } from './kana-name.mjs?v=20260909-5';
-import { shouldCallName } from './name-confirmation.mjs?v=20261006-device-names-1';
-import { recordedName } from './name-library.mjs?v=20261006-device-names-1';
-import { structuredParts, validateRegistrationName } from './registration-name.mjs?v=20261006-device-names-1';
+import { shouldCallName } from './name-confirmation.mjs?v=20261019-restored-names-1';
+import { recordedName } from './name-library.mjs?v=20261019-restored-names-1';
+import { structuredParts, validateRegistrationName } from './registration-name.mjs?v=20261019-restored-names-1';
 // Existing uploaded WAVs stay stored. Reading selects a prepared Leda name,
 // otherwise the whole name uses device speech. Legacy recordings are not played.
 const database = () => new Promise((resolve, reject) => {

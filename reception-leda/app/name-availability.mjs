@@ -1,5 +1,5 @@
-import { recordedName, normalizeNameReading } from './name-library.mjs?v=20261006-device-names-1';
-import { structuredParts } from './registration-name.mjs?v=20261006-device-names-1';
+import { recordedName, normalizeNameReading } from './name-library.mjs?v=20261019-restored-names-1';
+import { structuredParts } from './registration-name.mjs?v=20261019-restored-names-1';
 
 export function nameAvailability(person) {
   const parts = structuredParts(person);
