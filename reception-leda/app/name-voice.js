@@ -1,7 +1,8 @@
 import { readingFor } from './kana-name.mjs?v=20260909-5';
-import { shouldCallName } from './name-confirmation.mjs?v=20261019-restored-names-1';
-import { recordedName } from './name-library.mjs?v=20261019-restored-names-1';
-import { structuredParts, validateRegistrationName } from './registration-name.mjs?v=20261019-restored-names-1';
+import { shouldCallName } from './name-confirmation.mjs?v=20261020-leda-fullnames-1';
+import { recordedName } from './name-library.mjs?v=20261020-leda-fullnames-1';
+import { structuredParts, validateRegistrationName } from './registration-name.mjs?v=20261020-leda-fullnames-1';
+import { fullNameAudio } from './full-name-audio.mjs?v=20261020-leda-fullnames-1';
 // Existing uploaded WAVs stay stored. Reading selects a prepared Leda name,
 // otherwise the whole name uses device speech. Legacy recordings are not played.
 const database = () => new Promise((resolve, reject) => {
@@ -56,9 +57,16 @@ export async function nameLine(person, { audition = false } = {}) {
   const parts = structuredParts(person);
   if (parts) validateRegistrationName(person);
   if (parts?.length === 2) {
-    // Until Leda full-name joins are verified, use one device utterance.
+    const recordings = parts.map(part => recordedName(part));
+    try {
+      const audio = await fullNameAudio(recordings[0], recordings[1]);
+      if (audio) return { text: person.name + 'さん。', audio, group: 'named' };
+    } catch (error) {
+      console.warn('フルネーム音声を準備できなかったため、端末音声で読み上げます。', error.message);
+    }
+    // Never play a partial name or repeat the honorific on fallback.
     const reading = parts.map(part => recordedName(part)?.reading || readingFor(part)).join('');
-    return { text: person.name + 'さん。', spokenText: callName(reading), group: 'named' };
+    return { text: person.name + 'さん。', spokenText: reading + 'さん', group: 'named' };
   }
   const recording = recordedName(person);
   const audio = recording?.voice === 'Gemini Leda' ? recording.audio : null;

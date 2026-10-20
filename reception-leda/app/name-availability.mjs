@@ -1,5 +1,6 @@
-import { recordedName, normalizeNameReading } from './name-library.mjs?v=20261019-restored-names-1';
-import { structuredParts } from './registration-name.mjs?v=20261019-restored-names-1';
+import { recordedName, normalizeNameReading } from './name-library.mjs?v=20261020-leda-fullnames-1';
+import { structuredParts } from './registration-name.mjs?v=20261020-leda-fullnames-1';
+import { canJoinNames } from './full-name-audio.mjs?v=20261020-leda-fullnames-1';
 
 export function nameAvailability(person) {
   const parts = structuredParts(person);
@@ -7,7 +8,11 @@ export function nameAvailability(person) {
     const status = parts.map(nameAvailability);
     const labels = status.map((s, i) => `${i === 0 ? '名字' : '名前'}：${s.state === 'empty' ? '未入力' : s.state === 'recorded' ? '収録済み' : s.state === 'missing' ? '未収録' : '読みがなを確認'}${s.state === 'recorded' ? `（${recordedName(parts[i]).reading}）` : ''}`).join(' ／ ');
     if (status.some(s => s.state === 'empty' || s.state === 'reading-needed')) return { state: 'reading-needed', title: '名字と名前をそれぞれ確認してください', detail: labels + '。名字と名前は別々の欄に入力してください。' };
-    return { state: 'missing', title: 'フルネームは端末音声で読み上げます', detail: labels + '。Ledaのフルネーム結合は準備中のため、読みがなをつなげて端末の日本語音声で一度に読み上げます。名字だけ・名前だけでは準備済みのLeda音声を優先します。' };
+    if (canJoinNames(...parts.map(part => recordedName(part)))) return {
+      state: 'recorded', title: 'フルネームをLeda音声で読み上げます',
+      detail: labels + '。名字と名前をつなぎ、「さん」は最後に一度だけ付けて呼びかけます。試聴して発音をご確認ください。',
+    };
+    return { state: 'missing', title: 'フルネームは端末音声で読み上げます', detail: labels + '。この組み合わせは、入力した読みがなをつなげて端末の日本語音声で一度に読み上げます。' };
   }
   if (parts?.length === 1) return nameAvailability(parts[0]);
   const name = String(person?.name || '').trim();
