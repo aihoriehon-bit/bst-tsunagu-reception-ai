@@ -1,4 +1,4 @@
-import { recordedName, normalizeNameReading } from './name-library.mjs?v=20261020-leda-fullnames-1';
+import { recordedName, normalizeNameReading } from './name-library.mjs?v=20261021-leda-pitch-b-1';
 
 const clean = value => String(value || '').trim().slice(0, 40);
 export function registrationName(mode, firstName, firstReading, lastName = '', lastReading = '') {

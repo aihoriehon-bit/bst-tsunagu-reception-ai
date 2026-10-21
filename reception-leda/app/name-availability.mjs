@@ -1,6 +1,6 @@
-import { recordedName, normalizeNameReading } from './name-library.mjs?v=20261020-leda-fullnames-1';
-import { structuredParts } from './registration-name.mjs?v=20261020-leda-fullnames-1';
-import { canJoinNames } from './full-name-audio.mjs?v=20261020-leda-fullnames-1';
+import { recordedName, normalizeNameReading } from './name-library.mjs?v=20261021-leda-pitch-b-1';
+import { structuredParts } from './registration-name.mjs?v=20261021-leda-pitch-b-1';
+import { canJoinNames } from './full-name-audio.mjs?v=20261021-leda-pitch-b-1';
 
 export function nameAvailability(person) {
   const parts = structuredParts(person);

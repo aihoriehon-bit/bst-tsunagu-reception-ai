@@ -9,6 +9,8 @@ const validTiming = part => part?.voice === 'Gemini Leda'
   && part.joinTiming.endSeconds <= part.joinTiming.durationSeconds;
 export function canJoinNames(surname, given) {
   return Boolean(surname?.voice === 'Gemini Leda'
+    && surname.surnameStem?.pitchSemitones === 1 && given?.pitchSemitones === 1
+    && surname.surnameStem?.pitchSemitones === 1 && given?.pitchSemitones === 1
     && surname.surnameStem?.audio && surname.surnameStem?.sha256
     && Number.isFinite(surname.surnameStem.durationSeconds)
     && surname.surnameStem.durationSeconds > .1

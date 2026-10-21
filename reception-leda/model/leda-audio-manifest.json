@@ -6,494 +6,904 @@
     {
       "key": "welcome",
       "text": "いらっしゃいませ。こちらでご用件をお伺いいたします。",
-      "sha256": "6c34148652936a53dc360f9e8f4b3d708195c82db2551b8035b3d8c1f0183d91",
-      "bytes": 180524
+      "sha256": "e8ff1d3a73f0fe3e79963b8e5feb2f01d93abd031df3af3c856a4352c1c33910",
+      "bytes": 180524,
+      "sourceSHA256": "6c34148652936a53dc360f9e8f4b3d708195c82db2551b8035b3d8c1f0183d91",
+      "audio": "./leda-audio-b/welcome.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 3.76,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "morning",
       "text": "有限会社ビジネスシステム通信、受付AIのつなぐです。恐れ入りますが、お名前とご用件をお聞かせいただけますか？",
-      "sha256": "c60deeeecc6b243343af56a7435ada944cdcfb8d3a822571ddbe18c6f24043d2",
-      "bytes": 424364
+      "sha256": "f21b3cb6ffd450033e4d790ae618d4f07a61547fd4764d10aca7d7c89a73e8a2",
+      "bytes": 424364,
+      "sourceSHA256": "c60deeeecc6b243343af56a7435ada944cdcfb8d3a822571ddbe18c6f24043d2",
+      "audio": "./leda-audio-b/morning.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 8.84,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "visitor",
       "text": "いつもありがとうございます。担当者をお呼びしますので、どなたにお取り次ぎしましょうか？",
-      "sha256": "f28623b4d3ea77a39e97b35bb8892f916689bce44509e9e824386ed87dc27f8a",
-      "bytes": 284204
+      "sha256": "496e69b5572b6c151d13df3d0c610b1e120834649990622fc04465bf604e6734",
+      "bytes": 284204,
+      "sourceSHA256": "f28623b4d3ea77a39e97b35bb8892f916689bce44509e9e824386ed87dc27f8a",
+      "audio": "./leda-audio-b/visitor.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 5.92,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "calling",
       "text": "配達ありがとうございます。どなた宛てのお荷物でしょうか？宛先が分からない場合は、分かりません、とお答えください。",
-      "sha256": "b0adcd928024ee5f949f99f9a981fed57f5ba273bc1daadbe81310cc0ce1aa48",
-      "bytes": 443564
+      "sha256": "63554e5cf709a2204cc2c1b0b6c124ed69712a3b6b502311a1d761fd37d00ae3",
+      "bytes": 443564,
+      "sourceSHA256": "b0adcd928024ee5f949f99f9a981fed57f5ba273bc1daadbe81310cc0ce1aa48",
+      "audio": "./leda-audio-b/calling.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 9.24,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "goodbye",
       "text": "ありがとうございました。どうぞお気をつけてお帰りください。",
-      "sha256": "c534c4134e641301e264a630ca744b6f660df0b023d8f29bf3535f327a99157e",
-      "bytes": 217004
+      "sha256": "bccd1a7cd3d59b0628ea496a60f9ec6e14dd8226778e027a0aa6ee982cb04b16",
+      "bytes": 217004,
+      "sourceSHA256": "c534c4134e641301e264a630ca744b6f660df0b023d8f29bf3535f327a99157e",
+      "audio": "./leda-audio-b/goodbye.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 4.52,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "employeeGeneric",
       "text": "お疲れさまです。",
-      "sha256": "613a7cff25542c0aa680e282e13fc9badf6b4101d6adb9b2c5cd288dadfe0a10",
-      "bytes": 76844
+      "sha256": "302d3baf7d157d313af1ad6125f1bbd2081ca09fe080208a637945efabe0c412",
+      "bytes": 76844,
+      "sourceSHA256": "613a7cff25542c0aa680e282e13fc9badf6b4101d6adb9b2c5cd288dadfe0a10",
+      "audio": "./leda-audio-b/employeeGeneric.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 1.6,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "employeeGoodbye",
       "text": "お疲れさまです。何かありましたら、いつでもお声がけくださいね。",
-      "sha256": "2a518df8155fac74930a81b9c408b17b47189b18b2e9f38cecf4b0ab2d4b170e",
-      "bytes": 238124
+      "sha256": "effb3f21a242d6c9fde740c6d96bd0eaece45116abd20f18f5f1abeeb3ef94ca",
+      "bytes": 238124,
+      "sourceSHA256": "2a518df8155fac74930a81b9c408b17b47189b18b2e9f38cecf4b0ab2d4b170e",
+      "audio": "./leda-audio-b/employeeGoodbye.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 4.96,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "startup",
       "text": "受付AIのつなぐです。受付で仕事をしながら、ご来客をお待ちしています。どうぞよろしくお願いします。",
-      "sha256": "0e265e011d2f8f8985fa6cf3699cfe610acd863af3ee77b1e559ae0d6979d588",
-      "bytes": 368684
+      "sha256": "fb3edc99363237c65ab84dc8e5b51cc2577d6b9b975bb42730a627b4d7fff166",
+      "bytes": 368684,
+      "sourceSHA256": "0e265e011d2f8f8985fa6cf3699cfe610acd863af3ee77b1e559ae0d6979d588",
+      "audio": "./leda-audio-b/startup.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 7.68,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "idleRequest",
       "text": "ご用件がお決まりになりましたら、いつでもお声がけくださいね。",
-      "sha256": "5c73e2f972c10e5247604e7f6a390786b79659b2a8fc1fd8f85e7850602ec320",
-      "bytes": 213164
+      "sha256": "f668258b81e06661707fc19cc6a85cbde05d5de20680926cef616784b8fca0da",
+      "bytes": 213164,
+      "sourceSHA256": "5c73e2f972c10e5247604e7f6a390786b79659b2a8fc1fd8f85e7850602ec320",
+      "audio": "./leda-audio-b/idleRequest.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 4.44,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "idleServices",
       "text": "防犯カメラや業務用無線、LED工事、映像音響設備についてもご案内できます。",
-      "sha256": "b9323dcd36937d2b246968481b52d78fd82b1a68c2f2bd780463be12e85ab34a",
-      "bytes": 339884
+      "sha256": "ed580569911f55e7a204c9282ee47ef132da519a5f50c00be9ee3cb94db649fc",
+      "bytes": 339884,
+      "sourceSHA256": "b9323dcd36937d2b246968481b52d78fd82b1a68c2f2bd780463be12e85ab34a",
+      "audio": "./leda-audio-b/idleServices.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 7.08,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "idleAppointment",
       "text": "お約束のある方は、お名前と担当者名をお聞かせください。",
-      "sha256": "0a7d9f623adfc4409366bb3f19f5f7497c487ee24a125aef1b7b5bd3f4709b60",
-      "bytes": 228524
+      "sha256": "cd1ddc7babc364003f9675a577e6de8e5634ed3668a34cc4d7c06cd7beaab228",
+      "bytes": 228524,
+      "sourceSHA256": "0a7d9f623adfc4409366bb3f19f5f7497c487ee24a125aef1b7b5bd3f4709b60",
+      "audio": "./leda-audio-b/idleAppointment.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 4.76,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "workMemo",
       "text": "受付メモを確認しています。",
-      "sha256": "98612f857372b2bfba6970d1aef12a14df4417a7d695177fb6fc6b3a354033fc",
-      "bytes": 117164
+      "sha256": "405daae23b83df0c89830079d377718fa4454c4411e4719c7b2de7b3cba36ac2",
+      "bytes": 117164,
+      "sourceSHA256": "98612f857372b2bfba6970d1aef12a14df4417a7d695177fb6fc6b3a354033fc",
+      "audio": "./leda-audio-b/workMemo.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 2.44,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "workPrepare",
       "text": "次のお客様をお迎えする準備をしています。",
-      "sha256": "d8db2001b519c6da63b9a0d1c86b1cec8e5c27f9f410250bf1dfafdfc888419e",
-      "bytes": 153644
+      "sha256": "a4cf552c619c2c234cfa7663e34dc750735a09b7b7e9e60f6f3a213280e31102",
+      "bytes": 153644,
+      "sourceSHA256": "d8db2001b519c6da63b9a0d1c86b1cec8e5c27f9f410250bf1dfafdfc888419e",
+      "audio": "./leda-audio-b/workPrepare.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 3.2,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "workSchedule",
       "text": "今日の来客予定を確認しています。",
-      "sha256": "59cd6126342ab7bdfeb29b175abe54de4d2adb81a2e69f8ed2e402eac9fd4a1f",
-      "bytes": 136364
+      "sha256": "a87b5222375627cd6e3d0eb32287868402294cd1027451a82aa7ac19eb80daca",
+      "bytes": 136364,
+      "sourceSHA256": "59cd6126342ab7bdfeb29b175abe54de4d2adb81a2e69f8ed2e402eac9fd4a1f",
+      "audio": "./leda-audio-b/workSchedule.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 2.84,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "greetingMorning",
       "text": "おはようございます。",
-      "sha256": "ffed10b485bc424868bb7dc53ab142900c9f300448f74c18632f48f7342600ff",
-      "bytes": 76844
+      "sha256": "c8b4d9864f5bc7643a08fa6cab61f695da458d166bce93408c9f70522863e195",
+      "bytes": 76844,
+      "sourceSHA256": "ffed10b485bc424868bb7dc53ab142900c9f300448f74c18632f48f7342600ff",
+      "audio": "./leda-audio-b/greetingMorning.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 1.6,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "greetingDay",
       "text": "こんにちは。",
-      "sha256": "4738cad72099d0c03f024ec31a580532bbd832e816f5198266d49e49f48a3d56",
-      "bytes": 63404
+      "sha256": "29652654db106caced41da5d60d41de30e8652b7c24a04d67d1ada5ef5252cd0",
+      "bytes": 63404,
+      "sourceSHA256": "4738cad72099d0c03f024ec31a580532bbd832e816f5198266d49e49f48a3d56",
+      "audio": "./leda-audio-b/greetingDay.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 1.32,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "greetingEvening",
       "text": "こんばんは。",
-      "sha256": "e15cb932f48559ae52fdf9903b84105e58698edc58caadea4d3e8d3863fd550b",
-      "bytes": 59564
+      "sha256": "071078b8676c1cb25d52465418ed77a719430e450d19a57392fd94d410bbe456",
+      "bytes": 59564,
+      "sourceSHA256": "e15cb932f48559ae52fdf9903b84105e58698edc58caadea4d3e8d3863fd550b",
+      "audio": "./leda-audio-b/greetingEvening.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 1.24,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "employeeSato",
       "text": "お疲れさまです。",
-      "sha256": "613a7cff25542c0aa680e282e13fc9badf6b4101d6adb9b2c5cd288dadfe0a10",
-      "bytes": 76844
+      "sha256": "302d3baf7d157d313af1ad6125f1bbd2081ca09fe080208a637945efabe0c412",
+      "bytes": 76844,
+      "sourceSHA256": "613a7cff25542c0aa680e282e13fc9badf6b4101d6adb9b2c5cd288dadfe0a10",
+      "audio": "./leda-audio-b/employeeSato.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 1.6,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "employeeTanaka",
       "text": "お疲れさまです。",
-      "sha256": "613a7cff25542c0aa680e282e13fc9badf6b4101d6adb9b2c5cd288dadfe0a10",
-      "bytes": 76844
+      "sha256": "302d3baf7d157d313af1ad6125f1bbd2081ca09fe080208a637945efabe0c412",
+      "bytes": 76844,
+      "sourceSHA256": "613a7cff25542c0aa680e282e13fc9badf6b4101d6adb9b2c5cd288dadfe0a10",
+      "audio": "./leda-audio-b/employeeTanaka.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 1.6,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "fukudaMorning",
       "text": "福田さん、おはようございます。いつもありがとうございます。今日はどのようなご用件でしょうか？",
-      "sha256": "11d1ebe8daf97f0cafec2780e48dff8a359ca71f4899de70cb783b480ec5d754",
-      "bytes": 332204
+      "sha256": "2b6872b8b951d61b6b0f975bbdae0b9ec8772c6fda76068bf9add0c2f44c3000",
+      "bytes": 332204,
+      "sourceSHA256": "11d1ebe8daf97f0cafec2780e48dff8a359ca71f4899de70cb783b480ec5d754",
+      "audio": "./leda-audio-b/fukudaMorning.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 6.92,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "fukudaDay",
       "text": "福田さん、こんにちは。いつもありがとうございます。今日はどのようなご用件でしょうか？",
-      "sha256": "e69b35f9a7ca31e33092d1f067c0e2b8d96a0cb7e9e1fb92b6971eeec224814f",
-      "bytes": 293804
+      "sha256": "950c0faa191b2cd7dcac7187cadb368bbe3d785c5cd92dc05fcf91b94aafb220",
+      "bytes": 293804,
+      "sourceSHA256": "e69b35f9a7ca31e33092d1f067c0e2b8d96a0cb7e9e1fb92b6971eeec224814f",
+      "audio": "./leda-audio-b/fukudaDay.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 6.12,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "fukudaEvening",
       "text": "福田さん、こんばんは。いつもありがとうございます。今日はどのようなご用件でしょうか？",
-      "sha256": "a2bfdf74b674840eba7ce6a039f1f3f6ba1ab3842acd4df6822e0278d14af728",
-      "bytes": 284204
+      "sha256": "c85af65bd966d8089e66be3486db619191d7c76ae885d63dc5fe7fe003487e7c",
+      "bytes": 284204,
+      "sourceSHA256": "a2bfdf74b674840eba7ce6a039f1f3f6ba1ab3842acd4df6822e0278d14af728",
+      "audio": "./leda-audio-b/fukudaEvening.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 5.92,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "yamato",
       "text": "いつもお疲れさまです。ヤマトの方ですね。担当者をお呼びしますので、そのまま少々お待ちください。",
-      "sha256": "e06564826c5c926195d39e74688b5ee37af1ad74c852cc1e80f15e8ced450296",
-      "bytes": 343724
+      "sha256": "4257a3d2e4d44fd0b32bee25d762d67e6cd16c41a896f4fb66370711ae5d66b1",
+      "bytes": 343724,
+      "sourceSHA256": "e06564826c5c926195d39e74688b5ee37af1ad74c852cc1e80f15e8ced450296",
+      "audio": "./leda-audio-b/yamato.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 7.16,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatHello",
       "text": "受付AIのつなぐです。ご訪問、配達、社員の方のご用件など、どのようなご用件でしょうか？",
-      "sha256": "c8ce465394445af911e891f7624bb72baba9e2095f55b8f68937a6a8aa0102c6",
-      "bytes": 399404
+      "sha256": "1b3317dd6c5473d187eebf1b7817dd11968e9caa403f7b4694aa8883a528ecff",
+      "bytes": 399404,
+      "sourceSHA256": "c8ce465394445af911e891f7624bb72baba9e2095f55b8f68937a6a8aa0102c6",
+      "audio": "./leda-audio-b/chatHello.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 8.32,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatGuestRecipient",
       "text": "いつもありがとうございます。担当者をお呼びしますので、どなたにお取り次ぎしましょうか？",
-      "sha256": "f28623b4d3ea77a39e97b35bb8892f916689bce44509e9e824386ed87dc27f8a",
-      "bytes": 284204
+      "sha256": "496e69b5572b6c151d13df3d0c610b1e120834649990622fc04465bf604e6734",
+      "bytes": 284204,
+      "sourceSHA256": "f28623b4d3ea77a39e97b35bb8892f916689bce44509e9e824386ed87dc27f8a",
+      "audio": "./leda-audio-b/chatGuestRecipient.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 5.92,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatRecognizedGuest",
       "text": "いつもありがとうございます。",
-      "sha256": "60158d7673ad9af85d86af8e67972c072ceb0340ccfbf71b366773a7bd7f3853",
-      "bytes": 90284
+      "sha256": "8dfa1e0a35750a21a692e8e25a85a599e1ad79b5b4e6cee75a91f5bbe8c1175e",
+      "bytes": 90284,
+      "sourceSHA256": "60158d7673ad9af85d86af8e67972c072ceb0340ccfbf71b366773a7bd7f3853",
+      "audio": "./leda-audio-b/chatRecognizedGuest.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 1.88,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatRecognizedEmployee",
       "text": "お疲れさまです。",
-      "sha256": "613a7cff25542c0aa680e282e13fc9badf6b4101d6adb9b2c5cd288dadfe0a10",
-      "bytes": 76844
+      "sha256": "302d3baf7d157d313af1ad6125f1bbd2081ca09fe080208a637945efabe0c412",
+      "bytes": 76844,
+      "sourceSHA256": "613a7cff25542c0aa680e282e13fc9badf6b4101d6adb9b2c5cd288dadfe0a10",
+      "audio": "./leda-audio-b/chatRecognizedEmployee.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 1.6,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatRecognizedDelivery",
       "text": "いつも配達ありがとうございます。",
-      "sha256": "3d105ddab0e3bc836d04a1a490fa149202659d78ecb9712aff19dcaa4eabb8de",
-      "bytes": 117164
+      "sha256": "6f831cde223fc1b9a3a9672c7eabbeb1b0421f27ecdba6bd89ebc2305e8d1f45",
+      "bytes": 117164,
+      "sourceSHA256": "3d105ddab0e3bc836d04a1a490fa149202659d78ecb9712aff19dcaa4eabb8de",
+      "audio": "./leda-audio-b/chatRecognizedDelivery.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 2.44,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatRecipient",
       "text": "どなたへのお取次ぎをご希望ですか？担当者が分からない場合は、誰でもいい、とお答えください。",
-      "sha256": "f5c75f21ddb09c0bf85dcd1b124e085451b2bacb2d6c7c9c2ac6158b21fe1e3d",
-      "bytes": 347564
+      "sha256": "667ee069d8b2744b11c0fe1cff356800d494831aec5103d87dcd916e0b6db1db",
+      "bytes": 347564,
+      "sourceSHA256": "f5c75f21ddb09c0bf85dcd1b124e085451b2bacb2d6c7c9c2ac6158b21fe1e3d",
+      "audio": "./leda-audio-b/chatRecipient.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 7.24,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatVisitorName",
       "text": "承知しました。お越しになった、あなたのお名前をお願いします。",
-      "sha256": "2db1cd026553fcdb533be80ffecce6c7238ca6556d1aa340dad2bdba9f7b4831",
-      "bytes": 247724
+      "sha256": "6a48aa150813a4e4b9ec4913e99852c684683adb260b94f531eaf3b003054b2a",
+      "bytes": 247724,
+      "sourceSHA256": "2db1cd026553fcdb533be80ffecce6c7238ca6556d1aa340dad2bdba9f7b4831",
+      "audio": "./leda-audio-b/chatVisitorName.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 5.16,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatPurpose",
       "text": "ご用件を簡単にお聞かせいただけますか？",
-      "sha256": "4d8be630b08c600814b4e722f1cbc6982b3ff5dd4451533a0654fe4568734e0c",
-      "bytes": 149804
+      "sha256": "3b3142b1acb5211b922bdb1892df0e7fcf2527b02a057a0344383ddabb0d0c8c",
+      "bytes": 149804,
+      "sourceSHA256": "4d8be630b08c600814b4e722f1cbc6982b3ff5dd4451533a0654fe4568734e0c",
+      "audio": "./leda-audio-b/chatPurpose.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 3.12,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatDelivery",
       "text": "配達ありがとうございます。どなた宛てのお荷物でしょうか？宛先が分からない場合は、分かりません、とお答えください。",
-      "sha256": "b0adcd928024ee5f949f99f9a981fed57f5ba273bc1daadbe81310cc0ce1aa48",
-      "bytes": 443564
+      "sha256": "63554e5cf709a2204cc2c1b0b6c124ed69712a3b6b502311a1d761fd37d00ae3",
+      "bytes": 443564,
+      "sourceSHA256": "b0adcd928024ee5f949f99f9a981fed57f5ba273bc1daadbe81310cc0ce1aa48",
+      "audio": "./leda-audio-b/chatDelivery.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 9.24,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatDeliveryConfirm",
       "text": "ありがとうございます。画面のお荷物の宛先は合っていますか？はい、または、訂正、とお答えください。",
-      "sha256": "a195d7dc10befcd246334c08e423fda87d4d8a06f47bad7d788890d681f76998",
-      "bytes": 380204
+      "sha256": "6e04530ad073b5cef43bf8fa68aa15258dfc2e48949f640150b17f4746e1929d",
+      "bytes": 380204,
+      "sourceSHA256": "a195d7dc10befcd246334c08e423fda87d4d8a06f47bad7d788890d681f76998",
+      "audio": "./leda-audio-b/chatDeliveryConfirm.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 7.92,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatDeliveryCall",
       "text": "承知しました。宛先の担当者をお呼びしますので、少々お待ちください。ここまでが受付デモです。実際の呼び出しは行っていません。",
-      "sha256": "1dc16abeecf76a1cf59d8eba89d0f5653dbbbf4dfcda2bea1f41adff2c7a70dc",
-      "bytes": 495404
+      "sha256": "356313c2c4ceb6bcde893248b8b7e9d46652d7d15e0daa488a2aee85a5c70abf",
+      "bytes": 495404,
+      "sourceSHA256": "1dc16abeecf76a1cf59d8eba89d0f5653dbbbf4dfcda2bea1f41adff2c7a70dc",
+      "audio": "./leda-audio-b/chatDeliveryCall.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 10.32,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatGeneral",
       "text": "では、総務担当者をお呼びいたしますね。お越しになった、あなたのお名前をお願いします。",
-      "sha256": "d7f8341215f70d953b29811c58f7094f73ad52fbf8af88020c9c57aef6e16af9",
-      "bytes": 332204
+      "sha256": "f473a4b297b2b463dc6be2d0f288904c71cfc787ed71f12a27e76fa45b51147b",
+      "bytes": 332204,
+      "sourceSHA256": "d7f8341215f70d953b29811c58f7094f73ad52fbf8af88020c9c57aef6e16af9",
+      "audio": "./leda-audio-b/chatGeneral.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 6.92,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatGeneralConfirm",
       "text": "では、総務担当者をお呼びいたしますね。画面の受付内容は合っていますか？はい、または、訂正、とお答えください。",
-      "sha256": "f396f5f61741e17a145a4ff1c78b6c75c5b43da9a4be8dd4e792ad29ae901b3d",
-      "bytes": 468524
+      "sha256": "786947891a65b1b10ee5dd6da083dcc646a463a0fb2cdffc232946aaca81cc2a",
+      "bytes": 468524,
+      "sourceSHA256": "f396f5f61741e17a145a4ff1c78b6c75c5b43da9a4be8dd4e792ad29ae901b3d",
+      "audio": "./leda-audio-b/chatGeneralConfirm.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 9.76,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatGeneralPurpose",
       "text": "では、総務担当者をお呼びいたしますね。ご用件を簡単にお聞かせいただけますか？",
-      "sha256": "7ef0f284096f605d2a8dc214fb3b4996f318d307a4986f34e7c11722bb2fc19e",
-      "bytes": 330284
+      "sha256": "249eb85ad1ade8a960a29f44527f5d1796e1f1e95b30623df8502cdc1f42b0df",
+      "bytes": 330284,
+      "sourceSHA256": "7ef0f284096f605d2a8dc214fb3b4996f318d307a4986f34e7c11722bb2fc19e",
+      "audio": "./leda-audio-b/chatGeneralPurpose.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 6.88,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatPause",
       "text": "はい、ご準備ができましたら、お声がけください。",
-      "sha256": "24a5a24e9238e8d67f280630bbf0084218b77fb1e9585ba9429f2f704c131ec7",
-      "bytes": 170924
+      "sha256": "fc548c16fecc754556c34ae73d4466537e3a270a07e1c96e65e857d354578a63",
+      "bytes": 170924,
+      "sourceSHA256": "24a5a24e9238e8d67f280630bbf0084218b77fb1e9585ba9429f2f704c131ec7",
+      "audio": "./leda-audio-b/chatPause.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 3.56,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatCancel",
       "text": "承知しました。今回の受付は取り消しました。またご用件がございましたら、お声がけください。",
-      "sha256": "41e91fb866b014b005e843e450eb72f1e3ccc3899e0f037966ede8c6c7b6522e",
-      "bytes": 351404
+      "sha256": "ab68939cfe3d1a1ac568749226cdffb2eb263ff4cb93a89e5d1943ec91856817",
+      "bytes": 351404,
+      "sourceSHA256": "41e91fb866b014b005e843e450eb72f1e3ccc3899e0f037966ede8c6c7b6522e",
+      "audio": "./leda-audio-b/chatCancel.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 7.32,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatNoPurpose",
       "text": "承知しました。また何かございましたら、お声がけください。",
-      "sha256": "eb061be81ab05e94836334006801984613179bff57c2d115c8eeb7ef54c8353e",
-      "bytes": 205484
+      "sha256": "b94f311bec8e2c5af5bfded14b973a79cb35517995453e9ca0dbc3bf1a5f7a8a",
+      "bytes": 205484,
+      "sourceSHA256": "eb061be81ab05e94836334006801984613179bff57c2d115c8eeb7ef54c8353e",
+      "audio": "./leda-audio-b/chatNoPurpose.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 4.28,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatHelp",
       "text": "面会や打ち合わせ、配達などのご用件を伺えます。担当者が分からなければ、誰でもいい、とお答えください。聞き直す場合は、もう一度、内容を直す場合は、訂正、とお話しください。",
-      "sha256": "ba69ce2cad113e044ed7e082025ffd50d849ec608fe0f7d437d270037afbb0f0",
-      "bytes": 756524
+      "sha256": "faa4d6d76319a39f9b69971d9cc196c607332863ae5d7e13d220ff7ad94d38a7",
+      "bytes": 756524,
+      "sourceSHA256": "ba69ce2cad113e044ed7e082025ffd50d849ec608fe0f7d437d270037afbb0f0",
+      "audio": "./leda-audio-b/chatHelp.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 15.76,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatWaitTime",
       "text": "申し訳ありませんが、正確なお待ち時間は分かりません。お急ぎの場合は、受付スタッフへ直接お声がけください。",
-      "sha256": "2e97b5e8a2211351f1985518b6c58d0d0a985dbeb47c317877d93092bd6588cf",
-      "bytes": 420524
+      "sha256": "678c392be4f0aa26cabb8297919d3e63a2821d88d6f2af7d6477d9c9ed8c40f5",
+      "bytes": 420524,
+      "sourceSHA256": "2e97b5e8a2211351f1985518b6c58d0d0a985dbeb47c317877d93092bd6588cf",
+      "audio": "./leda-audio-b/chatWaitTime.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 8.76,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatFacility",
       "text": "申し訳ありませんが、場所や営業時間などの詳しい情報は、受付スタッフへご確認ください。",
-      "sha256": "077c01eda57db38fd31247847bc124084377ef20804095d7c811fa3969fb0926",
-      "bytes": 343724
+      "sha256": "6983b3907cb080b331d44fe226db8dc0b7fd1b05557ccf78a2778ff3d7bd28c1",
+      "bytes": 343724,
+      "sourceSHA256": "077c01eda57db38fd31247847bc124084377ef20804095d7c811fa3969fb0926",
+      "audio": "./leda-audio-b/chatFacility.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 7.16,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatCallStatus",
       "text": "現在は受付の確認用デモのため、実際の電話や通知は送っていません。受付スタッフへ直接お声がけください。",
-      "sha256": "7f27b65a743fd1e424cffe188784bf0c96d64db1694f8c123c3690483bd50410",
-      "bytes": 437804
+      "sha256": "10feac50647e8f0ee3013c86a9d979b7e24c0f47c59cb8769518ec6a416c7ff1",
+      "bytes": 437804,
+      "sourceSHA256": "7f27b65a743fd1e424cffe188784bf0c96d64db1694f8c123c3690483bd50410",
+      "audio": "./leda-audio-b/chatCallStatus.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 9.12,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatNameRequired",
       "text": "恐れ入りますが、お越しになった方のお名前をもう一度お願いします。お名前をお伝えになりたくない場合は、受付スタッフへ直接お声がけください。",
-      "sha256": "f0fd2b99fa3acfb25502ad208d029da2e7e091d39b6117f765874288298c50df",
-      "bytes": 497324
+      "sha256": "a459d67db2816e91bdf1f34c72896ddb5e8682a05d20e50309aa81b76e5e63ef",
+      "bytes": 497324,
+      "sourceSHA256": "f0fd2b99fa3acfb25502ad208d029da2e7e091d39b6117f765874288298c50df",
+      "audio": "./leda-audio-b/chatNameRequired.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 10.36,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatConfirm",
       "text": "ありがとうございます。画面に受付内容をまとめました。お名前、お取次ぎ先、ご用件は合っていますか？はい、または、訂正、とお答えください。",
-      "sha256": "46742d887b1a661bc74563a3ae0952a1dd92c23e6dafa41486148279b992ce4b",
-      "bytes": 547244
+      "sha256": "086989f9b831cbf7e6b6742e5619ae1fe40c08e165047b69c0503458aef32285",
+      "bytes": 547244,
+      "sourceSHA256": "46742d887b1a661bc74563a3ae0952a1dd92c23e6dafa41486148279b992ce4b",
+      "audio": "./leda-audio-b/chatConfirm.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 11.4,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatCorrection",
       "text": "どの項目を訂正しますか？ご自身のお名前、担当者、または、ご用件、とお答えください。",
-      "sha256": "f1b3625e05506d951f667caf5c0d30d76aae80a023922ef567b0d43e7b1d5cbe",
-      "bytes": 412844
+      "sha256": "55d213aa1dd95e4945afaaea8308c9e5c56446973151149c7a6fb2cf85fc9333",
+      "bytes": 412844,
+      "sourceSHA256": "f1b3625e05506d951f667caf5c0d30d76aae80a023922ef567b0d43e7b1d5cbe",
+      "audio": "./leda-audio-b/chatCorrection.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 8.6,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatDemoComplete",
       "text": "受付内容を確認しました。ここまでが受付デモです。ご協力ありがとうございました。",
-      "sha256": "8fafa7f6a9bd8df5c57a03c93db6161dffba550ff39a951876009213d3f3c79d",
-      "bytes": 332204
+      "sha256": "b35deedd7b9fd8b24aa4d7ec81f55a7ddce178094175a43f9d9d57f5743ad11a",
+      "bytes": 332204,
+      "sourceSHA256": "8fafa7f6a9bd8df5c57a03c93db6161dffba550ff39a951876009213d3f3c79d",
+      "audio": "./leda-audio-b/chatDemoComplete.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 6.92,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatReceived",
       "text": "受付内容を確認しました。お取次ぎのご案内に進みますので、少々お待ちください。",
-      "sha256": "7ae4815548bad8f90b20e2250df5b165648e4ccafaf66753504bc38bc0677f8d",
-      "bytes": 291884
+      "sha256": "3230d9ef1d70b116c479403cde64683875fa55ff6d88f4235f854c3124b46cd5",
+      "bytes": 291884,
+      "sourceSHA256": "7ae4815548bad8f90b20e2250df5b165648e4ccafaf66753504bc38bc0677f8d",
+      "audio": "./leda-audio-b/chatReceived.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 6.08,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatGeneralComplete",
       "text": "受付内容を確認しました。総務担当者へのお取次ぎをご案内します。少々お待ちください。",
-      "sha256": "9e4bdcf9c14c2cc27082b8ee74569244a284c2badf9683528210860c8948f0d7",
-      "bytes": 345644
+      "sha256": "baeb402680c91a0ff6329d0d9260d9e90edda18f9475b0dcc5311a2f170aea9f",
+      "bytes": 345644,
+      "sourceSHA256": "9e4bdcf9c14c2cc27082b8ee74569244a284c2badf9683528210860c8948f0d7",
+      "audio": "./leda-audio-b/chatGeneralComplete.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 7.2,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatCompany",
       "text": "有限会社ビジネスシステム通信では、通信設備や防犯カメラなどのご相談を承っています。詳しい内容は担当者へご確認ください。",
-      "sha256": "25fc025d140a4e2fcfd6fcd7baf290a4cc795ebecff9535e7417945cb9483b6e",
-      "bytes": 512684
+      "sha256": "ff9144f994d280f320e70b0560f1ae446728601e3f172391932b3058014b4e7f",
+      "bytes": 512684,
+      "sourceSHA256": "25fc025d140a4e2fcfd6fcd7baf290a4cc795ebecff9535e7417945cb9483b6e",
+      "audio": "./leda-audio-b/chatCompany.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 10.68,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatEmployee",
       "text": "お疲れさまです。",
-      "sha256": "613a7cff25542c0aa680e282e13fc9badf6b4101d6adb9b2c5cd288dadfe0a10",
-      "bytes": 76844
+      "sha256": "302d3baf7d157d313af1ad6125f1bbd2081ca09fe080208a637945efabe0c412",
+      "bytes": 76844,
+      "sourceSHA256": "613a7cff25542c0aa680e282e13fc9badf6b4101d6adb9b2c5cd288dadfe0a10",
+      "audio": "./leda-audio-b/chatEmployee.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 1.6,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatIdentity",
       "text": "私は、受付AIのつなぐです。ご用件やお名前を順番に伺う、受付のデモをしています。",
-      "sha256": "39c3dbb409b74e2dfc774dbfd1bcfff0dcc08180e2cb0c89ccd8c7e8c959e85a",
-      "bytes": 380204
+      "sha256": "0819bcf468d79306a417d61e7830326426623db38074b2202545be184c29e50f",
+      "bytes": 380204,
+      "sourceSHA256": "39c3dbb409b74e2dfc774dbfd1bcfff0dcc08180e2cb0c89ccd8c7e8c959e85a",
+      "audio": "./leda-audio-b/chatIdentity.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 7.92,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatThanks",
       "text": "どういたしまして。また何かありましたら、お声がけくださいね。",
-      "sha256": "917ac2536edc2aedb82e768570ba570c246483993b2670c9f7b3b5f8c1f7ea3d",
-      "bytes": 222764
+      "sha256": "fc897136550b18870042ce006f277994fc589c36dfa55efca5202098efbca5a2",
+      "bytes": 222764,
+      "sourceSHA256": "917ac2536edc2aedb82e768570ba570c246483993b2670c9f7b3b5f8c1f7ea3d",
+      "audio": "./leda-audio-b/chatThanks.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 4.64,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatBye",
       "text": "ありがとうございました。どうぞお気をつけてお帰りください。",
-      "sha256": "c534c4134e641301e264a630ca744b6f660df0b023d8f29bf3535f327a99157e",
-      "bytes": 217004
+      "sha256": "bccd1a7cd3d59b0628ea496a60f9ec6e14dd8226778e027a0aa6ee982cb04b16",
+      "bytes": 217004,
+      "sourceSHA256": "c534c4134e641301e264a630ca744b6f660df0b023d8f29bf3535f327a99157e",
+      "audio": "./leda-audio-b/chatBye.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 4.52,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "chatUnknown",
       "text": "すみません、もう一度ご用件を教えていただけますか？ご訪問、配達、会社案内などに対応しています。",
-      "sha256": "6a69215836e4dc13f542fd8f71668373f831dead7af2f21f076ee740dff436ae",
-      "bytes": 422444
+      "sha256": "37ea71a66d6b0bcfd87c7a0d89b87ced20439dfb5220c18e9ff2dbf4b8f9b9f1",
+      "bytes": 422444,
+      "sourceSHA256": "6a69215836e4dc13f542fd8f71668373f831dead7af2f21f076ee740dff436ae",
+      "audio": "./leda-audio-b/chatUnknown.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 8.8,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "nameMakkii",
       "text": "まっきぃさん。",
-      "sha256": "11934ba9a0f714cea1ea881c28eb0e297117231e6efeb2eebc19e235fd7f5142",
-      "bytes": 61484
+      "sha256": "2c0e380c86f84d519840ea3dac76542b2a14d377e1b03af1d4a23f841f2117b8",
+      "bytes": 61484,
+      "sourceSHA256": "11934ba9a0f714cea1ea881c28eb0e297117231e6efeb2eebc19e235fd7f5142",
+      "audio": "./leda-audio-b/nameMakkii.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 1.28,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "enrollFrontFast",
       "text": "正面を向いてください。",
-      "sha256": "b97067d600339345fcff9c1a13f0e95770da64a0c96d507c7f2a7d845e7859a3",
-      "bytes": 96044
+      "sha256": "61c2e18a99254cf88deb018174b1ee0f4f23bcd784a2794e60c846e431400716",
+      "bytes": 96044,
+      "sourceSHA256": "b97067d600339345fcff9c1a13f0e95770da64a0c96d507c7f2a7d845e7859a3",
+      "audio": "./leda-audio-b/enrollFrontFast.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 2.0,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "enrollDoneFast",
       "text": "登録できました。",
-      "sha256": "24ddd830aaeae5d8abc7f9fa445ac2fd8f2f71555e3341b49d4ca8bd17900558",
-      "bytes": 74924
+      "sha256": "9f7fbee6b3fdde96b57718a974d33bdb152a9c7249f0235f4f7ca036abbd60f7",
+      "bytes": 74924,
+      "sourceSHA256": "24ddd830aaeae5d8abc7f9fa445ac2fd8f2f71555e3341b49d4ca8bd17900558",
+      "audio": "./leda-audio-b/enrollDoneFast.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 1.56,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "enrollFrontCue",
       "text": "正面を向いてください。",
-      "sha256": "b97067d600339345fcff9c1a13f0e95770da64a0c96d507c7f2a7d845e7859a3",
-      "bytes": 96044
+      "sha256": "61c2e18a99254cf88deb018174b1ee0f4f23bcd784a2794e60c846e431400716",
+      "bytes": 96044,
+      "sourceSHA256": "b97067d600339345fcff9c1a13f0e95770da64a0c96d507c7f2a7d845e7859a3",
+      "audio": "./leda-audio-b/enrollFrontCue.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 2.0,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "enrollRightCue",
       "text": "次は右を向いてください。",
-      "sha256": "71904172ea156253a8996815ef6c0b3d34418e8835e126dd786fc629e52e2922",
-      "bytes": 122924
+      "sha256": "df2085af1762a54472cb9937f84bf991810c4a151ccbd8fb08438bd970be82be",
+      "bytes": 122924,
+      "sourceSHA256": "71904172ea156253a8996815ef6c0b3d34418e8835e126dd786fc629e52e2922",
+      "audio": "./leda-audio-b/enrollRightCue.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 2.56,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "enrollLeftCue",
       "text": "最後に左を向いてください。",
-      "sha256": "6f849c8eb4b44ea49927aba9811db22e475133568c91aaac3f894c970e800311",
-      "bytes": 113324
+      "sha256": "90a7dff67b2373f6d1f55529ca3a74e2adca114f92eb5623861c094c8e8ff570",
+      "bytes": 113324,
+      "sourceSHA256": "6f849c8eb4b44ea49927aba9811db22e475133568c91aaac3f894c970e800311",
+      "audio": "./leda-audio-b/enrollLeftCue.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 2.36,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "guideRoute",
       "text": "ご用件を番号でお答えください。1番、弊社スタッフとお約束。2番、宅急便や納品など。3番、お約束なしのご来訪。",
-      "sha256": "a83d80ce7bcf971c49f22c1a66928e5b4a3a92845740fd478030f2d4442024d6",
-      "bytes": 568364
+      "sha256": "1c83d9fef10c1d2d7a625e7d492fb3b69957fb42f8c9d8e3ec265820b107fb01",
+      "bytes": 568364,
+      "sourceSHA256": "a83d80ce7bcf971c49f22c1a66928e5b4a3a92845740fd478030f2d4442024d6",
+      "audio": "./leda-audio-b/guideRoute.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 11.84,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "guideDeliveryType",
       "text": "お届けの種類を番号でお答えください。1番、宅急便や郵便。2番、商品の納品。3番、その他のお届け物。",
-      "sha256": "01b2c6fcbb1b41361c79441f3addf1a3cc5ab82994d66b96bee3f546aa9899c9",
-      "bytes": 531884
+      "sha256": "9ca2d0002a2083c61d439cfa3628fdfb5103a45869ab067572c99dd20b40da95",
+      "bytes": 531884,
+      "sourceSHA256": "01b2c6fcbb1b41361c79441f3addf1a3cc5ab82994d66b96bee3f546aa9899c9",
+      "audio": "./leda-audio-b/guideDeliveryType.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 11.08,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "guidePurpose",
       "text": "ご用件を番号でお答えください。1番、打ち合わせや面会。2番、ご相談。3番、営業のご案内。4番、その他。",
-      "sha256": "978fcbe926aced39ad89e3b5b03bf75995a572b6e26c908d328339356ae9840d",
-      "bytes": 499244
+      "sha256": "4ff64063e708f9e6a8eb53d0153b2323292aea11a717662fc8a4dc7de1785acc",
+      "bytes": 499244,
+      "sourceSHA256": "978fcbe926aced39ad89e3b5b03bf75995a572b6e26c908d328339356ae9840d",
+      "audio": "./leda-audio-b/guidePurpose.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 10.4,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "guideCompany",
       "text": "まず、お越しになった方の会社名だけをお話しください。個人でお越しの場合は、個人です、とお答えください。",
-      "sha256": "a1188c12a514c78ccefd790d6673123f579e924578130486f14a2341e4d13df3",
-      "bytes": 407084
+      "sha256": "546afb0acde974d3c037d0eef618823fbe0561501db787caad091879411b68f2",
+      "bytes": 407084,
+      "sourceSHA256": "a1188c12a514c78ccefd790d6673123f579e924578130486f14a2341e4d13df3",
+      "audio": "./leda-audio-b/guideCompany.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 8.48,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "guideCompanyCheck",
       "text": "画面の会社名で合っていますか？1番、合っています。2番、会社名を言い直す。3番、会社名なし、個人での来訪。",
-      "sha256": "a50bf1376f31837f2c5fc05293c348f70cb39db2997e9747502873f6ce030010",
-      "bytes": 568364
+      "sha256": "d81647f81fdfb98e87347c009e43b9d1af9994913089982f921939114d26f5b0",
+      "bytes": 568364,
+      "sourceSHA256": "a50bf1376f31837f2c5fc05293c348f70cb39db2997e9747502873f6ce030010",
+      "audio": "./leda-audio-b/guideCompanyCheck.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 11.84,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "guideName",
       "text": "次に、あなたのお名前だけをお話しください。",
-      "sha256": "9c8a68630baba3b6dbb93ff0d4723bd579dac40d9b2838e39b55f98b14030320",
-      "bytes": 172844
+      "sha256": "fee478999c2c101b27219d9938340de22fe27c5bc8392805044bcdc448cfcbc2",
+      "bytes": 172844,
+      "sourceSHA256": "9c8a68630baba3b6dbb93ff0d4723bd579dac40d9b2838e39b55f98b14030320",
+      "audio": "./leda-audio-b/guideName.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 3.6,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "guideGoAhead",
       "text": "どうぞ。",
-      "sha256": "8e0d6d75fe21989061c89e0454d0f3347ddca80037b0da4bddcc8a34e5b83fb5",
-      "bytes": 49964
+      "sha256": "42162ef70784870b980c2d52645fa7f28c43425d4be4f70fbd3c8d26a86bd80b",
+      "bytes": 49964,
+      "sourceSHA256": "8e0d6d75fe21989061c89e0454d0f3347ddca80037b0da4bddcc8a34e5b83fb5",
+      "audio": "./leda-audio-b/guideGoAhead.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 1.04,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "guideNameCheck",
       "text": "画面のお名前で合っていますか？1番、合っています。2番、お名前を言い直す。",
-      "sha256": "c0cfa2bb4b04bf1f1d0b2861bc80934a0c0983b3878c9f8a456f5409a9359643",
-      "bytes": 328364
+      "sha256": "897badf7251d553641fe283d5d4c679646b44feb78eb613e6344c69b235b4f8d",
+      "bytes": 328364,
+      "sourceSHA256": "c0cfa2bb4b04bf1f1d0b2861bc80934a0c0983b3878c9f8a456f5409a9359643",
+      "audio": "./leda-audio-b/guideNameCheck.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 6.84,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "guideConfirm",
       "text": "受付内容をご確認ください。1番、受付を完了。2番、担当者を訂正。3番、会社名を訂正。4番、お名前を訂正。5番、ご用件を訂正。6番、来訪の種類を訂正。",
-      "sha256": "08e72eb52d97db8f8882bba622b96418cf1334a232aa6c882119acc97184a58c",
-      "bytes": 879404
+      "sha256": "bb5877cf2c5861e1fef7c03a0875f75e57ff810d62cc782fc832ab5855163e7e",
+      "bytes": 879404,
+      "sourceSHA256": "08e72eb52d97db8f8882bba622b96418cf1334a232aa6c882119acc97184a58c",
+      "audio": "./leda-audio-b/guideConfirm.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 18.32,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "guideEmployee",
       "text": "お取り次ぎは必要ですか？1番、受付を利用する。2番、必要ありません。",
-      "sha256": "bdca9a483760af121cd93f761c0f1a94164af8223c21013aa4567d64b1998c2e",
-      "bytes": 328364
+      "sha256": "6d1a4df4c9e45f64bf35d8cf96a8c351a5f665f32d513fc383d25770c04bc0c1",
+      "bytes": 328364,
+      "sourceSHA256": "bdca9a483760af121cd93f761c0f1a94164af8223c21013aa4567d64b1998c2e",
+      "audio": "./leda-audio-b/guideEmployee.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 6.84,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "guideGeneral",
       "text": "では、総務担当者へのお取り次ぎで承ります。",
-      "sha256": "6d3c9ac65ad9fcde9cd0a92e9961b6c46f7c3782c9c3fbfc54bf190854a1a059",
-      "bytes": 178604
+      "sha256": "2ae08d42309dc4fd5fbb50c644c172136ac872efbce466a4f5f5a3a0d6190332",
+      "bytes": 178604,
+      "sourceSHA256": "6d3c9ac65ad9fcde9cd0a92e9961b6c46f7c3782c9c3fbfc54bf190854a1a059",
+      "audio": "./leda-audio-b/guideGeneral.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 3.72,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "guideUnclear",
       "text": "すみません、番号を一つに絞れませんでした。画面の番号を、もう一度お答えください。",
-      "sha256": "a418c6294ca886d3493c2661f0140b5eb8fae3eb155c196215992539e0efd90c",
-      "bytes": 372524
+      "sha256": "a0241dfb821715755f023212a7be8f88302e93e23a260e0c72ef6526763400c5",
+      "bytes": 372524,
+      "sourceSHA256": "a418c6294ca886d3493c2661f0140b5eb8fae3eb155c196215992539e0efd90c",
+      "audio": "./leda-audio-b/guideUnclear.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 7.76,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "guideRetry",
       "text": "すみません、うまく聞き取れませんでした。緑のマイクが表示されてから、もう一度お願いします。",
-      "sha256": "3f90876fe843cbacee4f68f11a2c874494d091ecc9d973fe282733a2dd39061f",
-      "bytes": 347564
+      "sha256": "603ee1cfcf1c34483bd457f10ba784eaef136d2fc2ed67735512a330587040d1",
+      "bytes": 347564,
+      "sourceSHA256": "3f90876fe843cbacee4f68f11a2c874494d091ecc9d973fe282733a2dd39061f",
+      "audio": "./leda-audio-b/guideRetry.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 7.24,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "guideComplete",
       "text": "受付内容を確認しました。ここまでが受付デモです。実際の呼び出しは行っていません。ご協力ありがとうございました。",
-      "sha256": "bb1b6efc925bcf382ae2ff914c71d680c3b56560d87cfa3f60c50fb94defe391",
-      "bytes": 445484
+      "sha256": "3a1147a8b44ae8bd4f9ba368dd427520038547cbe971fb15ee3fc577f5e5f89d",
+      "bytes": 445484,
+      "sourceSHA256": "bb1b6efc925bcf382ae2ff914c71d680c3b56560d87cfa3f60c50fb94defe391",
+      "audio": "./leda-audio-b/guideComplete.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 9.28,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "guideDepartment0",
       "text": "お呼びする部署を番号でお答えください。1番、えいぎょう。2番、そうむ。7番、部署が分からないので総務へ。",
-      "sha256": "ce9e4bbec0fcff0739a6af222549b3ff08a7d99c627e780a3df73dda0a2f54bf",
-      "bytes": 487724
+      "sha256": "2e46ec24121a525634a6cda91fd88065f7e591a26cb5cee09764dd2ffc8b3f06",
+      "bytes": 487724,
+      "sourceSHA256": "ce9e4bbec0fcff0739a6af222549b3ff08a7d99c627e780a3df73dda0a2f54bf",
+      "audio": "./leda-audio-b/guideDepartment0.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 10.16,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "guideStaff_sales_0",
       "text": "えいぎょうの担当者を番号でお答えください。1番、やまだたろう。2番、えいぎょうのうけつけたんとう。7番、この部署のどなたでも。",
-      "sha256": "8f8861a7558707c2d99d773806eba189e70197c12aac5eca072d58f96d1f25fe",
-      "bytes": 574124
+      "sha256": "881c2aa5c3444bc167ae3b92c886fe9fa37705d115fcc670a027db34155a7302",
+      "bytes": 574124,
+      "sourceSHA256": "8f8861a7558707c2d99d773806eba189e70197c12aac5eca072d58f96d1f25fe",
+      "audio": "./leda-audio-b/guideStaff_sales_0.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 11.96,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "guideStaff_general_0",
       "text": "そうむの担当者を番号でお答えください。1番、そうむたんとうしゃ。7番、この部署のどなたでも。",
-      "sha256": "3fa721b13e6dd2a24b4454927ce7c1b563891faa4fe2afd144740db4fa2a5ec9",
-      "bytes": 420524
+      "sha256": "9eaefeda4bf2e72ecad20753772845cfbd8af77f6634810b317b33a79c217619",
+      "bytes": 420524,
+      "sourceSHA256": "3fa721b13e6dd2a24b4454927ce7c1b563891faa4fe2afd144740db4fa2a5ec9",
+      "audio": "./leda-audio-b/guideStaff_general_0.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 8.76,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "greetingMorningArrival",
       "text": "おはようございます。有限会社ビジネスシステム通信、受付AIのつなぐです。恐れ入りますが、お名前とご用件をお聞かせいただけますか？",
-      "sha256": "6355885ab418e85ea4f1bb48ac8597c82343490890f9b38901fcdaefffde1a35",
-      "bytes": 487724
+      "sha256": "6e25f7a2c08a6210a78ba38c03bc4428b3ef3be1a6651978ffa29ea279ffc7de",
+      "bytes": 487724,
+      "sourceSHA256": "6355885ab418e85ea4f1bb48ac8597c82343490890f9b38901fcdaefffde1a35",
+      "audio": "./leda-audio-b/greetingMorningArrival.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 10.16,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "greetingDayArrival",
       "text": "こんにちは。有限会社ビジネスシステム通信、受付AIのつなぐです。恐れ入りますが、お名前とご用件をお聞かせいただけますか？",
-      "sha256": "e31086875e05c84bb9e33a884251d9918603aee817e97f7cef9deda29f7d0efc",
-      "bytes": 512684
+      "sha256": "d5bfcf76e7f8af5bdc0ca788d62772eaa80a975b4e0df6e1a55a25df82374aa3",
+      "bytes": 512684,
+      "sourceSHA256": "e31086875e05c84bb9e33a884251d9918603aee817e97f7cef9deda29f7d0efc",
+      "audio": "./leda-audio-b/greetingDayArrival.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 10.68,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     },
     {
       "key": "greetingEveningArrival",
       "text": "こんばんは。有限会社ビジネスシステム通信、受付AIのつなぐです。恐れ入りますが、お名前とご用件をお聞かせいただけますか？",
-      "sha256": "4aa24a95edd1e7907d38f8c808cdccc62decf3748d0d3fdb113daf42f47afc0f",
-      "bytes": 472364
+      "sha256": "5609af16bf402e6d03d8fd012ef3fa5999c57129c34f1fb5f70d9bb00c5f69cd",
+      "bytes": 472364,
+      "sourceSHA256": "4aa24a95edd1e7907d38f8c808cdccc62decf3748d0d3fdb113daf42f47afc0f",
+      "audio": "./leda-audio-b/greetingEveningArrival.wav?v=20261021-leda-pitch-b-1",
+      "durationSeconds": 9.84,
+      "pitchSemitones": 1,
+      "pitchChoice": "B"
     }
   ],
   "unusedLegacyKeys": [
@@ -503,5 +913,9 @@
     "enrollDone",
     "enrollRightFast",
     "enrollLeftFast"
-  ]
+  ],
+  "version": "20261021-leda-pitch-b-1",
+  "pitchSemitones": 1,
+  "pitchChoice": "B",
+  "pitchFilter": "asetrate=25427,aresample=24000,atempo=0.943878554"
 }
